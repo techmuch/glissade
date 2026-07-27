@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slidecast</title>
+<style>
+  /* Theme tokens. These are the built-in "Paper" defaults; the deck
+     overwrites them on :root at runtime from themes.json, so every colour and
+     face below has to come from a variable -- anything hardcoded would ignore
+     the selected theme. */
+  :root{
+    --ink:#1e2430;
+    --ink-soft:#4a5568;
+    --paper:#f6f3ee;
+    --accent:#7a5c2e;
+    --accent-light:#b8955a;
+    --rule:#ddd5c8;
+    --surround:#2a2723;
+    --story-bg:#efe9df;
+    --ask-bg:#2f3a3f;
+    --ask-ink:#e8e2d6;
+    --ask-ink-soft:#c3cbcd;
+    --ask-heading:#ffffff;
+    --ask-accent:#b8955a;
+    --overlay-bg:rgba(20,18,16,.95);
+    --overlay-ink:#e6e0d4;
+    --chrome-ink:#9a9186;
+    --blank-bg:#14120f;
+    --deck-font:Georgia,'Iowan Old Style','Times New Roman',serif;
+    --ui-font:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    --heading-weight:400;
+    --heading-tracking:-0.01em;
+    /* Global text scale. Everything on a slide is sized in vh and
+       multiplied by this, so one number resizes the whole deck. */
+    --scale:1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--surround);
+    font-family:var(--deck-font);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  #stage{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .slide{
+    display:none;
+    width:100%; height:100%;
+    background:var(--paper);
+    padding:5vh 7vw;
+    flex-direction:column;
+    /* `safe center` keeps the top of the slide reachable if a large text
+       scale makes the content taller than the screen; plain `center` would
+       clip it out of view. The first declaration is the fallback. */
+    justify-content:center;
+    justify-content:safe center;
+    overflow-y:auto;
+    position:relative;
+    animation:fade .25s ease;
+  }
+  .slide > *{flex-shrink:0}
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  .eyebrow{
+    font-family:var(--ui-font);
+    font-size:calc(1.5vh * var(--scale)); letter-spacing:.22em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin-bottom:2.4vh;
+  }
+  h1{font-size:calc(7.6vh * var(--scale)); line-height:1.08; font-weight:var(--heading-weight); letter-spacing:var(--heading-tracking)}
+  h2{font-size:calc(5.2vh * var(--scale)); line-height:1.15; font-weight:var(--heading-weight); margin-bottom:3.5vh; letter-spacing:var(--heading-tracking)}
+  h3{font-size:calc(3.4vh * var(--scale)); line-height:1.25; font-weight:var(--heading-weight); color:var(--accent); margin-bottom:2.5vh}
+  p{font-size:calc(3vh * var(--scale)); line-height:1.5; color:var(--ink-soft); max-width:46ch}
+  .lead{font-size:calc(3.4vh * var(--scale)); color:var(--ink)}
+
+  .byline{
+    margin-top:4vh; font-size:calc(2.6vh * var(--scale)); color:var(--ink-soft);
+    border-top:1px solid var(--rule); padding-top:3vh; max-width:40ch;
+  }
+  .byline strong{color:var(--ink); font-weight:600; display:block; font-size:calc(2.9vh * var(--scale))}
+  .byline span{font-size:calc(2.2vh * var(--scale)); display:block; margin-top:.6vh}
+
+  blockquote{
+    font-size:calc(3.6vh * var(--scale)); line-height:1.45; max-width:34ch;
+    border-left:4px solid var(--accent-light); padding-left:calc(3.5vh * var(--scale));
+  }
+  blockquote.big{font-size:calc(4.6vh * var(--scale)); max-width:26ch}
+  blockquote em{font-style:italic; color:var(--accent); font-weight:600}
+  cite{
+    display:block; margin-top:3vh; font-style:normal;
+    font-family:var(--ui-font);
+    font-size:calc(1.9vh * var(--scale)); letter-spacing:.06em; color:var(--accent); text-transform:uppercase;
+  }
+
+  ul{list-style:none; max-width:44ch}
+  li{
+    font-size:calc(3.1vh * var(--scale)); line-height:1.4; margin-bottom:2.8vh;
+    padding-left:calc(4.5vh * var(--scale)); position:relative; color:var(--ink);
+  }
+  li:before{
+    content:''; position:absolute; left:0; top:calc(1.5vh * var(--scale));
+    width:calc(1.6vh * var(--scale)); height:calc(1.6vh * var(--scale)); border:2px solid var(--accent-light); border-radius:50%;
+  }
+  li small{display:block; font-size:calc(2.2vh * var(--scale)); color:var(--ink-soft); margin-top:.8vh; line-height:1.4}
+
+  .slide.ask{background:var(--ask-bg); color:var(--ask-ink)}
+  .slide.ask .eyebrow{color:var(--ask-accent)}
+  .slide.ask h2{color:var(--ask-heading); max-width:24ch}
+  .slide.ask p{color:var(--ask-ink-soft)}
+  .slide.ask li{color:var(--ask-ink)}
+  .slide.ask li:before{border-color:var(--ask-accent)}
+  .slide.ask li small{color:var(--ask-ink-soft)}
+
+  .slide.story{background:var(--story-bg)}
+  .dialogue{max-width:44ch}
+  .dialogue p{font-size:calc(3vh * var(--scale)); margin-bottom:2.2vh}
+  .dialogue p.q{color:var(--ink); font-style:italic}
+  .dialogue p.a{padding-left:calc(4vh * var(--scale))}
+
+  .center{align-items:center; text-align:center}
+  .center p,.center blockquote,.center ul{max-width:38ch}
+  .center blockquote{border-left:none; padding-left:0; border-top:1px solid var(--rule); padding-top:3.5vh}
+
+  .num{
+    position:absolute; bottom:3.5vh; right:5vw;
+    font-family:var(--ui-font);
+    font-size:calc(1.7vh * var(--scale)); color:var(--accent); opacity:.5; letter-spacing:.1em;
+  }
+  .slide.ask .num{color:var(--ask-accent); opacity:.7}
+  .tag{
+    position:absolute; top:4vh; left:7vw;
+    font-family:var(--ui-font);
+    font-size:calc(1.5vh * var(--scale)); letter-spacing:.2em; text-transform:uppercase; color:var(--accent); opacity:.65;
+  }
+  .slide.ask .tag{color:var(--ask-accent); opacity:.9}
+
+  #notes{
+    position:fixed; left:0; right:0; bottom:0;
+    background:var(--overlay-bg); color:var(--overlay-ink);
+    font-family:var(--ui-font);
+    font-size:15px; line-height:1.5; padding:16px 24px;
+    max-height:34vh; overflow:auto; display:none; border-top:2px solid var(--accent-light);
+  }
+  #notes.on{display:block}
+  #notes b{color:var(--ask-accent)}
+  #help{
+    position:fixed; top:12px; right:16px;
+    font-family:var(--ui-font);
+    font-size:11px; color:var(--chrome-ink); letter-spacing:.08em; z-index:5;
+  }
+
+  /* ==================== layouts ====================
+     A slide is either legacy freeform markup (layout "blank") or a set of
+     regions the renderer fills. Regions are sized in vh/vw so they track the
+     text scale, and every colour comes from the theme tokens above. */
+
+  .slide.lay{padding:5vh 6vw}
+  .region{min-width:0; min-height:0}          /* let flex children shrink */
+  .stack{display:flex; flex-direction:column; justify-content:center; min-width:0}
+  .stack > * + *{margin-top:1.6vh}
+
+  /* two-column frame shared by split/two-content/comparison */
+  .cols{
+    display:flex; gap:5vw; width:100%; align-items:center;
+    flex:1; min-height:0;
+  }
+  .cols.top{align-items:flex-start}
+  .cols > .region{flex:1 1 0}
+  .cols.wide-media > .media-region{flex:1.25 1 0}
+  .cols.wide-text  > .text-region{flex:1.25 1 0}
+
+  /* headings inside laid-out slides sit tighter than the freeform ones */
+  .slide.lay h2{margin-bottom:2.2vh}
+  .slide.lay h3{margin-bottom:1.4vh}
+  .slide.lay p{margin-bottom:0}
+  .slide.lay .stack ul{margin-top:.6vh}
+  .slide.lay li{margin-bottom:1.8vh}
+
+  .subhead{
+    font-size:calc(2.6vh * var(--scale)); line-height:1.35;
+    color:var(--ink-soft); max-width:40ch;
+  }
+  .slide.ask .subhead{color:var(--ask-ink-soft)}
+
+  /* ---- media boxes (image or iframe) ---- */
+  .media-box{
+    position:relative; width:100%;
+    background:rgba(0,0,0,.05); border-radius:.6vh; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .slide.ask .media-box{background:rgba(255,255,255,.06)}
+  .media-box.ar{height:0}                      /* aspect-ratio via padding */
+  .media-box.ar > *{position:absolute; inset:0; width:100%; height:100%}
+  .media-box img{display:block; width:100%; height:100%; object-fit:contain}
+  .media-box img.cover{object-fit:cover}
+  .media-box iframe{border:0; display:block; background:#000}
+
+  .figure{display:flex; flex-direction:column; min-width:0; min-height:0}
+  .figure .media-box{flex:1; min-height:0}
+  .caption{
+    font-family:var(--ui-font);
+    font-size:calc(1.9vh * var(--scale)); line-height:1.4;
+    color:var(--ink-soft); margin-top:1.4vh; max-width:60ch;
+  }
+  .slide.ask .caption{color:var(--ask-ink-soft)}
+  .caption b{color:var(--ink); font-weight:600}
+  .slide.ask .caption b{color:var(--ask-ink)}
+
+  /* ---- full-bleed ---- */
+  .slide.bleed{padding:0}
+  .slide.bleed .media-box{
+    position:absolute; inset:0; width:100%; height:100%;
+    border-radius:0; background:#000;
+  }
+  .slide.bleed .media-box img{object-fit:cover}
+  .slide.bleed .overlay{
+    position:absolute; left:0; right:0; bottom:0; z-index:2;
+    padding:6vh 7vw 5vh;
+    background:linear-gradient(to top, rgba(0,0,0,.82), rgba(0,0,0,.45) 55%, rgba(0,0,0,0));
+    color:#fff;
+  }
+  .slide.bleed .overlay h1,
+  .slide.bleed .overlay h2{color:#fff; max-width:22ch}
+  .slide.bleed .overlay p{color:rgba(255,255,255,.88); max-width:46ch}
+  .slide.bleed .overlay .eyebrow{color:#fff; opacity:.85}
+  .slide.bleed .num,.slide.bleed .tag{color:#fff; opacity:.75; z-index:3}
+
+  /* ---- grid ---- */
+  .grid{display:grid; gap:2.4vh 2.2vw; width:100%; flex:1; min-height:0; align-content:center}
+  .grid.n2{grid-template-columns:repeat(2,1fr)}
+  .grid.n3{grid-template-columns:repeat(3,1fr)}
+  .grid.n4{grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(2,1fr)}
+  .grid .figure{min-height:0}
+  .grid .caption{
+    font-size:calc(1.6vh * var(--scale)); margin-top:.9vh; text-align:center;
+  }
+  .grid .media-box{background:rgba(0,0,0,.06)}
+
+  /* ---- section header ---- */
+  .slide.section-head{justify-content:center}
+  .slide.section-head .rule{
+    width:12vw; height:.5vh; background:var(--accent-light);
+    margin:2.6vh 0 3vh; border-radius:1px;
+  }
+  .slide.section-head.center .rule{margin-left:auto; margin-right:auto}
+
+  /* ---- external-embed fallback ---- */
+  .embed-fallback{
+    position:absolute; inset:0; z-index:2;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:1.8vh; padding:4vh 4vw; text-align:center;
+    background:var(--paper); color:var(--ink);
+  }
+  .embed-fallback.on{display:flex}
+  .embed-fallback .ef-title{
+    font-family:var(--ui-font); font-weight:600;
+    font-size:calc(2.2vh * var(--scale)); color:var(--ink);
+  }
+  .embed-fallback .ef-url{
+    font-family:var(--ui-font); font-size:calc(1.7vh * var(--scale));
+    color:var(--accent); word-break:break-all; max-width:52ch; line-height:1.4;
+  }
+  .embed-fallback img{width:auto; height:22vh; max-width:40%; object-fit:contain; background:#fff; padding:1vh; border-radius:.5vh}
+  .embed-fallback .ef-hint{
+    font-family:var(--ui-font); font-size:calc(1.5vh * var(--scale));
+    color:var(--ink-soft); letter-spacing:.04em;
+  }
+
+  /* Blank-screen overlay, toggled from the remote or with B */
+  #blank{
+    position:fixed; inset:0; background:var(--blank-bg); z-index:20; display:none;
+  }
+  #blank.on{display:block}
+
+  /* Live-connection dot, only shown when served by the lesson server */
+  #live{
+    position:fixed; top:12px; left:16px; z-index:6;
+    font-family:var(--ui-font);
+    font-size:11px; letter-spacing:.08em; color:var(--chrome-ink); display:none; align-items:center; gap:6px;
+  }
+  #live.show{display:flex}
+  #live i{width:7px; height:7px; border-radius:50%; background:#c0642f; display:block}
+  #live.ok i{background:#5f8a4e}
+
+  /* Brief confirmation of the new text size, so you can tell it registered
+     from across the room. Fades itself out. */
+  #scaletoast{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:var(--overlay-bg); color:var(--overlay-ink); z-index:25;
+    font-family:var(--ui-font);
+    padding:18px 30px; border-radius:10px; text-align:center;
+    opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  #scaletoast.on{opacity:1}
+  #scaletoast b{display:block; font-size:34px; font-weight:600; letter-spacing:.01em}
+  #scaletoast span{
+    display:block; font-size:10.5px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--ask-accent); margin-top:5px;
+  }
+
+  @media print{
+    body{background:#fff; overflow:visible}
+    #stage{position:static}
+    .slide{display:flex !important; page-break-after:always; height:100vh; animation:none}
+    #notes,#help,#live,#blank,#scaletoast{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="live"><i></i><span>connecting…</span></div>
+<div id="help">← → navigate &nbsp;·&nbsp; N notes &nbsp;·&nbsp; B blank &nbsp;·&nbsp; + − text &nbsp;·&nbsp; T theme &nbsp;·&nbsp; R reload embed &nbsp;·&nbsp; F fullscreen</div>
+<div id="scaletoast"><b id="scaleval">100%</b><span>text size</span></div>
+<div id="stage"></div>
+<div id="notes"></div>
+<div id="blank"></div>
+
+<script>
+const SLIDES = __SLIDES_JSON__;
+const THEMES = __THEMES_JSON__;
+const DECK_TITLE = __TITLE__;
+const LIVE = __LIVE__;
+
+document.title = DECK_TITLE;
+
+const MIN_SCALE = 0.7, MAX_SCALE = 1.6, SCALE_STEP = 0.1;
+
+const stage = document.getElementById('stage');
+const notesEl = document.getElementById('notes');
+const blankEl = document.getElementById('blank');
+const liveEl = document.getElementById('live');
+const toastEl = document.getElementById('scaletoast');
+let i = 0, notesOn = false, blanked = false, scale = 1;
+let themeId = (THEMES[0] || {}).id || 'paper';
+
+/* ==================== layout renderer ====================
+   Every layout is built from three region kinds: text, image, and embed.
+   A slide with no `layout` is treated as "blank" and its raw `html` is used
+   verbatim, so decks written before layouts existed render unchanged. */
+
+function el(tag, cls, html){
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(html != null) e.innerHTML = html;
+  return e;
+}
+
+function aspectRatio(a){
+  if(!a) return null;
+  if(typeof a === 'number') return a;
+  const m = String(a).split(/[:\/x]/);
+  if(m.length === 2){
+    const w = parseFloat(m[0]), h = parseFloat(m[1]);
+    if(w > 0 && h > 0) return w / h;
+  }
+  const n = parseFloat(a);
+  return n > 0 ? n : null;
+}
+
+/* Text region: any subset of eyebrow / heading / subhead / body / bullets.
+   `body` and bullet text are authored as HTML so quotes and emphasis work. */
+function textRegion(o){
+  const box = el('div', 'region stack text-region');
+  if(o.eyebrow)  box.appendChild(el('div', 'eyebrow', o.eyebrow));
+  if(o.heading)  box.appendChild(el(o.headingLevel === 1 ? 'h1' : 'h2', null, o.heading));
+  if(o.subheading) box.appendChild(el('div', 'subhead', o.subheading));
+  if(o.body)     box.appendChild(el('div', null, o.body));
+  if(o.bullets && o.bullets.length){
+    const ul = el('ul');
+    o.bullets.forEach(b => {
+      const item = (b && typeof b === 'object')
+        ? b.text + (b.sub ? '<small>' + b.sub + '</small>' : '')
+        : String(b);
+      ul.appendChild(el('li', null, item));
+    });
+    box.appendChild(ul);
+  }
+  if(o.quote){
+    const q = el('blockquote', o.quoteBig ? 'big' : null, o.quote);
+    if(o.cite) q.appendChild(el('cite', null, o.cite));
+    box.appendChild(q);
+  }
+  return box;
+}
+
+/* An image or an embed, in a box that can hold an aspect ratio. Embeds are
+   NOT created here — only a placeholder is, so nothing loads until the slide
+   is actually shown. */
+function mediaBox(node, opts){
+  opts = opts || {};
+  const ar = aspectRatio(node.aspect || opts.aspect);
+  const box = el('div', 'media-box' + (ar ? ' ar' : ''));
+  if(ar) box.style.paddingBottom = (100 / ar) + '%';
+
+  if(node.kind === 'image'){
+    const img = el('img');
+    img.src = node.src;
+    img.alt = node.alt || '';
+    if((node.fit || opts.fit) === 'cover') img.className = 'cover';
+    if(node.remote) img.addEventListener('error', () => {
+      box.appendChild(fallbackPanel(node.src, 'Image could not load'));
+      box.querySelector('.embed-fallback').classList.add('on');
+    });
+    box.appendChild(img);
+  } else {
+    // Deferred embed: remember the spec, mount on activation.
+    box.dataset.embed = '1';
+    EMBEDS.set(box, node);
+    box.appendChild(fallbackPanel(node.src, node.fallback_label, node.qr));
+  }
+  return box;
+}
+
+function fallbackPanel(url, label, qr){
+  const p = el('div', 'embed-fallback');
+  p.appendChild(el('div', 'ef-title', label ? 'Can’t reach ' + label : 'This embed needs internet'));
+  if(qr){
+    const q = el('img');
+    q.src = qr; q.alt = 'QR code linking to ' + (url || '');
+    p.appendChild(q);
+  }
+  if(url) p.appendChild(el('div', 'ef-url', url));
+  p.appendChild(el('div', 'ef-hint', qr ? 'Scan to open it on a phone' : 'Check the connection and press R to retry'));
+  return p;
+}
+
+function figure(node, opts){
+  const f = el('div', 'figure region');
+  f.appendChild(mediaBox(node, opts));
+  if(node.caption) f.appendChild(el('div', 'caption', node.caption));
+  return f;
+}
+
+/* Normalise "what goes in this region" — a slide may put an image or an embed
+   in the same slot, and left/right blocks may carry either. */
+function pickMedia(o){
+  if(!o) return null;
+  if(o.image && typeof o.image === 'object') return Object.assign({kind:'image'}, o.image);
+  if(o.media && typeof o.media === 'object') return Object.assign({kind:'embed'}, o.media);
+  return null;
+}
+
+const EMBEDS = new WeakMap();
+
+const LAYOUTS = {
+  /* ---- PowerPoint-equivalent layouts ---- */
+  'title': s => {
+    const t = textRegion({eyebrow:s.eyebrow, heading:s.heading, headingLevel:1});
+    if(s.subheading || s.byline){
+      const b = el('div', 'byline');
+      if(s.subheading) b.appendChild(el('strong', null, s.subheading));
+      if(s.byline) b.appendChild(el('span', null, s.byline));
+      t.appendChild(b);
+    }
+    return [t];
+  },
+  'title-only': s => [textRegion({eyebrow:s.eyebrow, heading:s.heading, headingLevel:1})],
+  'title-content': s => [textRegion(s)],
+  'section': s => {
+    const t = textRegion({eyebrow:s.eyebrow, heading:s.heading, headingLevel:1});
+    t.insertBefore(el('div','rule'), t.querySelector('h1') ? t.querySelector('h1').nextSibling : null);
+    if(s.subheading) t.appendChild(el('div','subhead', s.subheading));
+    if(s.body) t.appendChild(el('div', null, s.body));
+    return [t];
+  },
+  'two-content': s => {
+    const head = (s.heading || s.eyebrow) ? textRegion({eyebrow:s.eyebrow, heading:s.heading}) : null;
+    const cols = el('div', 'cols top');
+    ['left','right'].forEach(side => {
+      const blk = s[side] || {};
+      const m = pickMedia(blk);
+      cols.appendChild(m ? figure(m, {aspect: blk.aspect}) : textRegion(blk));
+    });
+    return head ? [head, cols] : [cols];
+  },
+  'comparison': s => {
+    const out = [];
+    if(s.heading || s.eyebrow) out.push(textRegion({eyebrow:s.eyebrow, heading:s.heading}));
+    const cols = el('div', 'cols top');
+    ['left','right'].forEach(side => {
+      const blk = Object.assign({}, s[side] || {});
+      const m = pickMedia(blk);
+      const region = el('div', 'region stack');
+      if(blk.subheading) region.appendChild(el('h3', null, blk.subheading));
+      region.appendChild(m ? figure(m, {aspect: blk.aspect}) : textRegion(blk));
+      cols.appendChild(region);
+    });
+    out.push(cols);
+    return out;
+  },
+  'content-caption': s => {
+    const cols = el('div', 'cols wide-media');
+    const m = pickMedia(s);
+    cols.appendChild(m ? Object.assign(figure(m, {aspect:s.aspect}), {className:'figure region media-region'})
+                       : textRegion({body:s.body, bullets:s.bullets}));
+    cols.appendChild(textRegion({eyebrow:s.eyebrow, heading:s.heading, subheading:s.subheading, body:s.caption}));
+    return [cols];
+  },
+  'picture-caption': s => {
+    const m = pickMedia(s);
+    const wrap = el('div', 'region stack center');
+    if(s.heading) wrap.appendChild(el('h2', null, s.heading));
+    if(m) wrap.appendChild(figure(m, {aspect: s.aspect || '16:9'}));
+    if(s.body) wrap.appendChild(el('div', 'caption', s.body));
+    return [wrap];
+  },
+
+  /* ---- media layouts ---- */
+  'media-right': s => splitMedia(s, 'right'),
+  'media-left':  s => splitMedia(s, 'left'),
+  'media-caption': s => {
+    const m = pickMedia(s);
+    const wrap = el('div', 'region stack');
+    if(s.eyebrow) wrap.appendChild(el('div','eyebrow', s.eyebrow));
+    if(s.heading) wrap.appendChild(el('h2', null, s.heading));
+    if(m) wrap.appendChild(figure(m, {aspect: s.aspect || '16:9'}));
+    return [wrap];
+  },
+  'media-full': s => {
+    const m = pickMedia(s);
+    const out = [];
+    if(m) out.push(mediaBox(m, {fit:'cover', aspect:null}));
+    if(s.heading || s.body || s.eyebrow){
+      const ov = el('div', 'overlay');
+      if(s.eyebrow) ov.appendChild(el('div','eyebrow', s.eyebrow));
+      if(s.heading) ov.appendChild(el('h2', null, s.heading));
+      if(s.body) ov.appendChild(el('p', null, s.body));
+      out.push(ov);
+    }
+    return out;
+  },
+  'grid': s => {
+    const items = (s.images || []).map(i => Object.assign({kind:'image'}, i));
+    const out = [];
+    if(s.heading || s.eyebrow) out.push(textRegion({eyebrow:s.eyebrow, heading:s.heading}));
+    const g = el('div', 'grid n' + Math.min(4, Math.max(2, items.length)));
+    items.forEach(i => g.appendChild(figure(i, {fit:'cover', aspect: s.aspect || '4:3'})));
+    out.push(g);
+    return out;
+  }
+};
+
+function splitMedia(s, side){
+  const cols = el('div', 'cols wide-media');
+  const m = pickMedia(s);
+  const text = textRegion(s);
+  const media = m ? figure(m, {aspect: s.aspect || '16:9'}) : el('div','region');
+  media.classList.add('media-region');
+  if(side === 'left'){ cols.appendChild(media); cols.appendChild(text); }
+  else { cols.appendChild(text); cols.appendChild(media); }
+  return [cols];
+}
+
+function buildSlide(s, n){
+  const layout = s.layout || 'blank';
+  const d = el('div', 'slide ' + (s.cls || ''));
+  d.dataset.layout = layout;
+
+  if(layout === 'blank' || !LAYOUTS[layout]){
+    // Legacy / freeform slides: raw markup, exactly as before.
+    d.innerHTML = s.html || '';
+  } else {
+    d.classList.add('lay');
+    if(layout === 'media-full') d.classList.add('bleed');
+    if(layout === 'section') d.classList.add('section-head');
+    LAYOUTS[layout](s).forEach(node => d.appendChild(node));
+  }
+
+  if(s.tag) d.insertBefore(el('div', 'tag', s.tag), d.firstChild);
+  d.appendChild(el('div', 'num', (n + 1) + ' / ' + SLIDES.length));
+  return d;
+}
+
+SLIDES.forEach((s, n) => stage.appendChild(buildSlide(s, n)));
+const els = stage.querySelectorAll('.slide');
+
+/* ---- embed lifecycle ----
+   Every slide lives in the DOM at once, so an iframe left mounted would keep
+   a YouTube video playing (and audible) after you advance. Embeds are
+   therefore created when their slide becomes active and destroyed when it
+   stops being active — removing the element is what actually stops playback.
+   It also means a deck with a dozen embeds loads nothing until it needs to. */
+
+function mountEmbeds(slideEl){
+  slideEl.querySelectorAll('[data-embed]').forEach(box => {
+    if(box.querySelector('iframe')) return;
+    const spec = EMBEDS.get(box);
+    if(!spec) return;
+
+    const frame = document.createElement('iframe');
+    frame.setAttribute('allowfullscreen', '');
+    frame.setAttribute('loading', 'eager');
+    frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    if(spec.allow) frame.setAttribute('allow', spec.allow);
+    else if(spec.external) frame.setAttribute('allow',
+      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
+
+    const fb = box.querySelector('.embed-fallback');
+    if(fb) fb.classList.remove('on');
+
+    if(spec.srcdoc != null){
+      /* Self-contained activity. Scripts yes, same-origin no — it can run its
+         own game code but cannot reach into the deck. */
+      frame.setAttribute('sandbox', spec.sandbox || 'allow-scripts allow-popups allow-forms allow-modals');
+      frame.srcdoc = spec.srcdoc;
+    } else if(spec.src){
+      if(spec.sandbox) frame.setAttribute('sandbox', spec.sandbox);
+      let timer = setTimeout(() => { if(fb) fb.classList.add('on'); }, spec.timeout || 6000);
+      frame.addEventListener('load', () => clearTimeout(timer));
+      frame.addEventListener('error', () => { clearTimeout(timer); if(fb) fb.classList.add('on'); });
+      // A known-offline browser shouldn't sit staring at a blank frame.
+      if(navigator.onLine === false && fb){ clearTimeout(timer); fb.classList.add('on'); }
+      frame.src = spec.src;
+    } else {
+      if(fb) fb.classList.add('on');
+      return;
+    }
+    box.appendChild(frame);
+  });
+}
+
+function unmountEmbeds(slideEl){
+  slideEl.querySelectorAll('[data-embed] iframe').forEach(f => f.remove());
+}
+
+function retryEmbeds(){
+  const cur = els[i];
+  if(!cur) return;
+  unmountEmbeds(cur);
+  cur.querySelectorAll('.embed-fallback').forEach(f => f.classList.remove('on'));
+  mountEmbeds(cur);
+}
+
+function render(n){
+  const prev = i;
+  i = Math.max(0, Math.min(SLIDES.length - 1, n));
+  els.forEach((e, k) => e.classList.toggle('active', k === i));
+  if(els[prev] && prev !== i) unmountEmbeds(els[prev]);
+  if(els[i]) mountEmbeds(els[i]);
+  notesEl.innerHTML = SLIDES[i].notes || '<i>No notes for this slide.</i>';
+  if(!LIVE) location.hash = i + 1;
+}
+function setBlank(on){
+  blanked = !!on;
+  blankEl.classList.toggle('on', blanked);
+}
+
+/* --- text size -------------------------------------------------------- */
+
+let toastTimer = null;
+function toast(big, small){
+  document.getElementById('scaleval').textContent = big;
+  toastEl.querySelector('span').textContent = small;
+  toastEl.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('on'), small === 'text size' ? 900 : 2600);
+}
+
+function applyScale(v, announce){
+  const num = parseFloat(v);
+  /* A server predating this feature sends no `scale`, and NaN here would
+     poison every calc() in the stylesheet -- the whole deck would collapse to
+     default font sizes. Keep the current value instead. */
+  if(!isFinite(num)) return;
+  scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, Math.round(num * 100) / 100));
+  document.documentElement.style.setProperty('--scale', scale);
+  if(!LIVE) try{ localStorage.setItem('deckScale', scale); }catch(e){}
+  if(announce) toast(Math.round(scale * 100) + '%', 'text size');
+}
+
+/* In live mode the server owns the value, same as the slide index, so the
+   phone's readout always matches what's on the wall. If the server can't take
+   the request -- most likely it was started before this feature existed --
+   fall back to resizing just this screen and say so, rather than appearing to
+   do nothing. */
+function requestScale(body, localValue){
+  if(!LIVE){ applyScale(localValue, true); return; }
+  post('/api/scale', body).then(r => {
+    if(r.ok) return;
+    applyScale(localValue, false);
+    toast(Math.round(scale * 100) + '%',
+          r.status === 404 ? 'this screen only — restart the server to sync'
+                           : 'this screen only — server unreachable');
+  });
+}
+function bumpScale(steps){ requestScale({step: steps}, scale + steps * SCALE_STEP); }
+function resetScale(){ requestScale({scale: 1}, 1); }
+
+/* --- themes ----------------------------------------------------------- */
+
+function findTheme(id){
+  for(const t of THEMES) if(t.id === id) return t;
+  return THEMES[0] || null;
+}
+/* Writes the theme's tokens onto :root. Every colour and face in the
+   stylesheet reads from these, so this one call restyles the deck. */
+function applyTheme(id, announce){
+  const t = findTheme(id);
+  if(!t) return;
+  themeId = t.id;
+  const root = document.documentElement.style;
+  for(const key in t.vars) root.setProperty(key, t.vars[key]);
+  if(!LIVE) try{ localStorage.setItem('deckTheme', themeId); }catch(e){}
+  if(announce) toast(t.name, 'theme');
+}
+function requestTheme(id, announceLocally){
+  if(!LIVE){ applyTheme(id, true); return; }
+  post('/api/theme', {id: id}).then(r => {
+    if(r.ok) return;
+    applyTheme(id, false);
+    toast(findTheme(id).name,
+          r.status === 404 ? 'this screen only — restart the server to sync'
+                           : 'this screen only — server unreachable');
+  });
+}
+function cycleTheme(){
+  if(THEMES.length < 2) return;
+  let idx = THEMES.findIndex(t => t.id === themeId);
+  requestTheme(THEMES[(idx + 1 + THEMES.length) % THEMES.length].id);
+}
+
+/* In live mode the server owns the slide index, so navigation is a request,
+   not a local change — that keeps the projector and the phone in step. */
+function go(n){
+  if(LIVE){ post('/api/goto', {n: n + 1}); }
+  else { render(n); }
+}
+/* Reports whether the request actually landed. fetch() resolves normally on a
+   404, so `ok` has to be checked explicitly — silently swallowing that is how
+   a stale server looks identical to a broken feature. */
+function post(path, body){
+  return fetch(path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body || {})
+  }).then(r => ({ok: r.ok, status: r.status}))
+    .catch(() => ({ok: false, status: 0}));
+}
+
+document.addEventListener('keydown', e => {
+  const k = e.key;
+  if(k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown'){ e.preventDefault(); go(i + 1); }
+  else if(k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp'){ e.preventDefault(); go(i - 1); }
+  else if(k === 'Home'){ go(0); }
+  else if(k === 'End'){ go(SLIDES.length - 1); }
+  else if(k === 'n' || k === 'N'){ notesOn = !notesOn; notesEl.classList.toggle('on', notesOn); }
+  else if(k === 'b' || k === 'B'){ LIVE ? post('/api/blank', {blank: !blanked}) : setBlank(!blanked); }
+  /* '=' is the unshifted key on most layouts, so + works without Shift. */
+  else if(k === '+' || k === '=' || k === 'Add'){ e.preventDefault(); bumpScale(1); }
+  else if(k === '-' || k === '_' || k === 'Subtract'){ e.preventDefault(); bumpScale(-1); }
+  else if(k === '0'){ e.preventDefault(); resetScale(); }
+  else if(k === 't' || k === 'T'){ cycleTheme(); }
+  else if(k === 'r' || k === 'R'){ retryEmbeds(); }
+  else if(k === 'f' || k === 'F'){
+    if(!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+    else document.exitFullscreen && document.exitFullscreen();
+  }
+});
+stage.addEventListener('click', e => {
+  go(e.clientX < window.innerWidth * 0.25 ? i - 1 : i + 1);
+});
+
+if(LIVE){
+  liveEl.classList.add('show');
+  let es, first = true, rev = null;
+  const connect = () => {
+    es = new EventSource('/events');
+    es.onopen = () => {
+      liveEl.classList.add('ok');
+      liveEl.querySelector('span').textContent = 'remote connected';
+    };
+    es.onmessage = ev => {
+      const st = JSON.parse(ev.data);
+      /* The slides were baked into this page when it was served, so a deck
+         change means the page itself is stale — reload rather than trying to
+         swap 20 slides in place. */
+      if(st.rev != null){
+        if(rev == null) rev = st.rev;
+        else if(st.rev !== rev){ location.reload(); return; }
+      }
+      const sizeChanged = st.scale != null && st.scale !== scale;
+      const themeChanged = st.theme != null && st.theme !== themeId;
+      render(st.n - 1);
+      setBlank(st.blank);
+      applyScale(st.scale, sizeChanged && !first && !themeChanged);
+      if(st.theme != null) applyTheme(st.theme, themeChanged && !first);
+      first = false;
+    };
+    es.onerror = () => {
+      liveEl.classList.remove('ok');
+      liveEl.querySelector('span').textContent = 'reconnecting…';
+      es.close();
+      setTimeout(connect, 1500);
+    };
+  };
+  connect();
+  render(0);
+} else {
+  /* Standalone: no server to remember anything, so the browser does. */
+  let saved = 1, savedTheme = null;
+  try{
+    saved = parseFloat(localStorage.getItem('deckScale')) || 1;
+    savedTheme = localStorage.getItem('deckTheme');
+  }catch(e){}
+  applyScale(saved, false);
+  applyTheme(savedTheme || themeId, false);
+  const start = parseInt(location.hash.replace('#',''), 10);
+  render(isNaN(start) ? 0 : start - 1);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sorting activity</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    background:#f6f3ee; color:#1e2430;
+    height:100vh; display:flex; flex-direction:column;
+    padding:2.4vh 2.4vw; gap:1.4vh; overflow:hidden;
+  }
+  h1{font-size:clamp(15px,2.6vh,26px); font-weight:600; letter-spacing:-.01em}
+  .sub{font-size:clamp(11px,1.7vh,15px); color:#4a5568; line-height:1.4}
+  .board{display:flex; gap:1.4vw; flex:1; min-height:0}
+  .col{
+    flex:1; background:#fff; border:2px dashed #ddd5c8; border-radius:10px;
+    padding:1.2vh .9vw; display:flex; flex-direction:column; gap:.8vh;
+    min-height:0; overflow-y:auto; transition:border-color .15s, background .15s;
+  }
+  .col.over{border-color:#7a5c2e; background:#fdfbf7}
+  .col h2{
+    font-size:clamp(10px,1.5vh,13px); letter-spacing:.16em; text-transform:uppercase;
+    color:#7a5c2e; font-weight:700; flex:none;
+  }
+  .col.pool{background:#efe9df; border-style:solid}
+  .chip{
+    background:#fff; border:1px solid #ddd5c8; border-left:4px solid #b8955a;
+    border-radius:7px; padding:.8vh .7vw; cursor:grab;
+    font-size:clamp(11px,1.7vh,15px); line-height:1.3; flex:none;
+    user-select:none; touch-action:none;
+  }
+  .chip.ok{border-left-color:#5f8a4e}
+  .chip.no{border-left-color:#b5562c}
+  .chip.sel{outline:3px solid #b8955a}
+  footer{display:flex; align-items:center; gap:.8vw; flex:none; font-size:clamp(11px,1.7vh,15px); color:#4a5568}
+  button{font:inherit; font-weight:600; background:#7a5c2e; color:#fff; border:0; border-radius:7px; padding:.85vh 1.1vw; cursor:pointer}
+  button.ghost{background:transparent; color:#7a5c2e; border:1px solid #ddd5c8}
+  .score{margin-left:auto; font-weight:600; color:#1e2430}
+</style>
+</head>
+<body>
+
+<h1>Which of these work without internet?</h1>
+<p class="sub">Drag each item into a column — or tap it, then tap a column. Then press Check.</p>
+
+<div class="board">
+  <div class="col pool" id="pool"><h2>Drag from here</h2></div>
+  <div class="col" id="yes" data-bucket="yes"><h2>Works offline</h2></div>
+  <div class="col" id="no"  data-bucket="no"><h2>Needs the network</h2></div>
+</div>
+
+<footer>
+  <button id="check">Check</button>
+  <button id="reset" class="ghost">Reset</button>
+  <span class="score" id="score">0 of 6 sorted</span>
+</footer>
+
+<script>
+/* This whole file is inlined into the deck as the iframe's srcdoc, so it runs
+   with no server and no network — which is also the point it's making. */
+const ITEMS = [
+  ['An embedded image',            'yes'],
+  ['A local HTML activity',        'yes'],
+  ['Switching themes',             'yes'],
+  ['Changing text size',           'yes'],
+  ['A YouTube embed',              'no' ],
+  ['The phone remote',             'no' ]
+];
+
+const pool = document.getElementById('pool');
+const cols = [...document.querySelectorAll('.col')];
+let sel = null;
+
+function build(){
+  document.querySelectorAll('.chip').forEach(c => c.remove());
+  ITEMS.forEach(([label, answer]) => {
+    const c = document.createElement('div');
+    c.className = 'chip';
+    c.draggable = true;
+    c.textContent = label;
+    c.dataset.answer = answer;
+    c.addEventListener('dragstart', () => { sel = c; });
+    c.addEventListener('dragend',   () => { sel = null; tally(); });
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(x => x.classList.remove('sel'));
+      if(sel === c){ sel = null; return; }
+      sel = c; c.classList.add('sel');
+    });
+    pool.appendChild(c);
+  });
+  tally();
+}
+
+cols.forEach(col => {
+  col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('over'); });
+  col.addEventListener('dragleave', () => col.classList.remove('over'));
+  col.addEventListener('drop', e => {
+    e.preventDefault(); col.classList.remove('over');
+    if(sel){ place(col, sel); sel = null; }
+  });
+  col.addEventListener('click', () => {
+    if(sel){ place(col, sel); sel.classList.remove('sel'); sel = null; }
+  });
+});
+
+function place(col, chip){
+  chip.classList.remove('ok','no');
+  col.appendChild(chip);
+  tally();
+}
+
+function tally(){
+  const placed = document.querySelectorAll('.col[data-bucket] .chip').length;
+  document.getElementById('score').textContent = placed + ' of ' + ITEMS.length + ' sorted';
+}
+
+document.getElementById('check').onclick = () => {
+  let right = 0;
+  cols.filter(c => c.dataset.bucket).forEach(col => {
+    col.querySelectorAll('.chip').forEach(chip => {
+      const ok = chip.dataset.answer === col.dataset.bucket;
+      chip.classList.toggle('ok', ok);
+      chip.classList.toggle('no', !ok);
+      if(ok) right++;
+    });
+  });
+  document.getElementById('score').textContent = right + ' of ' + ITEMS.length + ' correct';
+};
+
+document.getElementById('reset').onclick = build;
+build();
+</script>
+</body>
+</html>

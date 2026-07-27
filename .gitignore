@@ -1,0 +1,16 @@
+# pixi environments — recreated from pixi.toml / pixi.lock
+.pixi/
+
+# Generated standalone decks — rebuild with `pixi run build`
+build/
+
+# Presenter preferences (deck, theme, text size) — local to the machine
+# and room you're presenting in
+presenter-settings.json
+
+# Python
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store

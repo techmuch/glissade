@@ -1,0 +1,274 @@
+{
+  "title": "Slidecast — A Tour",
+  "subtitle": "What it does and how to drive it",
+  "order": 1,
+  "slides": [
+    {
+      "n": 1,
+      "layout": "title",
+      "title": "Title — Slidecast",
+      "eyebrow": "A tour",
+      "heading": "Slidecast",
+      "subheading": "Decks that work when the Wi-Fi doesn't",
+      "byline": "Press → or tap Next on your phone",
+      "notes": "<b>Welcome.</b> This deck is both the documentation and a demonstration — every feature it describes is being used to show it to you.<br><br>If you're reading this on the phone remote, you're already using half of what's here. Press <b>N</b> on the projecting machine to show these notes on screen too."
+    },
+    {
+      "n": 2,
+      "layout": "title-content",
+      "title": "What it is",
+      "tag": "Overview",
+      "eyebrow": "The short version",
+      "heading": "A presentation server with a phone remote",
+      "bullets": [
+        {"text": "Write slides as JSON", "sub": "No binary file to corrupt, no proprietary format, diffs cleanly in git"},
+        {"text": "Drive them from your phone", "sub": "Notes, next-slide preview, and a jump list in your hand"},
+        {"text": "Build to one HTML file", "sub": "Images and activities embedded — it runs with no network at all"}
+      ],
+      "notes": "Three ideas, in order of how much they matter.<br><br>The third is the one that earns its keep: a deck you can open from a USB stick in a building with no working Wi-Fi."
+    },
+    {
+      "n": 3,
+      "layout": "section",
+      "title": "Section — Running it",
+      "cls": "center",
+      "eyebrow": "Part one",
+      "heading": "Running it",
+      "subheading": "Two commands and two addresses.",
+      "notes": "<b>layout: \"section\"</b> — a divider. Use these to give a long deck some shape; people navigate by them without realising."
+    },
+    {
+      "n": 4,
+      "layout": "two-content",
+      "title": "The two commands",
+      "tag": "Running it",
+      "heading": "Two commands",
+      "left": {
+        "subheading": "Present",
+        "body": "<p><b>pixi run start</b></p><p>Serves the deck to the projector and a remote to your phone. Prints both addresses and a QR code.</p>"
+      },
+      "right": {
+        "subheading": "Build",
+        "body": "<p><b>pixi run build</b></p><p>Writes every deck to <b>build/</b> as a standalone file. No server needed to open it.</p>"
+      },
+      "notes": "<b>layout: \"two-content\"</b> — two independent regions side by side.<br><br>Start is what you use in the room. Build is what you do the night before, so there's a file on the laptop that works even if nothing else does."
+    },
+    {
+      "n": 5,
+      "layout": "title-content",
+      "title": "The two addresses",
+      "tag": "Running it",
+      "eyebrow": "Both on the same Wi-Fi",
+      "heading": "Two addresses",
+      "bullets": [
+        {"text": "/ — the projector", "sub": "Open on the machine driving the screen, then press F for fullscreen"},
+        {"text": "/control — your phone", "sub": "Scan the QR code the server prints on startup"}
+      ],
+      "body": "<p>Whoever advances — phone or laptop — everyone follows. The server holds the position, not the browser.</p>",
+      "notes": "<b>Why the server owns the state:</b> a device that reconnects mid-presentation lands on the right slide instead of slide 1. It also means you can open the deck on a second screen and it stays in step."
+    },
+    {
+      "n": 6,
+      "layout": "media-right",
+      "title": "The remote",
+      "tag": "Running it",
+      "eyebrow": "In your hand",
+      "heading": "The remote",
+      "bullets": [
+        "Full speaker notes for the current slide",
+        "A live preview of the next one",
+        "Jump list, theme picker, deck picker",
+        "Swipe, or use a Bluetooth clicker"
+      ],
+      "image": {"src": "media/images/gradient-blue.jpg", "alt": "Abstract gradient", "fit": "cover"},
+      "aspect": "4:3",
+      "notes": "<b>layout: \"media-right\"</b> — the workhorse. Text one side, media the other; <code>media-left</code> mirrors it.<br><br>The remote holds a screen wake lock, so your phone shouldn't sleep while you're presenting."
+    },
+    {
+      "n": 7,
+      "layout": "section",
+      "title": "Section — Writing slides",
+      "cls": "center",
+      "eyebrow": "Part two",
+      "heading": "Writing slides",
+      "subheading": "One JSON file per deck.",
+      "notes": "Now the part you'll actually spend time in."
+    },
+    {
+      "n": 8,
+      "layout": "content-caption",
+      "title": "Anatomy of a slide",
+      "tag": "Writing slides",
+      "image": {"src": "media/images/gradient-amber.jpg", "alt": "Abstract gradient", "fit": "cover"},
+      "aspect": "4:3",
+      "eyebrow": "decks/your-deck.json",
+      "heading": "Anatomy of a slide",
+      "caption": "<p>Pick a <b>layout</b>, fill the fields it uses. Skip any you don't need — nothing is required.</p><p>Text fields accept HTML, so emphasis and quotation marks behave.</p>",
+      "notes": "<b>layout: \"content-caption\"</b> — a wide media region beside a narrower text column.<br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>, <code>quote</code>, <code>image</code>, <code>media</code>, <code>images</code>, <code>left</code>, <code>right</code>, <code>caption</code>, <code>notes</code>, <code>tag</code>, <code>cls</code>.<br><br>The <b>Layout Gallery</b> deck shows all fourteen layouts. Switch to it from the remote."
+    },
+    {
+      "n": 9,
+      "layout": "title-content",
+      "title": "Notes go in the JSON",
+      "tag": "Writing slides",
+      "eyebrow": "The field that matters most",
+      "heading": "Write the notes first",
+      "body": "<p>Every slide carries a <b>notes</b> field. It shows on your phone and, with <b>N</b>, on screen.</p>",
+      "quote": "The slide is for the room. The notes are for you.",
+      "notes": "<b>This is the argument for the whole tool.</b><br><br>Slides get overloaded because they're doing two jobs: showing the room something, and reminding the speaker what to say. Split those and the slides get quieter and better.<br><br>Notes accept HTML too — <b>bold</b> the thing you'll forget."
+    },
+    {
+      "n": 10,
+      "layout": "comparison",
+      "title": "Discussion slides",
+      "tag": "Writing slides",
+      "heading": "A slide that changes the room",
+      "left": {
+        "subheading": "Normal slide",
+        "body": "<p>Light background. Information. People read it.</p>"
+      },
+      "right": {
+        "subheading": "cls: \"ask\"",
+        "body": "<p>Dark background. A question. People look up.</p>"
+      },
+      "notes": "<b>layout: \"comparison\"</b> — like two-content, but each side gets a subheading.<br><br>Adding <code>\"cls\": \"ask\"</code> inverts a slide to the dark treatment. Use it for questions and discussion stops — the change in the room is doing the work, not the words.<br><br>The remote flags these so you can see a discussion stop coming."
+    },
+    {
+      "n": 11,
+      "cls": "ask center",
+      "layout": "title-content",
+      "title": "A discussion slide",
+      "tag": "Try it",
+      "eyebrow": "For example",
+      "heading": "What would you cut from your last deck?",
+      "body": "<p>This slide is <code>cls: \"ask\"</code>. Notice the room got quieter.</p>",
+      "notes": "<b>This is that slide.</b> Give it a moment before moving on — the pause is the feature.<br><br>Combine <code>ask</code> with <code>center</code> for a question that fills the screen."
+    },
+    {
+      "n": 12,
+      "layout": "section",
+      "title": "Section — Making it yours",
+      "cls": "center",
+      "eyebrow": "Part three",
+      "heading": "Making it yours",
+      "subheading": "Themes, text size, and media.",
+      "notes": "The customisation section."
+    },
+    {
+      "n": 13,
+      "layout": "two-content",
+      "title": "Themes",
+      "tag": "Making it yours",
+      "eyebrow": "Press T to cycle",
+      "heading": "Themes",
+      "left": {
+        "body": "<p>Every colour and typeface comes from a token. One value restyles the whole deck.</p><p>Two ship: <b>Paper</b> and <b>Georgia Tech</b>. Add your own as an entry in <b>themes.json</b> — no code.</p>"
+      },
+      "right": {
+        "image": {"src": "media/images/gradient-plum.jpg", "alt": "Abstract gradient", "fit": "cover"},
+        "aspect": "4:3"
+      },
+      "notes": "<b>Try it now:</b> press <b>T</b>, or tap a swatch on the remote. Watch this slide change under you.<br><br>The Georgia Tech theme follows GT's published accessibility guidance, not just its palette — Tech Gold is used for rules and bullets but never for text, since GT flags it as inaccessible on light backgrounds."
+    },
+    {
+      "n": 14,
+      "layout": "title-content",
+      "title": "Text size",
+      "tag": "Making it yours",
+      "eyebrow": "Press + and −",
+      "heading": "Size it for the room you're in",
+      "body": "<p>Dim projector? Deep room? Resize the whole deck from 70% to 160% — headings, body, quotes, and bullets together.</p>",
+      "bullets": [
+        {"text": "+ and − on the projecting machine", "sub": "0 returns to 100%"},
+        {"text": "A− / A+ on the remote", "sub": "Set it from the back of the room, where you can actually judge it"}
+      ],
+      "notes": "<b>Try it now.</b> The size flashes on screen so you can confirm it from a distance.<br><br>It's saved between runs, so set it once while pointed at the projector and it's still right when you start."
+    },
+    {
+      "n": 15,
+      "layout": "grid",
+      "title": "Images are embedded",
+      "tag": "Making it yours",
+      "eyebrow": "Not linked — embedded",
+      "heading": "Images travel inside the file",
+      "aspect": "4:3",
+      "images": [
+        {"src": "media/images/gradient-teal.jpg",  "alt": "Gradient", "caption": "Point at a file…"},
+        {"src": "media/images/gradient-moss.jpg",  "alt": "Gradient", "caption": "…it's downscaled…"},
+        {"src": "media/images/gradient-slate.jpg", "alt": "Gradient", "caption": "…and written in"}
+      ],
+      "notes": "<b>layout: \"grid\"</b> — two to four images, optional captions. Four lay out as a 2×2.<br><br>These three are inside this file as data URIs. Anything over 2560px is downscaled first, so a phone photo doesn't add megabytes.<br><br>There is no images folder to forget on a USB stick."
+    },
+    {
+      "n": 16,
+      "layout": "media-caption",
+      "title": "Embedded activity",
+      "tag": "Making it yours",
+      "eyebrow": "Running inside this slide, offline",
+      "heading": "Activities embed too",
+      "media": {"file": "media/activities/sorter.html", "aspect": "16:9"},
+      "notes": "<b>This is a real activity</b> — a local HTML file inlined as the iframe's <code>srcdoc</code>. It works with no network because it isn't fetching anything.<br><br>Sandboxed to <code>allow-scripts</code>: it runs its own code but can't reach the deck.<br><br><b>Careful:</b> while you're clicking inside an activity, arrow keys go to it, not the deck. Advance from your phone.<br><br>(It's also a quiz on the previous slides. Answers: everything works offline except the YouTube embed and the remote itself.)"
+    },
+    {
+      "n": 17,
+      "layout": "media-full",
+      "title": "External embeds",
+      "tag": "Making it yours",
+      "media": {"src": "https://www.youtube.com/embed/aqz-KE-bpKQ", "aspect": "16:9"},
+      "eyebrow": "The one thing that needs the network",
+      "heading": "External embeds",
+      "body": "A YouTube URL can't be embedded into a file. If it can't load, this slide shows a QR code instead of a blank frame — press R to retry.",
+      "notes": "<b>layout: \"media-full\"</b> — media fills the slide, text sits in a gradient panel.<br><br>Use the <b>/embed/</b> URL form, not the watch link.<br><br><b>pixi run build</b> lists every slide like this one, so you know your network dependencies before you're standing in front of a room.<br><br>Embeds mount only while their slide is showing — otherwise a video would keep playing, audibly, after you moved on."
+    },
+    {
+      "n": 18,
+      "layout": "section",
+      "title": "Section — When things go wrong",
+      "cls": "center",
+      "eyebrow": "Part four",
+      "heading": "When things go wrong",
+      "subheading": "Because they will.",
+      "notes": "The part nobody writes documentation for."
+    },
+    {
+      "n": 19,
+      "layout": "title-content",
+      "title": "Failure modes",
+      "tag": "Troubleshooting",
+      "heading": "If something breaks",
+      "bullets": [
+        {"text": "Wi-Fi dies", "sub": "Open the built file from build/ — no server, no network, everything embedded"},
+        {"text": "An embed won't load", "sub": "The slide shows a QR code. Press R to retry."},
+        {"text": "A control does nothing", "sub": "Usually a server left running from before a change. Restart it — the deck will tell you if that's the cause."},
+        {"text": "Phone locks", "sub": "The remote holds a wake lock, but reconnecting picks up the current slide anyway"}
+      ],
+      "notes": "<b>The honest one is the third.</b> API routes are registered when the server starts, but templates are read per request — so a stale server can serve new buttons that post to endpoints it doesn't have.<br><br>Rather than failing silently, the deck now falls back to acting locally and says <i>restart the server to sync</i>."
+    },
+    {
+      "n": 20,
+      "layout": "two-content",
+      "title": "Keys and decks",
+      "tag": "Reference",
+      "heading": "Worth memorising",
+      "left": {
+        "subheading": "On the projector",
+        "body": "<p><b>← →</b> navigate<br><b>N</b> notes<br><b>B</b> blank the screen<br><b>+ − 0</b> text size<br><b>T</b> theme<br><b>R</b> reload an embed<br><b>F</b> fullscreen</p>"
+      },
+      "right": {
+        "subheading": "Two decks ship",
+        "body": "<p><b>Slidecast — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fourteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
+      },
+      "notes": "<b>B is underused.</b> Blanking the screen during a discussion pulls attention back to the room better than any slide can.<br><br>Now switch to the <b>Layout Gallery</b> from your phone — it picks up where this leaves off."
+    },
+    {
+      "n": 21,
+      "layout": "title-content",
+      "cls": "ask center",
+      "title": "Closing",
+      "eyebrow": "That's the tour",
+      "heading": "Now go write something worth presenting.",
+      "body": "<p>Start by copying a slide from the Layout Gallery.</p>",
+      "notes": "<b>Close here.</b><br><br>Everything in this deck is in <code>decks/tour.json</code> — read it alongside what you just watched and the mapping is obvious.<br><br>The README has the full field reference."
+    }
+  ]
+}

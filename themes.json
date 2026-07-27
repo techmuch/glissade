@@ -1,0 +1,66 @@
+[
+  {
+    "id": "paper",
+    "name": "Paper",
+    "description": "Warm paper and muted gold. The default — quiet, readable, and easy on a dim projector.",
+    "vars": {
+      "--surround": "#2a2723",
+      "--paper": "#f6f3ee",
+      "--ink": "#1e2430",
+      "--ink-soft": "#4a5568",
+      "--accent": "#7a5c2e",
+      "--accent-light": "#b8955a",
+      "--rule": "#ddd5c8",
+      "--story-bg": "#efe9df",
+      "--ask-bg": "#2f3a3f",
+      "--ask-ink": "#e8e2d6",
+      "--ask-ink-soft": "#c3cbcd",
+      "--ask-heading": "#ffffff",
+      "--ask-accent": "#b8955a",
+      "--overlay-bg": "rgba(20,18,16,.95)",
+      "--overlay-ink": "#e6e0d4",
+      "--chrome-ink": "#9a9186",
+      "--blank-bg": "#14120f",
+      "--deck-font": "Georgia, 'Iowan Old Style', 'Times New Roman', serif",
+      "--ui-font": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+      "--heading-weight": "400",
+      "--heading-tracking": "-0.01em"
+    }
+  },
+  {
+    "id": "gatech",
+    "name": "Georgia Tech",
+    "description": "Official Georgia Tech palette — Tech Gold, Navy Blue, and Diploma ivory, using the accessible gold variants for text.",
+    "_palette": {
+      "Tech Gold": "#B3A369 (PMS 4515) — rules and bullets only; GT flags it as inaccessible for text",
+      "Navy Blue": "#003057 (PMS 540) — headings and discussion-slide background",
+      "Diploma": "#F9F6E5 — slide background",
+      "Gray Matter": "#54585A — body text",
+      "Pi Mile": "#D6DBD4 — hairline rules",
+      "Tech Dark Gold": "#857437 — GT's accessible small-bold gold, darkened to #7f6f34 to clear WCAG AA (4.58:1) on Diploma rather than 4.25:1"
+    },
+    "vars": {
+      "--surround": "#002240",
+      "--paper": "#f9f6e5",
+      "--ink": "#003057",
+      "--ink-soft": "#54585a",
+      "--accent": "#7f6f34",
+      "--accent-light": "#b3a369",
+      "--rule": "#d6dbd4",
+      "--story-bg": "#eeeade",
+      "--ask-bg": "#003057",
+      "--ask-ink": "#e9eef2",
+      "--ask-ink-soft": "#c2ccd4",
+      "--ask-heading": "#ffffff",
+      "--ask-accent": "#b3a369",
+      "--overlay-bg": "rgba(0,26,47,.96)",
+      "--overlay-ink": "#e9eef2",
+      "--chrome-ink": "#8c9aa6",
+      "--blank-bg": "#001a2f",
+      "--deck-font": "Roboto Slab, Georgia, 'Times New Roman', serif",
+      "--ui-font": "Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+      "--heading-weight": "500",
+      "--heading-tracking": "-0.005em"
+    }
+  }
+]

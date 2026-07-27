@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14120f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Slidecast — Remote</title>
+<style>
+  :root{
+    --bg:#14120f;
+    --panel:#1e1b17;
+    --panel2:#25211c;
+    --line:#332e27;
+    --text:#ece6dc;
+    --soft:#a49b8c;
+    --accent:#c9a465;
+    --ask:#6fa3b8;
+    --ok:#6fa76a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    padding-top:env(safe-area-inset-top);
+  }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; border-bottom:1px solid var(--line); flex:none;
+  }
+  .count{font-size:13px; letter-spacing:.1em; color:var(--accent); font-variant-numeric:tabular-nums}
+  .dot{width:8px;height:8px;border-radius:50%;background:#b5562c;flex:none}
+  .dot.ok{background:var(--ok)}
+  header .sp{flex:1}
+  .listbtn{
+    background:var(--panel2); color:var(--soft); border:1px solid var(--line);
+    border-radius:7px; padding:7px 12px; font-size:13px; font-weight:600;
+  }
+  .listbtn.on{color:var(--bg); background:var(--accent); border-color:var(--accent)}
+
+  /* ---------- scrolling middle ---------- */
+  main{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 14px 8px}
+
+  .label{
+    font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin-bottom:7px; display:flex; gap:8px; align-items:center;
+  }
+  .badge{
+    background:var(--ask); color:#10171a; border-radius:3px;
+    padding:2px 6px; font-size:9.5px; letter-spacing:.12em;
+  }
+
+  .now{
+    background:var(--panel); border:1px solid var(--line);
+    border-left:3px solid var(--accent); border-radius:9px;
+    padding:14px 15px; margin-bottom:14px;
+  }
+  .now.ask{border-left-color:var(--ask)}
+  .now h1{
+    font-size:19px; font-weight:600; line-height:1.3; margin-bottom:12px;
+    font-family:Georgia,serif;
+  }
+  .notes{
+    font-size:15.5px; line-height:1.62; color:#ded6c8;
+    border-top:1px solid var(--line); padding-top:12px;
+  }
+  .notes b{color:var(--accent); font-weight:600}
+  .notes i{color:var(--soft)}
+  .notes br + br{content:''; display:block; height:6px}
+
+  /* ---------- next-slide preview ---------- */
+  .next{
+    background:var(--panel2); border:1px solid var(--line); border-radius:9px;
+    padding:13px 15px 15px; margin-bottom:10px; opacity:.94;
+  }
+  .next .label{color:var(--soft)}
+  .next h2{font-size:16px; font-weight:600; line-height:1.3; font-family:Georgia,serif; margin-bottom:11px}
+  .prev-render{
+    background:var(--pv-paper,#f6f3ee); color:var(--pv-ink,#1e2430); border-radius:6px;
+    padding:14px 15px; font-family:var(--pv-font,Georgia,'Times New Roman',serif); overflow:hidden;
+  }
+  .prev-render.ask{background:var(--pv-ask-bg,#2f3a3f); color:var(--pv-ask-ink,#f2ede4)}
+  /* the deck sizes everything in vh, which is meaningless in a small box —
+     so the preview re-declares every size in px */
+  .prev-render .eyebrow{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:8.5px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--pv-accent,#7a5c2e); font-weight:700; margin-bottom:7px;
+  }
+  .prev-render.ask .eyebrow{color:var(--pv-ask-accent,#b8955a)}
+  .prev-render h1{font-size:21px; line-height:1.15; font-weight:400; margin:0}
+  .prev-render h2{font-size:17px; line-height:1.25; font-weight:400; margin:0 0 8px; font-family:inherit}
+  .prev-render.ask h2{color:var(--pv-ask-head,#fff)}
+  .prev-render h3{font-size:14.5px; font-weight:400; color:var(--pv-accent,#7a5c2e); margin:0 0 8px}
+  .prev-render p{font-size:13px; line-height:1.45; color:var(--pv-ink-soft,#4a5568); margin:5px 0; max-width:none}
+  .prev-render.ask p{color:var(--pv-ask-soft,#c3cbcd)}
+  .prev-render blockquote{
+    font-size:14.5px; line-height:1.4; border-left:3px solid var(--pv-rule,#b8955a);
+    padding-left:11px; margin:0; max-width:none;
+  }
+  .prev-render blockquote.big{font-size:16px}
+  .prev-render blockquote em{font-style:italic; color:var(--pv-accent,#7a5c2e); font-weight:600}
+  .prev-render cite{
+    display:block; margin-top:8px; font-style:normal;
+    font-family:-apple-system,sans-serif; font-size:9px;
+    letter-spacing:.05em; color:var(--pv-accent,#7a5c2e); text-transform:uppercase;
+  }
+  .prev-render ul{list-style:none; margin:0; max-width:none}
+  .prev-render li{font-size:13px; line-height:1.35; margin-bottom:8px; padding-left:15px; position:relative; color:var(--pv-ink,#1e2430)}
+  .prev-render.ask li{color:var(--pv-ask-ink,#e8e2d6)}
+  .prev-render li:before{content:''; position:absolute; left:0; top:5px; width:6px; height:6px; border:1.5px solid var(--pv-rule,#b8955a); border-radius:50%}
+  .prev-render li small{display:block; font-size:11.5px; color:var(--pv-ink-soft,#4a5568); margin-top:3px; line-height:1.35}
+  .prev-render.ask li small{color:var(--pv-ask-soft,#a6b0b3)}
+  .prev-render .byline{margin-top:10px; font-size:12px; color:var(--pv-ink-soft,#4a5568); border-top:1px solid var(--pv-hair,#ddd5c8); padding-top:9px; max-width:none}
+  .prev-render .byline strong{display:block; font-size:13px; color:var(--pv-ink,#1e2430)}
+  .prev-render .byline span{display:block; font-size:11px; margin-top:2px}
+  .prev-render .dialogue p{font-size:13px; margin-bottom:6px}
+  .prev-render .dialogue p.q{color:var(--pv-ink,#1e2430); font-style:italic}
+  .prev-render .dialogue p.a{padding-left:14px}
+  .prev-render .lead{font-size:14px; color:var(--pv-ink,#1e2430)}
+  .prev-render .center{text-align:center}
+  .prev-render .tag,.prev-render .num{display:none}
+
+  /* laid-out slides get a compact preview rather than a scale model */
+  .pv-thumb{
+    width:100%; max-height:26vh; object-fit:cover; border-radius:5px;
+    display:block; margin:8px 0 0; background:rgba(0,0,0,.08);
+  }
+  .pv-grid{display:flex; gap:5px; margin-top:8px}
+  .pv-grid img{flex:1; min-width:0; height:60px; object-fit:cover; border-radius:4px}
+  .pv-embed{
+    margin-top:8px; padding:9px 11px; border-radius:5px;
+    background:rgba(0,0,0,.07); font-family:-apple-system,sans-serif;
+    font-size:11px; line-height:1.4; color:var(--pv-ink-soft,#4a5568);
+  }
+  .prev-render.ask .pv-embed{background:rgba(255,255,255,.1)}
+  .pv-embed b{
+    display:block; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--pv-accent,#7a5c2e); margin-bottom:3px;
+  }
+  .prev-render.ask .pv-embed b{color:var(--pv-ask-accent,#b8955a)}
+  .pv-embed .u{word-break:break-all; opacity:.85}
+  .pv-lay{
+    font-family:-apple-system,sans-serif; font-size:8.5px; letter-spacing:.14em;
+    text-transform:uppercase; opacity:.5; margin-bottom:6px;
+  }
+
+  .end{color:var(--soft); font-size:13.5px; font-style:italic; padding:6px 2px}
+
+  /* ---------- bottom bar ---------- */
+  footer{
+    flex:none; display:flex; gap:10px; padding:10px 12px;
+    padding-bottom:calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line); background:var(--panel);
+  }
+  .nav{
+    flex:1; border:none; border-radius:11px; padding:19px 10px;
+    font-size:16px; font-weight:700; letter-spacing:.03em;
+    background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    touch-action:manipulation; user-select:none;
+  }
+  .nav:active{background:#332e27}
+  .nav.next{background:var(--accent); color:#17140f; border-color:var(--accent); flex:1.7}
+  .nav.next:active{background:#b08f52}
+  .nav:disabled{opacity:.32}
+  .nav small{display:block; font-size:10px; font-weight:600; letter-spacing:.14em; opacity:.72; margin-top:3px}
+
+  /* ---------- jump drawer ---------- */
+  #drawer{
+    position:fixed; inset:0; background:var(--bg); z-index:30;
+    display:none; flex-direction:column;
+    padding-top:env(safe-area-inset-top);
+  }
+  #drawer.on{display:flex}
+  #drawer .head{
+    display:flex; align-items:center; padding:12px 14px;
+    border-bottom:1px solid var(--line); flex:none;
+  }
+  #drawer .head strong{font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); flex:1}
+  #drawer .head button{background:none;border:none;color:var(--soft);font-size:15px;font-weight:600;padding:6px 8px}
+  #list{flex:1; overflow-y:auto; padding:6px 0 calc(14px + env(safe-area-inset-bottom))}
+  .row{
+    display:flex; align-items:baseline; gap:11px; width:100%; text-align:left;
+    background:none; border:none; border-bottom:1px solid #221f1a;
+    padding:13px 15px; color:var(--text); font-size:14.5px; line-height:1.35;
+    font-family:inherit;
+  }
+  .row:active{background:var(--panel2)}
+  .row .n{font-size:11.5px; color:var(--soft); min-width:20px; font-variant-numeric:tabular-nums; flex:none}
+  .row.cur{background:var(--panel2); border-left:3px solid var(--accent); padding-left:12px}
+  .row.cur .t{color:var(--accent); font-weight:600}
+  .row.d .t:after{
+    content:'discussion'; display:inline-block; margin-left:8px;
+    font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ask); vertical-align:middle;
+  }
+
+  /* ---------- projected text size ---------- */
+  .size{
+    display:flex; align-items:center; gap:10px;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:9px; padding:9px 11px; margin-bottom:14px;
+  }
+  .size .cap{
+    font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--soft); font-weight:700; flex:1; line-height:1.35;
+  }
+  .size .cap b{display:block; color:var(--accent); font-size:15px; letter-spacing:.04em; margin-top:2px}
+  .size button{
+    width:46px; height:42px; flex:none;
+    background:var(--panel2); color:var(--text);
+    border:1px solid var(--line); border-radius:8px;
+    font-size:19px; font-weight:600; font-family:inherit;
+    touch-action:manipulation;
+  }
+  .size button:active{background:#332e27}
+  .size button:disabled{opacity:.3}
+  .size button.rst{width:auto; padding:0 12px; font-size:12px; letter-spacing:.1em; color:var(--soft)}
+  .warn{
+    display:none; margin:-6px 0 14px; padding:10px 12px;
+    background:#2a1f16; border:1px solid #5a3f22; border-radius:8px;
+    color:#e8c48a; font-size:13px; line-height:1.45;
+  }
+  .warn.on{display:block}
+
+  /* ---------- theme picker ---------- */
+  .themes{
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:9px; padding:11px 12px 12px; margin-bottom:14px;
+  }
+  .swatches{display:flex; gap:9px; flex-wrap:wrap}
+  .sw{
+    flex:1 1 130px; display:flex; align-items:center; gap:9px;
+    background:var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:9px 10px; color:var(--text);
+    font-family:inherit; font-size:13.5px; font-weight:600; text-align:left;
+    touch-action:manipulation;
+  }
+  .sw:active{background:#332e27}
+  .sw.on{border-color:var(--accent); background:#2b2519}
+  .sw.on .nm{color:var(--accent)}
+  /* Three stacked bands: slide paper, discussion slide, accent -- enough to
+     recognise a theme at a glance without rendering a whole slide. */
+  .chip{
+    width:26px; height:26px; border-radius:5px; flex:none;
+    overflow:hidden; display:flex; flex-direction:column;
+    border:1px solid rgba(255,255,255,.14);
+  }
+  .chip i{display:block; flex:1}
+  .chip i:last-child{flex:.55}
+  .sw .nm{line-height:1.2}
+
+  /* ---------- deck picker ---------- */
+  .deck{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    padding:10px 11px; color:var(--text); font-family:inherit;
+    margin-bottom:7px; touch-action:manipulation;
+  }
+  .deck:last-child{margin-bottom:0}
+  .deck:active{background:#332e27}
+  .deck.on{border-color:var(--accent); background:#2b2519}
+  .deck .dt{flex:1; min-width:0}
+  .deck .dn{font-size:14px; font-weight:600; line-height:1.25}
+  .deck.on .dn{color:var(--accent)}
+  .deck .ds{font-size:11.5px; color:var(--soft); line-height:1.35; margin-top:2px}
+  .deck .dc{
+    font-size:10.5px; letter-spacing:.1em; color:var(--soft);
+    font-variant-numeric:tabular-nums; flex:none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="dot" id="dot"></span>
+  <span class="count" id="count">—</span>
+  <span class="sp"></span>
+  <button class="listbtn" id="blankbtn">Blank</button>
+  <button class="listbtn" id="jumpbtn">Slides</button>
+</header>
+
+<main>
+  <div class="now" id="now">
+    <div class="label" id="nowlabel">Now showing</div>
+    <h1 id="nowtitle">Connecting…</h1>
+    <div class="notes" id="nownotes"></div>
+  </div>
+
+  <div class="size">
+    <span class="cap">Text on screen<b id="scaleval">100%</b></span>
+    <button id="smaller" aria-label="Smaller text">A−</button>
+    <button id="bigger" aria-label="Larger text">A+</button>
+    <button class="rst" id="resetsize">Reset</button>
+  </div>
+  <div class="warn" id="sizewarn"></div>
+
+  <div class="themes" id="themebox">
+    <div class="label">Theme</div>
+    <div class="swatches" id="swatches"></div>
+  </div>
+
+  <div class="themes" id="deckbox">
+    <div class="label">Deck</div>
+    <div id="decklist"></div>
+  </div>
+
+  <div class="next" id="nextbox">
+    <div class="label" id="nextlabel">Up next</div>
+    <h2 id="nexttitle"></h2>
+    <div class="prev-render" id="nextrender"></div>
+  </div>
+</main>
+
+<footer>
+  <button class="nav" id="prev">← Back</button>
+  <button class="nav next" id="next">Next →<small id="nextsub"></small></button>
+</footer>
+
+<div id="drawer">
+  <div class="head"><strong>Jump to slide</strong><button id="close">Done</button></div>
+  <div id="list"></div>
+</div>
+
+<script>
+let SLIDES = [], THEMES = [], DECKS = [];
+let cur = 1, blanked = false, scale = 1, minScale = 0.7, maxScale = 1.6;
+let painted = null, serverHasScale = true, themeId = null, deckId = null, rev = null;
+
+const $ = id => document.getElementById(id);
+
+/* fetch() resolves normally on a 404, so `ok` must be checked explicitly --
+   otherwise a server started before a feature existed looks identical to a
+   button that simply doesn't work. */
+function post(path, body){
+  return fetch(path, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body || {})
+  }).then(r => ({ok:r.ok, status:r.status}))
+    .catch(() => ({ok:false, status:0}));
+}
+
+function scaleFailed(r){
+  if(r.ok) return;
+  const el = $('sizewarn');
+  el.textContent = r.status === 404
+    ? 'This server was started before text sizing existed — restart it (pixi run start).'
+    : 'Could not reach the server.';
+  el.classList.add('on');
+}
+
+function paint(){
+  if(!SLIDES.length) return;
+  const s = SLIDES[cur - 1];
+  const nx = SLIDES[cur];
+
+  $('count').textContent = cur + ' / ' + SLIDES.length;
+
+  $('now').className = 'now' + (s.discussion ? ' ask' : '');
+  $('nowlabel').innerHTML = 'Now showing' +
+    (s.tag ? ' · ' + s.tag : '') +
+    (s.discussion ? ' <span class="badge">Discussion</span>' : '');
+  $('nowtitle').textContent = s.title;
+  $('nownotes').innerHTML = s.notes || '<i>No notes for this slide.</i>';
+
+  if(nx){
+    $('nextbox').style.display = '';
+    $('nextlabel').innerHTML = 'Up next' +
+      (nx.tag ? ' · ' + nx.tag : '') +
+      (nx.discussion ? ' <span class="badge">Discussion</span>' : '');
+    $('nexttitle').textContent = nx.title;
+    const r = $('nextrender');
+    r.className = 'prev-render' + (nx.discussion ? ' ask' : '');
+    r.innerHTML = previewHTML(nx);
+    applyPreviewTheme();
+    $('nextsub').textContent = nx.discussion ? 'discussion' : '';
+  } else {
+    $('nextbox').style.display = 'none';
+    $('nextsub').textContent = 'end';
+  }
+
+  $('prev').disabled = cur <= 1;
+  $('next').disabled = cur >= SLIDES.length;
+  $('blankbtn').classList.toggle('on', blanked);
+
+  /* Text size reflects what the projector is actually showing — the server
+     holds the value, so this readout can't drift from the wall. */
+  document.querySelectorAll('.sw').forEach(b => {
+    b.classList.toggle('on', b.dataset.id === themeId);
+  });
+  document.querySelectorAll('.deck').forEach(b => {
+    b.classList.toggle('on', b.dataset.id === deckId);
+  });
+
+  $('scaleval').textContent = serverHasScale ? Math.round(scale * 100) + '%' : '—';
+  $('smaller').disabled = !serverHasScale || scale <= minScale + 0.001;
+  $('bigger').disabled = !serverHasScale || scale >= maxScale - 0.001;
+  $('resetsize').disabled = !serverHasScale || Math.abs(scale - 1) < 0.001;
+
+  document.querySelectorAll('.row').forEach(r => {
+    r.classList.toggle('cur', +r.dataset.n === cur);
+  });
+
+  /* Only jump back to the top when the slide actually changed — adjusting
+     text size shouldn't lose your place in the notes. */
+  if(cur !== painted){
+    document.querySelector('main').scrollTop = 0;
+    painted = cur;
+  }
+}
+
+/* The deck renders layouts at full size; on a phone a scale model would be
+   unreadable, so laid-out slides get a compact summary instead — enough to
+   know what's about to appear, including whether it needs the network. */
+function previewHTML(s){
+  const layout = s.layout || 'blank';
+  if(layout === 'blank') return s.html || '';
+
+  const esc = t => String(t == null ? '' : t);
+  let h = '<div class="pv-lay">' + layout + '</div>';
+  if(s.eyebrow) h += '<div class="eyebrow">' + esc(s.eyebrow) + '</div>';
+  if(s.heading) h += '<h2>' + esc(s.heading) + '</h2>';
+  if(s.subheading) h += '<p>' + esc(s.subheading) + '</p>';
+
+  const media = s.media || (s.left && s.left.media) || (s.right && s.right.media);
+  const image = s.image || (s.left && s.left.image) || (s.right && s.right.image);
+
+  if(image && image.src) h += '<img class="pv-thumb" src="' + image.src + '" alt="">';
+
+  if(s.images && s.images.length){
+    h += '<div class="pv-grid">' +
+         s.images.slice(0, 4).map(i => '<img src="' + i.src + '" alt="">').join('') +
+         '</div>';
+  }
+
+  if(media){
+    if(media.external){
+      h += '<div class="pv-embed"><b>Embed · needs internet</b>' +
+           '<span class="u">' + esc(media.src || '') + '</span></div>';
+    } else {
+      h += '<div class="pv-embed"><b>Embedded activity · offline</b>' +
+           'Runs inside the deck.</div>';
+    }
+  }
+
+  if(s.body) h += '<p>' + s.body + '</p>';
+  if(s.bullets && s.bullets.length){
+    h += '<ul>' + s.bullets.map(b =>
+      '<li>' + (b && typeof b === 'object' ? esc(b.text) : esc(b)) + '</li>').join('') + '</ul>';
+  }
+  if(s.caption) h += '<p>' + s.caption + '</p>';
+  return h;
+}
+
+function theme(id){
+  for(const t of THEMES) if(t.id === id) return t;
+  return THEMES[0] || null;
+}
+
+function buildThemes(){
+  const box = $('swatches');
+  box.innerHTML = '';
+  if(THEMES.length < 2){ $('themebox').style.display = 'none'; return; }
+  THEMES.forEach(t => {
+    const v = t.vars || {};
+    const b = document.createElement('button');
+    b.className = 'sw';
+    b.dataset.id = t.id;
+    b.title = t.description || t.name;
+    b.innerHTML =
+      '<span class="chip">' +
+        '<i style="background:' + (v['--paper']   || '#eee') + '"></i>' +
+        '<i style="background:' + (v['--ask-bg']  || '#333') + '"></i>' +
+        '<i style="background:' + (v['--accent-light'] || '#999') + '"></i>' +
+      '</span><span class="nm">' + t.name + '</span>';
+    b.onclick = () => post('/api/theme', {id: t.id}).then(r => {
+      if(!r.ok) scaleFailed(r);
+    });
+    box.appendChild(b);
+  });
+}
+
+function buildDecks(){
+  const box = $('decklist');
+  box.innerHTML = '';
+  if(DECKS.length < 2){ $('deckbox').style.display = 'none'; return; }
+  $('deckbox').style.display = '';
+  DECKS.forEach(d => {
+    const b = document.createElement('button');
+    b.className = 'deck';
+    b.dataset.id = d.id;
+    b.innerHTML =
+      '<span class="dt"><span class="dn">' + d.title + '</span>' +
+      (d.subtitle ? '<span class="ds">' + d.subtitle + '</span>' : '') +
+      '</span><span class="dc">' + d.count + '</span>';
+    b.onclick = () => post('/api/deck', {id: d.id});
+    box.appendChild(b);
+  });
+}
+
+/* Switching decks changes the slide payload entirely, so the remote refetches
+   rather than trying to reconcile. */
+function reloadDeck(){
+  fetch('/api/slides').then(r => r.json()).then(s => {
+    SLIDES = s;
+    painted = null;
+    buildList();
+    paint();
+  }).catch(() => {});
+}
+
+/* Re-skin the "up next" preview so it matches what the projector will show —
+   a preview in the wrong colours is worse than no preview. */
+function applyPreviewTheme(){
+  const t = theme(themeId);
+  if(!t) return;
+  const r = $('nextrender').style;
+  const v = t.vars || {};
+  const map = {
+    '--pv-paper':    v['--paper'],
+    '--pv-ink':      v['--ink'],
+    '--pv-ink-soft': v['--ink-soft'],
+    '--pv-accent':   v['--accent'],
+    '--pv-rule':     v['--accent-light'],
+    '--pv-hair':     v['--rule'],
+    '--pv-ask-bg':   v['--ask-bg'],
+    '--pv-ask-ink':  v['--ask-ink'],
+    '--pv-ask-soft': v['--ask-ink-soft'],
+    '--pv-ask-head': v['--ask-heading'],
+    '--pv-ask-accent': v['--ask-accent'],
+    '--pv-font':     v['--deck-font']
+  };
+  for(const k in map) if(map[k]) r.setProperty(k, map[k]);
+}
+
+function buildList(){
+  const list = $('list');
+  list.innerHTML = '';
+  SLIDES.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'row' + (s.discussion ? ' d' : '');
+    b.dataset.n = s.n;
+    b.innerHTML = '<span class="n">' + s.n + '</span><span class="t">' + s.title + '</span>';
+    b.onclick = () => { post('/api/goto', {n: s.n}); $('drawer').classList.remove('on'); $('jumpbtn').classList.remove('on'); };
+    list.appendChild(b);
+  });
+}
+
+$('next').onclick   = () => post('/api/next');
+$('prev').onclick   = () => post('/api/prev');
+$('blankbtn').onclick = () => post('/api/blank', {blank: !blanked});
+$('bigger').onclick   = () => post('/api/scale', {step: 1}).then(scaleFailed);
+$('smaller').onclick  = () => post('/api/scale', {step: -1}).then(scaleFailed);
+$('resetsize').onclick = () => post('/api/scale', {scale: 1}).then(scaleFailed);
+$('jumpbtn').onclick  = () => { $('drawer').classList.add('on'); $('jumpbtn').classList.add('on'); };
+$('close').onclick    = () => { $('drawer').classList.remove('on'); $('jumpbtn').classList.remove('on'); };
+
+/* Volume-style hardware remotes and bluetooth clickers send arrow keys. */
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight' || e.key === ' '){ e.preventDefault(); post('/api/next'); }
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); post('/api/prev'); }
+});
+
+/* Swipe left/right anywhere on the notes area. */
+let sx = null, sy = null;
+document.querySelector('main').addEventListener('touchstart', e => {
+  sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+}, {passive:true});
+document.querySelector('main').addEventListener('touchend', e => {
+  if(sx === null) return;
+  const dx = e.changedTouches[0].clientX - sx;
+  const dy = e.changedTouches[0].clientY - sy;
+  if(Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 2){
+    post(dx < 0 ? '/api/next' : '/api/prev');
+  }
+  sx = sy = null;
+}, {passive:true});
+
+/* Keep the phone awake while presenting. */
+async function keepAwake(){
+  try{
+    if('wakeLock' in navigator){
+      const lock = await navigator.wakeLock.request('screen');
+      document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'visible') keepAwake();
+      }, {once:true});
+      return lock;
+    }
+  }catch(e){}
+}
+keepAwake();
+
+Promise.all([
+  fetch('/api/slides').then(r => r.json()),
+  /* An older server has no /api/themes or /api/decks; those pickers just stay
+     hidden rather than erroring. */
+  fetch('/api/themes').then(r => r.ok ? r.json() : []).catch(() => []),
+  fetch('/api/decks').then(r => r.ok ? r.json() : []).catch(() => [])
+]).then(([slides, themes, decks]) => {
+  SLIDES = slides;
+  THEMES = themes || [];
+  DECKS = decks || [];
+  if(!themeId && THEMES.length) themeId = THEMES[0].id;
+  buildThemes();
+  buildDecks();
+  buildList();
+  applyPreviewTheme();
+  paint();
+});
+
+(function connect(){
+  const es = new EventSource('/events');
+  es.onopen = () => $('dot').classList.add('ok');
+  es.onmessage = ev => {
+    const st = JSON.parse(ev.data);
+    /* A deck change replaces the slide payload entirely, so refetch. */
+    if(st.rev != null){
+      if(rev == null) rev = st.rev;
+      else if(st.rev !== rev){ rev = st.rev; reloadDeck(); }
+    }
+    cur = st.n; blanked = st.blank;
+    if(st.deck != null) deckId = st.deck;
+    /* An older server reports no scale. Flag it as soon as we connect rather
+       than letting the presenter discover it by pressing a dead button. */
+    serverHasScale = st.scale != null;
+    if(st.scale != null) scale = st.scale;
+    if(st.theme != null) themeId = st.theme;
+    if(st.min_scale != null) minScale = st.min_scale;
+    if(st.max_scale != null) maxScale = st.max_scale;
+    if(!serverHasScale) scaleFailed({ok:false, status:404});
+    paint();
+  };
+  es.onerror = () => { $('dot').classList.remove('ok'); es.close(); setTimeout(connect, 1500); };
+})();
+</script>
+</body>
+</html>
