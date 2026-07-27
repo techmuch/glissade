@@ -39,10 +39,28 @@ before embedding them. Without it images embed at full size; nothing breaks.
 | `glissade check [deck]` | Validate decks — run this after editing |
 | `glissade decks` / `themes` | List what's available |
 | `glissade demo` | Present the built-in tour and layout gallery |
+| `glissade upgrade` | Update to the latest release |
 
 Every command takes `-C PATH` to run as if started elsewhere. Commands find
 your project by walking up from the working directory, the way git does, so
 they work from any subdirectory.
+
+### Upgrading
+
+```bash
+glissade upgrade           # check, then update
+glissade upgrade --check   # just tell me if there's a newer one
+```
+
+It works out how Glissade was installed — uv, pipx, or pip — and runs that
+tool's upgrade command, showing you the command first. It never rewrites its
+own files: a running process can't safely replace them, and on Windows the
+console script is locked outright. If the installer isn't on your PATH it
+prints the command instead of guessing.
+
+**Glissade only reaches the network when you run this command.** There's no
+startup check and no background ping. It's a tool you run in front of an
+audience; it shouldn't stall or print a notice at the wrong moment.
 
 ## A project
 

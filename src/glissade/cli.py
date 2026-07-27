@@ -283,6 +283,71 @@ def cmd_check(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------- upgrade
+
+
+def cmd_upgrade(args) -> int:
+    from .upgrade import (
+        NOT_PUBLISHED,
+        detect_installer,
+        is_newer,
+        latest_version,
+        run_upgrade,
+    )
+
+    installer = detect_installer()
+    out()
+    out(f"  Installed {bold('v' + __version__)} via {bold(installer.kind)}")
+    if installer.note:
+        out(dim(f"  {installer.note}"))
+
+    out(dim("  Checking PyPI…"))
+    latest, why = latest_version()
+    if latest is None:
+        out()
+        if why == NOT_PUBLISHED:
+            out(f"  PyPI has no releases of {bold('glissade')} yet, so there's nothing to")
+            out("  upgrade to. You're running a build installed from source.")
+        else:
+            out("  Couldn't reach PyPI. Check your connection, or upgrade directly:")
+            out(f"    {bold(installer.printable)}")
+        out()
+        return 1
+
+    if not is_newer(latest, __version__):
+        out(f"  Latest is {bold('v' + latest)} — you're up to date.")
+        out()
+        return 0
+
+    out(f"  {bold('v' + latest)} is available.")
+    out()
+
+    if args.check:
+        out(f"  To upgrade:  {bold(installer.printable)}")
+        out()
+        return 0
+
+    if not installer.runnable:
+        out(f"  {installer.command[0]!r} isn't on your PATH. Run this yourself:")
+        out(f"    {bold(installer.printable)}")
+        out()
+        return 1
+
+    out(f"  Running: {dim(installer.printable)}")
+    out()
+    # Glissade never rewrites its own files — a running process can't safely
+    # replace them, and on Windows the console script is locked outright.
+    code = run_upgrade(installer)
+    out()
+    if code == 0:
+        out(f"  Upgraded. Run {bold('glissade --version')} to confirm.")
+    else:
+        out(f"  The upgrade command exited {code}. Try running it yourself:")
+        out(f"    {bold(installer.printable)}")
+    out()
+    return code
+
+
 # ------------------------------------------------------------ list things
 
 
@@ -367,6 +432,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = common(sub.add_parser("themes", help="list themes"))
     sp.set_defaults(func=cmd_themes)
+
+    sp = sub.add_parser("upgrade", help="update glissade to the latest release")
+    sp.add_argument(
+        "--check", action="store_true",
+        help="only report whether a newer version exists",
+    )
+    sp.set_defaults(func=cmd_upgrade)
 
     sp = sub.add_parser("demo", help="present the decks that ship with glissade")
     sp.add_argument("--deck", default=None, help="tour or gallery")
