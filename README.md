@@ -35,13 +35,23 @@ second window on the same machine.
 
 ### The remote
 
+The main view holds only what you read while presenting:
+
 - **Now showing** — full speaker notes for the current slide
 - **Up next** — a live preview of the slide you're about to advance to
 - **Back / Next** — thumb-sized buttons; swipes work too
-- **Text on screen** — `A−` / `A+` resize the projected deck
-- **Theme** and **Deck** pickers
-- **Slides** — the full jump list, with discussion stops flagged
-- **Blank** — blacks out the projector to pull attention back to the room
+
+Everything else is a panel behind a header button:
+
+| Button | Opens |
+| --- | --- |
+| **Blank** | (toggles directly — blacks out the projector) |
+| **Deck** | Deck picker |
+| **Slides** | The full jump list, with discussion stops flagged |
+| **⚙** | Text size and theme |
+
+Picking a slide or a deck closes the panel; changing size or theme leaves it
+open so you can judge the result against the wall.
 
 It holds a screen wake lock so your phone shouldn't sleep. Bluetooth clickers
 work — most send arrow keys.
