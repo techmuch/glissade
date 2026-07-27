@@ -21,9 +21,18 @@
       "eyebrow": "The short version",
       "heading": "A presentation server with a phone remote",
       "bullets": [
-        {"text": "Write slides as JSON", "sub": "No binary file to corrupt, no proprietary format, diffs cleanly in git"},
-        {"text": "Drive them from your phone", "sub": "Notes, next-slide preview, and a jump list in your hand"},
-        {"text": "Build to one HTML file", "sub": "Images and activities embedded — it runs with no network at all"}
+        {
+          "text": "Write slides as JSON",
+          "sub": "No binary file to corrupt, no proprietary format, diffs cleanly in git"
+        },
+        {
+          "text": "Drive them from your phone",
+          "sub": "Notes, next-slide preview, and a jump list in your hand"
+        },
+        {
+          "text": "Build to one HTML file",
+          "sub": "Images and activities embedded — it runs with no network at all"
+        }
       ],
       "notes": "Three ideas, in order of how much they matter.<br><br>The third is the one that earns its keep: a deck you can open from a USB stick in a building with no working Wi-Fi."
     },
@@ -61,8 +70,14 @@
       "eyebrow": "Both on the same Wi-Fi",
       "heading": "Two addresses",
       "bullets": [
-        {"text": "/ — the projector", "sub": "Open on the machine driving the screen, then press F for fullscreen"},
-        {"text": "/control — your phone", "sub": "Scan the QR code the server prints on startup"}
+        {
+          "text": "/ — the projector",
+          "sub": "Open on the machine driving the screen, then press F for fullscreen"
+        },
+        {
+          "text": "/control — your phone",
+          "sub": "Scan the QR code the server prints on startup"
+        }
       ],
       "body": "<p>Whoever advances — phone or laptop — everyone follows. The server holds the position, not the browser.</p>",
       "notes": "<b>Why the server owns the state:</b> a device that reconnects mid-presentation lands on the right slide instead of slide 1. It also means you can open the deck on a second screen and it stays in step."
@@ -80,7 +95,11 @@
         "Jump list, theme picker, deck picker",
         "Swipe, or use a Bluetooth clicker"
       ],
-      "image": {"src": "media/images/gradient-blue.jpg", "alt": "Abstract gradient", "fit": "cover"},
+      "image": {
+        "src": "media/images/gradient-blue.jpg",
+        "alt": "Abstract gradient",
+        "fit": "cover"
+      },
       "aspect": "4:3",
       "notes": "<b>layout: \"media-right\"</b> — the workhorse. Text one side, media the other; <code>media-left</code> mirrors it.<br><br>The remote holds a screen wake lock, so your phone shouldn't sleep while you're presenting."
     },
@@ -99,7 +118,11 @@
       "layout": "content-caption",
       "title": "Anatomy of a slide",
       "tag": "Writing slides",
-      "image": {"src": "media/images/gradient-amber.jpg", "alt": "Abstract gradient", "fit": "cover"},
+      "image": {
+        "src": "media/images/gradient-amber.jpg",
+        "alt": "Abstract gradient",
+        "fit": "cover"
+      },
       "aspect": "4:3",
       "eyebrow": "decks/your-deck.json",
       "heading": "Anatomy of a slide",
@@ -165,7 +188,11 @@
         "body": "<p>Every colour and typeface comes from a token. One value restyles the whole deck.</p><p>Two ship: <b>Paper</b> and <b>Georgia Tech</b>. Add your own as an entry in <b>themes.json</b> — no code.</p>"
       },
       "right": {
-        "image": {"src": "media/images/gradient-plum.jpg", "alt": "Abstract gradient", "fit": "cover"},
+        "image": {
+          "src": "media/images/gradient-plum.jpg",
+          "alt": "Abstract gradient",
+          "fit": "cover"
+        },
         "aspect": "4:3"
       },
       "notes": "<b>Try it now:</b> press <b>T</b>, or tap a swatch on the remote. Watch this slide change under you.<br><br>The Georgia Tech theme follows GT's published accessibility guidance, not just its palette — Tech Gold is used for rules and bullets but never for text, since GT flags it as inaccessible on light backgrounds."
@@ -179,8 +206,14 @@
       "heading": "Size it for the room you're in",
       "body": "<p>Dim projector? Deep room? Resize the whole deck from 70% to 160% — headings, body, quotes, and bullets together.</p>",
       "bullets": [
-        {"text": "+ and − on the projecting machine", "sub": "0 returns to 100%"},
-        {"text": "A− / A+ on the remote", "sub": "Set it from the back of the room, where you can actually judge it"}
+        {
+          "text": "+ and − on the projecting machine",
+          "sub": "0 returns to 100%"
+        },
+        {
+          "text": "A− / A+ on the remote",
+          "sub": "Set it from the back of the room, where you can actually judge it"
+        }
       ],
       "notes": "<b>Try it now.</b> The size flashes on screen so you can confirm it from a distance.<br><br>It's saved between runs, so set it once while pointed at the projector and it's still right when you start."
     },
@@ -193,9 +226,21 @@
       "heading": "Images travel inside the file",
       "aspect": "4:3",
       "images": [
-        {"src": "media/images/gradient-teal.jpg",  "alt": "Gradient", "caption": "Point at a file…"},
-        {"src": "media/images/gradient-moss.jpg",  "alt": "Gradient", "caption": "…it's downscaled…"},
-        {"src": "media/images/gradient-slate.jpg", "alt": "Gradient", "caption": "…and written in"}
+        {
+          "src": "media/images/gradient-teal.jpg",
+          "alt": "Gradient",
+          "caption": "Point at a file…"
+        },
+        {
+          "src": "media/images/gradient-moss.jpg",
+          "alt": "Gradient",
+          "caption": "…it's downscaled…"
+        },
+        {
+          "src": "media/images/gradient-slate.jpg",
+          "alt": "Gradient",
+          "caption": "…and written in"
+        }
       ],
       "notes": "<b>layout: \"grid\"</b> — two to four images, optional captions. Four lay out as a 2×2.<br><br>These three are inside this file as data URIs. Anything over 2560px is downscaled first, so a phone photo doesn't add megabytes.<br><br>There is no images folder to forget on a USB stick."
     },
@@ -206,7 +251,9 @@
       "tag": "Making it yours",
       "eyebrow": "Running inside this slide, offline",
       "heading": "Activities embed too",
-      "media": {"file": "media/activities/sorter.html", "aspect": "16:9"},
+      "media": {
+        "file": "media/activities/sorter.html"
+      },
       "notes": "<b>This is a real activity</b> — a local HTML file inlined as the iframe's <code>srcdoc</code>. It works with no network because it isn't fetching anything.<br><br>Sandboxed to <code>allow-scripts</code>: it runs its own code but can't reach the deck.<br><br><b>Careful:</b> while you're clicking inside an activity, arrow keys go to it, not the deck. Advance from your phone.<br><br>(It's also a quiz on the previous slides. Answers: everything works offline except the YouTube embed and the remote itself.)"
     },
     {
@@ -214,7 +261,10 @@
       "layout": "media-full",
       "title": "External embeds",
       "tag": "Making it yours",
-      "media": {"src": "https://www.youtube.com/embed/aqz-KE-bpKQ", "aspect": "16:9"},
+      "media": {
+        "src": "https://www.youtube.com/embed/aqz-KE-bpKQ",
+        "aspect": "16:9"
+      },
       "eyebrow": "The one thing that needs the network",
       "heading": "External embeds",
       "body": "A YouTube URL can't be embedded into a file. If it can't load, this slide shows a QR code instead of a blank frame — press R to retry.",
@@ -237,10 +287,22 @@
       "tag": "Troubleshooting",
       "heading": "If something breaks",
       "bullets": [
-        {"text": "Wi-Fi dies", "sub": "Open the built file from build/ — no server, no network, everything embedded"},
-        {"text": "An embed won't load", "sub": "The slide shows a QR code. Press R to retry."},
-        {"text": "A control does nothing", "sub": "Usually a server left running from before a change. Restart it — the deck will tell you if that's the cause."},
-        {"text": "Phone locks", "sub": "The remote holds a wake lock, but reconnecting picks up the current slide anyway"}
+        {
+          "text": "Wi-Fi dies",
+          "sub": "Open the built file from build/ — no server, no network, everything embedded"
+        },
+        {
+          "text": "An embed won't load",
+          "sub": "The slide shows a QR code. Press R to retry."
+        },
+        {
+          "text": "A control does nothing",
+          "sub": "Usually a server left running from before a change. Restart it — the deck will tell you if that's the cause."
+        },
+        {
+          "text": "Phone locks",
+          "sub": "The remote holds a wake lock, but reconnecting picks up the current slide anyway"
+        }
       ],
       "notes": "<b>The honest one is the third.</b> API routes are registered when the server starts, but templates are read per request — so a stale server can serve new buttons that post to endpoints it doesn't have.<br><br>Rather than failing silently, the deck now falls back to acting locally and says <i>restart the server to sync</i>."
     },

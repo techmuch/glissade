@@ -130,6 +130,23 @@ deck's own directory.
 Local activities are sandboxed to `allow-scripts`: they run their own code but
 can't reach the deck. For YouTube use the **`/embed/`** URL form.
 
+### Sizing
+
+Media is measured against the space actually available and sized to fill it —
+whichever of width or height binds first decides, and the other follows from
+the ratio. It refits when the window resizes, the text size changes, or the
+notes panel opens.
+
+`aspect` controls the shape:
+
+| Value | Behaviour |
+| --- | --- |
+| omitted | Images fit their own proportions; **activities fill all available space**; external embeds default to `16:9` |
+| `"16:9"`, `"4:3"`, `"1:1"` | Hold that ratio, as large as fits |
+| `"auto"` | Fill the region entirely, ignoring proportions |
+
+`media-full` always fills, whatever the slide asks for.
+
 Two behaviours worth knowing:
 
 - **Embeds mount only while their slide is on screen.** Every slide lives in

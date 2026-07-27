@@ -23,7 +23,10 @@
       "body": "<p>A heading with body text, bullets, or both. Text fields accept HTML, so <em>emphasis</em> works.</p>",
       "bullets": [
         "A plain string becomes a bullet",
-        {"text": "An object adds a second line", "sub": "Useful for a source, a caveat, or a short aside"}
+        {
+          "text": "An object adds a second line",
+          "sub": "Useful for a source, a caveat, or a short aside"
+        }
       ],
       "notes": "<b>layout: \"title-content\"</b><br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>.<br><br>Bullets take either a string or <code>{text, sub}</code>."
     },
@@ -53,10 +56,17 @@
       "heading": "two-content",
       "left": {
         "body": "<p>Two independent regions. Either can hold text…</p>",
-        "bullets": ["A point", "Another point"]
+        "bullets": [
+          "A point",
+          "Another point"
+        ]
       },
       "right": {
-        "image": {"src": "media/images/gradient-blue.jpg", "alt": "Abstract gradient", "fit": "cover"},
+        "image": {
+          "src": "media/images/gradient-blue.jpg",
+          "alt": "Abstract gradient",
+          "fit": "cover"
+        },
         "aspect": "4:3"
       },
       "notes": "<b>layout: \"two-content\"</b><br><br><code>left</code> and <code>right</code> each take text fields, an <code>image</code>, or a <code>media</code> embed. Here the right side is an image."
@@ -67,8 +77,14 @@
       "title": "comparison",
       "tag": "PowerPoint set",
       "heading": "comparison",
-      "left":  {"subheading": "This way", "body": "<p>Each side gets its own subheading above the content.</p>"},
-      "right": {"subheading": "Or this way", "body": "<p>Good for before/after, or two options you want weighed.</p>"},
+      "left": {
+        "subheading": "This way",
+        "body": "<p>Each side gets its own subheading above the content.</p>"
+      },
+      "right": {
+        "subheading": "Or this way",
+        "body": "<p>Good for before/after, or two options you want weighed.</p>"
+      },
       "notes": "<b>layout: \"comparison\"</b><br><br>Like two-content, plus a <code>subheading</code> on each side."
     },
     {
@@ -78,7 +94,10 @@
       "tag": "PowerPoint set",
       "cls": "center",
       "heading": "picture-caption",
-      "image": {"src": "media/images/gradient-amber.jpg", "alt": "Abstract gradient"},
+      "image": {
+        "src": "media/images/gradient-amber.jpg",
+        "alt": "Abstract gradient"
+      },
       "body": "<b>A centred picture</b> with its caption underneath, at a smaller size.",
       "notes": "<b>layout: \"picture-caption\"</b><br><br>Fields: <code>heading</code>, <code>image</code>, <code>body</code> (used as the caption)."
     },
@@ -87,7 +106,11 @@
       "layout": "content-caption",
       "title": "content-caption",
       "tag": "PowerPoint set",
-      "image": {"src": "media/images/gradient-teal.jpg", "alt": "Abstract gradient", "fit": "cover"},
+      "image": {
+        "src": "media/images/gradient-teal.jpg",
+        "alt": "Abstract gradient",
+        "fit": "cover"
+      },
       "aspect": "4:3",
       "eyebrow": "Wide left, narrow right",
       "heading": "content-caption",
@@ -102,7 +125,11 @@
       "eyebrow": "Split",
       "heading": "media-right",
       "body": "<p>Text on the left, media on the right. The workhorse for most talks.</p>",
-      "image": {"src": "media/images/gradient-plum.jpg", "alt": "Abstract gradient", "fit": "cover"},
+      "image": {
+        "src": "media/images/gradient-plum.jpg",
+        "alt": "Abstract gradient",
+        "fit": "cover"
+      },
       "aspect": "4:3",
       "notes": "<b>layout: \"media-right\"</b><br><br>Takes all the text fields plus an <code>image</code> or <code>media</code>."
     },
@@ -113,7 +140,11 @@
       "tag": "Media layouts",
       "heading": "media-left",
       "body": "<p>The same layout, mirrored. Alternate them so a run of split slides doesn't feel mechanical.</p>",
-      "image": {"src": "media/images/gradient-moss.jpg", "alt": "Abstract gradient", "fit": "cover"},
+      "image": {
+        "src": "media/images/gradient-moss.jpg",
+        "alt": "Abstract gradient",
+        "fit": "cover"
+      },
       "aspect": "4:3",
       "notes": "<b>layout: \"media-left\"</b>"
     },
@@ -124,7 +155,11 @@
       "tag": "Media layouts",
       "eyebrow": "Centred",
       "heading": "media-caption",
-      "image": {"src": "media/images/gradient-slate.jpg", "alt": "Abstract gradient", "caption": "The caption sits under the frame, at a smaller size."},
+      "image": {
+        "src": "media/images/gradient-slate.jpg",
+        "alt": "Abstract gradient",
+        "caption": "The caption sits under the frame, at a smaller size."
+      },
       "aspect": "16:9",
       "notes": "<b>layout: \"media-caption\"</b><br><br>A centred image or embed at moderate size. The <code>caption</code> lives on the image object, not the slide."
     },
@@ -133,7 +168,10 @@
       "layout": "media-full",
       "title": "media-full",
       "tag": "Media layouts",
-      "image": {"src": "media/images/gradient-blue.jpg", "alt": "Abstract gradient"},
+      "image": {
+        "src": "media/images/gradient-blue.jpg",
+        "alt": "Abstract gradient"
+      },
       "eyebrow": "Edge to edge",
       "heading": "media-full",
       "body": "Text sits in a gradient panel along the bottom, so it stays readable over any image. Leave the text out for a picture with nothing on it.",
@@ -147,9 +185,21 @@
       "heading": "grid",
       "aspect": "4:3",
       "images": [
-        {"src": "media/images/gradient-amber.jpg", "alt": "Gradient", "caption": "Two,"},
-        {"src": "media/images/gradient-teal.jpg",  "alt": "Gradient", "caption": "three,"},
-        {"src": "media/images/gradient-plum.jpg",  "alt": "Gradient", "caption": "or four"}
+        {
+          "src": "media/images/gradient-amber.jpg",
+          "alt": "Gradient",
+          "caption": "Two,"
+        },
+        {
+          "src": "media/images/gradient-teal.jpg",
+          "alt": "Gradient",
+          "caption": "three,"
+        },
+        {
+          "src": "media/images/gradient-plum.jpg",
+          "alt": "Gradient",
+          "caption": "or four"
+        }
       ],
       "notes": "<b>layout: \"grid\"</b><br><br>Two to four images with optional captions. Four lay out as a 2×2 rather than a row."
     },
@@ -160,15 +210,20 @@
       "tag": "Embeds",
       "eyebrow": "Runs with no internet",
       "heading": "An embedded activity",
-      "media": {"file": "media/activities/sorter.html", "aspect": "16:9"},
-      "notes": "<b>A local HTML file</b>, read at build time and inlined as the iframe's <code>srcdoc</code>. It travels inside the deck and needs no network.<br><br><code>\"media\": {\"file\": \"media/activities/sorter.html\", \"aspect\": \"16:9\"}</code><br><br>Sandboxed to <code>allow-scripts</code>. While you're clicking in it, arrow keys go to the activity — advance from your phone."
+      "media": {
+        "file": "media/activities/sorter.html"
+      },
+      "notes": "<b>A local HTML file</b>, read at build time and inlined as the iframe's <code>srcdoc</code>. It travels inside the deck and needs no network.<br><br><code>\"media\": {\"file\": \"media/activities/sorter.html\"}</code><br><br>With no <code>aspect</code>, an activity <b>fills whatever space the slide has</b> and refits when the window, text size, or notes panel changes. Give it <code>\"aspect\": \"16:9\"</code> to pin a shape instead.<br><br>Sandboxed to <code>allow-scripts</code>. While you're clicking in it, arrow keys go to the activity — advance from your phone."
     },
     {
       "n": 15,
       "layout": "media-full",
       "title": "Embed — external",
       "tag": "Embeds",
-      "media": {"src": "https://www.youtube.com/embed/aqz-KE-bpKQ", "aspect": "16:9"},
+      "media": {
+        "src": "https://www.youtube.com/embed/aqz-KE-bpKQ",
+        "aspect": "16:9"
+      },
       "eyebrow": "Needs live internet",
       "heading": "An external embed",
       "body": "If it can't load within six seconds, a QR code appears instead of a blank frame. Press R to retry.",
@@ -184,9 +239,18 @@
       "heading": "cls: \"ask\"",
       "body": "<p>Any layout can be inverted to the dark treatment. Use it for questions and discussion stops.</p>",
       "bullets": [
-        {"text": "\"ask\"", "sub": "Dark — a question, a pause"},
-        {"text": "\"story\"", "sub": "Slightly warmer paper — an aside or anecdote"},
-        {"text": "\"center\"", "sub": "Centres the content; combines with the others"}
+        {
+          "text": "\"ask\"",
+          "sub": "Dark — a question, a pause"
+        },
+        {
+          "text": "\"story\"",
+          "sub": "Slightly warmer paper — an aside or anecdote"
+        },
+        {
+          "text": "\"center\"",
+          "sub": "Centres the content; combines with the others"
+        }
       ],
       "notes": "<b>cls</b> is independent of <b>layout</b> — combine freely, e.g. <code>\"cls\": \"ask center\"</code>.<br><br>The remote flags <code>ask</code> slides so you can see a discussion stop coming."
     },
