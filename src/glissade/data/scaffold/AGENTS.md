@@ -36,8 +36,14 @@ Optionally declare the release the deck needs:
 "glissade": ">=0.6"
 ```
 
+Keep the `"format": 1` line. It records the deck format, so a later release
+can migrate the file rather than guess at its age.
+
 **Only use fields listed in this document.** Anything else is reported by
 `check` and renders nothing — inventing a field does not extend the format.
+
+`glissade check --fix` will correct layout typos, YouTube watch links and a
+missing format stamp for you. It will not invent content or rename fields.
 
 ---
 

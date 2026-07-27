@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://glissade.dev/schema/v1.json",
   "x-glissade-schema": 1,
-  "x-glissade-version": "0.6.0",
+  "x-glissade-version": "0.8.0",
   "title": "Glissade deck",
   "description": "A presentation deck. Either an object with metadata and a slides array, or a bare array of slides.",
   "oneOf": [
@@ -29,6 +29,14 @@
           "examples": [
             ">=0.6",
             ">=0.6,<1.0"
+          ]
+        },
+        "format": {
+          "type": "integer",
+          "description": "The deck format this was written against. Absent means 1. Recorded so a future release can migrate the file rather than guess.",
+          "default": 1,
+          "examples": [
+            1
           ]
         },
         "title": {

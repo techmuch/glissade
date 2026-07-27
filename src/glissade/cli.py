@@ -281,6 +281,24 @@ def cmd_check(args) -> int:
     project = demo_project() if args._demo else _project(args)
     chosen = _decks_or_die(project, args.deck)
 
+    if args.fix:
+        from .fix import apply as apply_fixes
+
+        applied = []
+        for deck in chosen:
+            for f in apply_fixes(Path(deck["path"])):
+                applied.append((deck["id"], f))
+        out()
+        if applied:
+            out(f"  Fixed {len(applied)}:")
+            for deck_id, f in applied:
+                out(f"    [{deck_id}] {f}")
+            out(dim("    Originals kept as <deck>.json.bak"))
+            # Re-read so the report below reflects the corrected files.
+            chosen = _decks_or_die(project, args.deck)
+        else:
+            out(dim("  Nothing to fix automatically."))
+
     errors = warnings = 0
     out()
     if not args._demo:
@@ -564,6 +582,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp = common(sub.add_parser("check", help="validate decks"))
     sp.add_argument("deck", nargs="?", default=None, help="deck id (default: all)")
     sp.add_argument("-q", "--quiet", action="store_true", help="errors only")
+    sp.add_argument("--fix", action="store_true",
+                    help="apply the corrections that have one obvious answer")
     sp.set_defaults(func=cmd_check)
 
     sp = common(sub.add_parser("decks", help="list decks"))

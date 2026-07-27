@@ -36,7 +36,7 @@ before embedding them. Without it images embed at full size; nothing breaks.
 | `glissade init [dir]` | Scaffold a project: a starter deck, `AGENTS.md`, and the JSON schema |
 | `glissade start` | Present, with a phone remote on the same Wi-Fi |
 | `glissade build [deck]` | Write standalone HTML to `build/` |
-| `glissade check [deck]` | Validate decks — run this after editing |
+| `glissade check [deck]` | Validate decks — `--fix` applies the obvious corrections |
 | `glissade decks` / `themes` | List what's available |
 | `glissade demo` | Present the built-in tour and layout gallery |
 | `glissade update` | Bring a project's Glissade-owned files up to date |
@@ -77,6 +77,42 @@ warn  slide 1: 'transition' isn't a field Glissade 0.6.0 understands — it will
 `init` copies the schema into your project, and your editor validates against
 that copy — so it goes stale when you upgrade. `check` notices and tells you to
 run `glissade schema`, which refreshes it.
+
+### Fixing decks
+
+`glissade check --fix` applies the corrections that have one obviously correct
+answer:
+
+```
+Fixed 3:
+  [talk] deck: record the deck format  'absent' -> '1'
+  [talk] slide 4: correct the layout name  'media-rite' -> 'media-right'
+  [talk] slide 9: use the YouTube embed URL  '…watch?v=ID' -> '…/embed/ID'
+  Originals kept as <deck>.json.bak
+```
+
+That's the whole list: layout and modifier names that are unmistakably typos,
+YouTube watch links, and the format stamp. It deliberately will **not** rename
+an unrecognised field — the nearest spelling is often the wrong meaning
+(`subtitle` looks closer to `title` than to `subheading`), and a field this
+release doesn't know may belong to a newer one. Those stay reported.
+
+Decks are never rewritten without `--fix`, and the original is kept as
+`<deck>.json.bak`.
+
+### The format stamp
+
+A deck records the format it was written against:
+
+```jsonc
+{ "format": 1, "title": "My talk", "slides": [ ... ] }
+```
+
+Absent means 1. It exists so a future release can migrate a file rather than
+guess at its age. `init` writes it, and `check --fix` adds it to older decks.
+
+Distinct from `"glissade": ">=0.6"`, which is a *requirement* — what the deck
+needs from the tool, rather than what the tool should assume about the deck.
 
 ### Upgrading a project
 
