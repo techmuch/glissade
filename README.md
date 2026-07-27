@@ -168,6 +168,7 @@ my-talk/
 ├── glissade.schema.json   editor autocomplete and validation
 ├── glissade.toml          optional defaults (deck, port, host)
 ├── themes.json            optional — overrides the built-in themes
+├── .glissade/             generated presenter state and live notes
 └── build/                 generated; rebuild any time
 ```
 
@@ -207,6 +208,11 @@ Both devices need to be on the same Wi-Fi. The server holds the slide
 position, so whoever advances — phone or laptop — everyone follows, and a
 device that reconnects lands on the right slide.
 
+The remote also has a **Live notes** editor for capturing feedback or action
+items during the meeting. Those notes autosave per slide and can optionally be
+shown on the projector as an overlay. The overlay is plain text: line breaks
+are preserved, and the projector toggles it with <kbd>L</kbd>.
+
 `glissade start --open` opens the deck in your browser once the server is
 actually accepting connections — put `open = true` in `glissade.toml` to make
 that a project's default.
@@ -217,10 +223,15 @@ want the laptop.
 
 ### The remote
 
-The main view holds only what you read while presenting — the current slide's
-speaker notes and a preview of the next one. Everything else sits behind a
-header button: **Deck**, **Slides** (jump list), and a gear for text size and
-theme. **Blank** blacks out the projector.
+The main view holds what you read while presenting — the current slide's
+speaker notes, a preview of the next one, and a **Live notes** editor for
+capturing audience feedback as you go. Everything else sits behind a header
+button: **Deck**, **Slides** (jump list), and a gear for text size and theme.
+**Blank** blacks out the projector.
+
+Live notes are saved automatically to `.glissade/live-notes.json` in a normal
+project. For the built-in demo decks, which live in the installed package,
+Glissade keeps them in your user cache instead.
 
 ### Keys on the projecting machine
 
@@ -228,6 +239,7 @@ theme. **Blank** blacks out the projector.
 | --- | --- |
 | <kbd>←</kbd> <kbd>→</kbd> | navigate |
 | <kbd>N</kbd> | speaker notes on screen |
+| <kbd>L</kbd> | toggle the live-notes overlay |
 | <kbd>B</kbd> | blank the screen |
 | <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd> | text size (70–160%) |
 | <kbd>T</kbd> | cycle theme |

@@ -112,6 +112,39 @@ def save_settings(state_file: Path, scale: float, theme: str, deck: str | None) 
         pass
 
 
+def load_live_notes(notes_file: Path) -> dict[str, dict[str, str]]:
+    """Restore presenter-written notes captured during a live session."""
+    try:
+        with notes_file.open(encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+    out: dict[str, dict[str, str]] = {}
+    if not isinstance(data, dict):
+        return out
+    for deck, entries in data.items():
+        if not isinstance(deck, str) or not isinstance(entries, dict):
+            continue
+        cleaned = {
+            str(n): str(text)
+            for n, text in entries.items()
+            if str(text).strip()
+        }
+        if cleaned:
+            out[deck] = cleaned
+    return out
+
+
+def save_live_notes(notes_file: Path, notes: dict[str, dict[str, str]]) -> None:
+    """Persist live notes typed during the meeting. Best-effort."""
+    try:
+        notes_file.parent.mkdir(parents=True, exist_ok=True)
+        notes_file.write_text(json.dumps(notes, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
 def render_deck(
     slides: list[dict[str, Any]],
     live: bool,
@@ -149,6 +182,7 @@ class Presentation:
 
     total: int
     state_file: Path | None = None
+    notes_file: Path | None = None
     theme_ids: list[str] = field(default_factory=list)
     deck_ids: list[str] = field(default_factory=list)
     n: int = 1
@@ -156,10 +190,19 @@ class Presentation:
     scale: float = DEFAULT_SCALE
     theme: str = "paper"
     deck: str | None = None
+    live_notes: dict[str, dict[str, str]] = field(default_factory=dict)
+    live_notes_visible: bool = False
     # Bumped when the deck changes. Displays reload on a change, because the
     # slides are baked into the page they were served.
     rev: int = 0
     listeners: set[asyncio.Queue] = field(default_factory=set)
+
+    def live_note_for(self, n: int | None = None, deck: str | None = None) -> str:
+        deck_id = deck if deck is not None else self.deck
+        if not deck_id:
+            return ""
+        slide = self.n if n is None else n
+        return str(self.live_notes.get(deck_id, {}).get(str(slide), ""))
 
     @property
     def state(self) -> dict[str, Any]:
@@ -169,6 +212,8 @@ class Presentation:
             "scale": self.scale,
             "theme": self.theme,
             "deck": self.deck,
+            "live_note": self.live_note_for(),
+            "live_notes_visible": self.live_notes_visible,
             "rev": self.rev,
             "total": self.total,
             "min_scale": MIN_SCALE,
@@ -211,9 +256,38 @@ class Presentation:
         idx = self.theme_ids.index(self.theme) if self.theme in self.theme_ids else 0
         return self.set_theme(self.theme_ids[(idx + steps) % len(self.theme_ids)])
 
+    def set_live_note(self, text: Any, n: Any = None) -> dict[str, Any]:
+        if not self.deck:
+            return self.state
+        try:
+            target = self.n if n is None else int(n)
+        except (TypeError, ValueError):
+            target = self.n
+        target = max(1, min(self.total, target))
+        deck_notes = self.live_notes.setdefault(self.deck, {})
+        note = str(text or "")
+        if note.strip():
+            deck_notes[str(target)] = note
+        else:
+            deck_notes.pop(str(target), None)
+            if not deck_notes:
+                self.live_notes.pop(self.deck, None)
+        self._save_live_notes()
+        if target == self.n:
+            return self.publish()
+        return self.state
+
+    def set_live_notes_visible(self, visible: Any) -> dict[str, Any]:
+        self.live_notes_visible = bool(visible)
+        return self.publish()
+
     def _save(self) -> None:
         if self.state_file is not None:
             save_settings(self.state_file, self.scale, self.theme, self.deck)
+
+    def _save_live_notes(self) -> None:
+        if self.notes_file is not None:
+            save_live_notes(self.notes_file, self.live_notes)
 
     def publish(self) -> dict[str, Any]:
         state = self.state
@@ -238,6 +312,8 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
     theme_ids = [t["id"] for t in themes]
     deck_ids = [d["id"] for d in all_decks]
     settings = load_settings(state_file, theme_ids, deck_ids)
+    notes_file = state_file.with_name("live-notes.json")
+    live_notes = load_live_notes(notes_file)
 
     current = deck_lib.resolve(deck_name or settings["deck"], all_decks)
 
@@ -264,11 +340,13 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
     show = Presentation(
         total=len(slides_for(current)),
         state_file=state_file,
+        notes_file=notes_file,
         theme_ids=theme_ids,
         deck_ids=deck_ids,
         scale=settings["scale"],
         theme=settings["theme"],
         deck=current["id"],
+        live_notes=live_notes,
     )
     app.state.show = show
     app.state.decks = all_decks
@@ -382,6 +460,25 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
         """Switch to a different deck. Displays reload themselves."""
         body = body or {}
         return switch(str(body.get("id", "")))
+
+    @app.get("/api/live-notes")
+    async def api_live_notes() -> dict[str, Any]:
+        return {
+            "deck": show.deck,
+            "n": show.n,
+            "text": show.live_note_for(),
+            "visible": show.live_notes_visible,
+        }
+
+    @app.post("/api/live-notes")
+    async def api_live_notes_set(body: dict[str, Any] | None = None) -> dict[str, Any]:
+        body = body or {}
+        return show.set_live_note(body.get("text", ""), n=body.get("n"))
+
+    @app.post("/api/live-notes-visible")
+    async def api_live_notes_visible(body: dict[str, Any] | None = None) -> dict[str, Any]:
+        body = body or {}
+        return show.set_live_notes_visible(body.get("visible", not show.live_notes_visible))
 
     @app.get("/events")
     async def events() -> StreamingResponse:

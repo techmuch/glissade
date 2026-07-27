@@ -246,6 +246,33 @@
   }
   .warn.on{display:block}
 
+  /* ---------- live notes ---------- */
+  .lnbox{
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:9px; padding:11px 12px 12px; margin-bottom:14px;
+  }
+  .lnbox .sub{
+    font-size:11.5px; color:var(--soft); line-height:1.4; margin:-2px 0 10px;
+  }
+  .lnbox textarea{
+    width:100%; min-height:132px; resize:vertical;
+    background:var(--panel2); color:var(--text);
+    border:1px solid var(--line); border-radius:8px;
+    padding:11px 12px; font:inherit; font-size:14px; line-height:1.45;
+  }
+  .lnbox textarea::placeholder{color:#8f8577}
+  .lnmeta{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin-top:10px; font-size:11.5px; color:var(--soft);
+  }
+  .lnmeta .ok{color:var(--ok)}
+  .lnmeta button{
+    background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    border-radius:7px; padding:7px 10px; font:inherit; font-size:12px; font-weight:600;
+    touch-action:manipulation;
+  }
+  .lnmeta button.on{background:var(--accent); color:var(--bg); border-color:var(--accent)}
+
   /* ---------- theme picker ---------- */
   .themes{
     background:var(--panel); border:1px solid var(--line);
@@ -318,6 +345,16 @@
     <h2 id="nexttitle"></h2>
     <div class="prev-render" id="nextrender"></div>
   </div>
+
+  <div class="lnbox">
+    <div class="label">Live notes</div>
+    <p class="sub">Type audience feedback or follow-up items for this slide. Autosaves to the project.</p>
+    <textarea id="livenotes" placeholder="Type live notes for this slide..."></textarea>
+    <div class="lnmeta">
+      <span id="lnstatus">No live notes yet.</span>
+      <button id="showlive">Show on projector</button>
+    </div>
+  </div>
 </main>
 
 <footer>
@@ -362,6 +399,7 @@
 let SLIDES = [], THEMES = [], DECKS = [];
 let cur = 1, blanked = false, scale = 1, minScale = 0.7, maxScale = 1.6;
 let painted = null, serverHasScale = true, themeId = null, deckId = null, rev = null;
+let liveNoteText = '', liveNotesVisible = false, liveNoteSaveTimer = null, liveNoteDirty = false;
 
 const $ = id => document.getElementById(id);
 
@@ -400,6 +438,11 @@ function paint(){
     (s.discussion ? ' <span class="badge">Discussion</span>' : '');
   $('nowtitle').textContent = s.title;
   $('nownotes').innerHTML = s.notes || '<i>No notes for this slide.</i>';
+  if(document.activeElement !== $('livenotes') || !liveNoteDirty) $('livenotes').value = liveNoteText || '';
+  $('lnstatus').textContent = liveNoteDirty ? 'Saving…' : (liveNoteText ? 'Saved for this slide.' : 'No live notes yet.');
+  $('lnstatus').className = liveNoteDirty ? '' : (liveNoteText ? 'ok' : '');
+  $('showlive').classList.toggle('on', !!liveNotesVisible);
+  $('showlive').textContent = liveNotesVisible ? 'Hide on projector' : 'Show on projector';
 
   if(nx){
     $('nextbox').style.display = '';
@@ -450,11 +493,36 @@ function paint(){
 /* The deck renders layouts at full size; on a phone a scale model would be
    unreadable, so laid-out slides get a compact summary instead — enough to
    know what's about to appear, including whether it needs the network. */
+function previewTextFromHTML(html){
+  const host = document.createElement('div');
+  host.innerHTML = html || '';
+  host.querySelectorAll('script,style').forEach(n => n.remove());
+  const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+  const lines = [];
+  let node;
+  while((node = walker.nextNode())){
+    const text = String(node.nodeValue || '').replace(/\s+/g, ' ').trim();
+    if(!text) continue;
+    if(lines[lines.length - 1] === text) continue;
+    lines.push(text);
+  }
+  return lines;
+}
+
 function previewHTML(s){
   const layout = s.layout || 'blank';
-  if(layout === 'blank') return s.html || '';
-
   const esc = t => String(t == null ? '' : t);
+  if(layout === 'blank'){
+    const lines = previewTextFromHTML(s.html);
+    if(!lines.length) return '';
+    let h = '<div class="pv-lay">blank</div>';
+    if(lines[0]) h += '<div class="eyebrow">' + esc(lines[0]) + '</div>';
+    if(lines[1]) h += '<h2>' + esc(lines[1]) + '</h2>';
+    const rest = lines.slice(2, 8);
+    if(rest.length) h += '<ul>' + rest.map(line => '<li>' + esc(line) + '</li>').join('') + '</ul>';
+    return h;
+  }
+
   let h = '<div class="pv-lay">' + layout + '</div>';
   if(s.eyebrow) h += '<div class="eyebrow">' + esc(s.eyebrow) + '</div>';
   if(s.heading) h += '<h2>' + esc(s.heading) + '</h2>';
@@ -574,6 +642,19 @@ function applyPreviewTheme(){
   for(const k in map) if(map[k]) r.setProperty(k, map[k]);
 }
 
+function queueLiveNoteSave(){
+  liveNoteDirty = true;
+  paint();
+  clearTimeout(liveNoteSaveTimer);
+  liveNoteSaveTimer = setTimeout(() => {
+    post('/api/live-notes', {n: cur, text: $('livenotes').value}).then(r => {
+      liveNoteDirty = false;
+      if(!r.ok) $('lnstatus').textContent = 'Could not save live notes.';
+      paint();
+    });
+  }, 350);
+}
+
 function buildList(){
   const list = $('list');
   list.innerHTML = '';
@@ -626,9 +707,21 @@ $('jumpbtn').onclick  = () => openPanel('slides');
 $('deckbtn').onclick  = () => openPanel('deck');
 $('setbtn').onclick   = () => openPanel('settings');
 $('close').onclick    = closeDrawer;
+$('livenotes').addEventListener('input', queueLiveNoteSave);
+$('showlive').onclick = () => post('/api/live-notes-visible', {visible: !liveNotesVisible});
 
-/* Volume-style hardware remotes and bluetooth clickers send arrow keys. */
+function isEditableTarget(el){
+  return !!el && (
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'INPUT' ||
+    el.isContentEditable
+  );
+}
+
+/* Volume-style hardware remotes and bluetooth clickers send arrow keys.
+   But while typing live notes, keystrokes belong to the editor, not nav. */
 document.addEventListener('keydown', e => {
+  if(isEditableTarget(e.target)) return;
   if(e.key === 'ArrowRight' || e.key === ' '){ e.preventDefault(); post('/api/next'); }
   if(e.key === 'ArrowLeft'){ e.preventDefault(); post('/api/prev'); }
 });
@@ -692,6 +785,8 @@ Promise.all([
     }
     cur = st.n; blanked = st.blank;
     if(st.deck != null) deckId = st.deck;
+    liveNoteText = st.live_note || '';
+    liveNotesVisible = !!st.live_notes_visible;
     /* An older server reports no scale. Flag it as soon as we connect rather
        than letting the presenter discover it by pressing a dead button. */
     serverHasScale = st.scale != null;
