@@ -39,6 +39,7 @@ before embedding them. Without it images embed at full size; nothing breaks.
 | `glissade check [deck]` | Validate decks — run this after editing |
 | `glissade decks` / `themes` | List what's available |
 | `glissade demo` | Present the built-in tour and layout gallery |
+| `glissade update` | Bring a project's Glissade-owned files up to date |
 | `glissade schema` | Refresh the project's JSON schema copy |
 | `glissade upgrade` | Update to the latest release |
 
@@ -77,7 +78,33 @@ warn  slide 1: 'transition' isn't a field Glissade 0.6.0 understands — it will
 that copy — so it goes stale when you upgrade. `check` notices and tells you to
 run `glissade schema`, which refreshes it.
 
-### Upgrading
+### Upgrading a project
+
+Upgrading the tool doesn't touch your projects. Two files in a project belong
+to Glissade and track the release — `AGENTS.md`, which describes the deck
+format, and `glissade.schema.json`, which your editor validates against. Both
+go stale when you upgrade:
+
+```bash
+glissade update --dry-run   # what would change
+glissade update             # refresh them
+```
+
+It refreshes only those two. Your decks, `themes.json`, `glissade.toml` and
+`.gitignore` are yours from the moment `init` writes them and are never
+rewritten.
+
+If you've edited a Glissade-owned file — house rules appended to `AGENTS.md`,
+say — it isn't discarded. `update` saves yours as `AGENTS.md.bak` and tells
+you, or use `--keep` to leave it alone entirely. It knows the difference
+because `init` and `update` record a hash of what they wrote, in
+`.glissade/scaffold.json`, which also records the release the project was
+created with.
+
+`init --force` refreshes the scaffold too, but it will not overwrite anything
+under `decks/` or your config — it lists what it kept.
+
+### Upgrading Glissade
 
 ```bash
 glissade upgrade           # check, then update

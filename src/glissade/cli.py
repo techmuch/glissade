@@ -108,6 +108,25 @@ def cmd_init(args) -> int:
         planned.append((src, target / src.relative_to(SCAFFOLD_DIR)))
     planned.append((SCHEMA_FILE, target / "glissade.schema.json"))
 
+    # --force refreshes the scaffold; it must never reach a deck. Losing an
+    # afternoon's writing to a command meant to refresh a doc is not a trade
+    # anyone would accept.
+    from .scaffold import YOURS, record_init
+
+    def is_yours(dst: Path) -> bool:
+        rel = dst.relative_to(target).as_posix()
+        return any(rel.startswith(y) if y.endswith("/") else rel == y for y in YOURS)
+
+    if args.force:
+        protected = [dst for _, dst in planned if dst.exists() and is_yours(dst)]
+        planned = [(src, dst) for src, dst in planned
+                   if not (dst.exists() and is_yours(dst))]
+        if protected:
+            out()
+            out("  Keeping what's already yours:")
+            for dst in protected:
+                out(f"    {dst.relative_to(target)}")
+
     clashes = [dst for _, dst in planned if dst.exists()]
     if clashes and not args.force:
         out("Already here:")
@@ -119,12 +138,16 @@ def cmd_init(args) -> int:
     for src, dst in planned:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dst)
+    record_init(Project(target), [dst.relative_to(target).as_posix() for _, dst in planned])
 
     out()
     out(f"  {bold('Glissade project ready')}  {dim(str(target))}")
     out("  " + rule())
     for _, dst in planned:
         out(f"  {dst.relative_to(target)}")
+    out()
+    if not planned:
+        out(dim("  Nothing to write — everything here is already yours."))
     out()
     out("  Next:")
     out(f"    {bold('glissade start')}    present it")
@@ -330,6 +353,52 @@ def _warn_if_schema_stale(project: Project) -> None:
         out()
 
 
+def cmd_update(args) -> int:
+    """Bring a project's tool-owned files up to the installed release."""
+    from .scaffold import apply, plan, read_manifest
+
+    project = _project(args)
+    manifest = read_manifest(project)
+    changes = plan(project)
+
+    out()
+    out(f"  {bold(str(project.root))}")
+    created = manifest.get("created_with")
+    updated = manifest.get("updated_with")
+    if created:
+        seen = f"created with v{created}"
+        if updated and updated != created:
+            seen += f", last updated with v{updated}"
+        out(dim(f"  {seen}; installed is v{__version__}"))
+    else:
+        out(dim(f"  no record of which release made this; installed is v{__version__}"))
+    out()
+
+    pending = [c for c in changes if c.needs_write]
+    if not pending:
+        out("  Everything Glissade owns here is already current.")
+        out(dim("  Your decks, themes and config are never touched by this command."))
+        out()
+        return 0
+
+    if args.dry_run:
+        out("  Would change:")
+        for c in pending:
+            note = "  (you edited this — a .bak would be kept)" if c.action == "edited" else ""
+            out(f"    {c.action:<8}  {c.name}{dim(note)}")
+        out()
+        out(dim("  Run without --dry-run to apply."))
+        out()
+        return 0
+
+    for line in apply(project, changes, keep_edits=args.keep):
+        out(f"  {line}")
+    out()
+    out(dim("  Decks, themes and config were not touched."))
+    out()
+    return 0
+
+
 def cmd_schema(args) -> int:
     """Refresh the project's copy of the JSON schema."""
     project = _project(args)
@@ -502,6 +571,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = common(sub.add_parser("themes", help="list themes"))
     sp.set_defaults(func=cmd_themes)
+
+    sp = common(sub.add_parser(
+        "update", help="bring this project's Glissade-owned files up to date"))
+    sp.add_argument("--dry-run", action="store_true", help="show what would change")
+    sp.add_argument("--keep", action="store_true",
+                    help="leave files you've edited alone instead of backing them up")
+    sp.set_defaults(func=cmd_update)
 
     sp = common(sub.add_parser("schema", help="refresh the project's JSON schema copy"))
     sp.set_defaults(func=cmd_schema)
