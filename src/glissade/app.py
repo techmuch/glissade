@@ -22,6 +22,10 @@ MAX_SCALE = 1.6
 SCALE_STEP = 0.1
 DEFAULT_SCALE = 1.0
 
+# How long an idle event stream waits before sending a comment, to stop routers
+# and phone browsers dropping it.
+HEARTBEAT_SECONDS = 15
+
 
 def clamp_scale(value: Any, fallback: float = DEFAULT_SCALE) -> float:
     """Coerce anything to a usable scale factor, rounded to a clean step."""
@@ -382,19 +386,35 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
     @app.get("/events")
     async def events() -> StreamingResponse:
         """Server-sent events: one message per state change, plus a heartbeat
-        so phone browsers and Wi-Fi routers don't drop an idle connection."""
+        so phone browsers and Wi-Fi routers don't drop an idle connection.
+
+        This stream is deliberately endless, which makes it the one thing that
+        can stop the process exiting: uvicorn's shutdown waits for open
+        connections to finish, and an endless response never does. So the loop
+        wakes once a second to check whether the server is shutting down and
+        returns if it is -- otherwise Ctrl-C appears to be ignored for as long
+        as any browser has the deck open.
+        """
         queue: asyncio.Queue = asyncio.Queue(maxsize=32)
         show.listeners.add(queue)
 
         async def stream():
+            server = getattr(app.state, "server", None)
+            idle = 0
             try:
                 yield f"data: {json.dumps(show.state)}\n\n"
                 while True:
+                    if server is not None and server.should_exit:
+                        return
                     try:
-                        state = await asyncio.wait_for(queue.get(), timeout=15)
+                        state = await asyncio.wait_for(queue.get(), timeout=1.0)
                         yield f"data: {json.dumps(state)}\n\n"
+                        idle = 0
                     except asyncio.TimeoutError:
-                        yield ": keep-alive\n\n"
+                        idle += 1
+                        if idle >= HEARTBEAT_SECONDS:
+                            yield ": keep-alive\n\n"
+                            idle = 0
             finally:
                 show.listeners.discard(queue)
 

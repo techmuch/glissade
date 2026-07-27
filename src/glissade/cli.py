@@ -188,10 +188,21 @@ def cmd_start(args) -> int:
 
         webbrowser.open(f"http://127.0.0.1:{port}/")
 
+    # Built by hand rather than uvicorn.run() so the app can reach the server
+    # and see its shutdown flag; the event stream watches it to end itself.
+    # timeout_graceful_shutdown is the backstop for anything else that might
+    # still be holding a connection open.
+    config = uvicorn.Config(
+        app, host=host, port=port, log_level="warning", timeout_graceful_shutdown=5
+    )
+    server = uvicorn.Server(config)
+    app.state.server = server
+
     try:
-        uvicorn.run(app, host=host, port=port, log_level="warning")
-    except KeyboardInterrupt:  # pragma: no cover
+        server.run()
+    except KeyboardInterrupt:  # pragma: no cover - a second Ctrl-C
         pass
+    out(dim("  Stopped."))
     return 0
 
 
