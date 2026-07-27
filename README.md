@@ -183,15 +183,26 @@ the phone remote to advance.
 | --- | --- |
 | **Paper** | Warm paper and muted gold. The default — easy on a dim projector. |
 | **Georgia Tech** | Official GT palette: Tech Gold, Navy Blue, Diploma ivory. |
+| **Texas A&M** | Official A&M palette: Aggie Maroon and white, with the Aggie brand typefaces. |
 
 Press <kbd>T</kbd> or tap a swatch on the remote. The server holds the value so
 the remote and the wall agree, and it's saved between runs.
 
-The Georgia Tech theme follows GT's own accessibility guidance: Tech Gold
-(`#B3A369`) is used only for rules and bullets, never text, since GT flags it
-as inaccessible on light backgrounds. Text gold is their Tech Dark Gold
-darkened to `#7f6f34` to clear WCAG AA on Diploma ivory (4.58:1 rather than
-4.25:1). Every text/background pair in both themes passes AA.
+Both university themes are built from published brand swatches, and every
+text/background pair in all three themes clears WCAG AA.
+
+**Georgia Tech** follows GT's own accessibility guidance: Tech Gold (`#B3A369`)
+is used only for rules and bullets, never text, since GT flags it as
+inaccessible on light backgrounds. Text gold is their Tech Dark Gold darkened
+to `#7f6f34` to clear AA on Diploma ivory (4.58:1 rather than 4.25:1).
+
+**Texas A&M** needed no such adjustment — every swatch is used unmodified, and
+the tightest pair still measures 8.93:1. Discussion slides flood Aggie Maroon
+(`#500000`). Type follows the Aggie brand fonts: Oswald for the uppercase
+micro-labels, which is its stated job, and Work Sans for headings and body.
+A&M name Georgia as their own digital substitute for Crimson Text, and it's a
+system font, so it's the guaranteed fallback when the brand fonts aren't
+installed.
 
 ### Adding one
 

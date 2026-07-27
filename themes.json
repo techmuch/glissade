@@ -62,5 +62,43 @@
       "--heading-weight": "500",
       "--heading-tracking": "-0.005em"
     }
+  },
+  {
+    "id": "tamu",
+    "name": "Texas A&M",
+    "description": "Official Texas A&M palette — Aggie Maroon and white, with the Aggie brand typefaces.",
+    "_palette": {
+      "Aggie Maroon": "#500000 (PMS 7421) — headings, and the flood on discussion slides",
+      "White": "#FFFFFF — the other half of the primary palette; slide background",
+      "Brand Dark": "#3C001C — the surround and the notes overlay",
+      "Brand Light": "#732F2F — eyebrows, citations, emphasis",
+      "Gray 800 / 300 / 200 / 100": "#3E3E3E body, #D1D1D1 rules, #EAEAEA and #F6F6F6 surfaces",
+      "Warm neutral": "#D6D3C4 — accent against maroon (print secondary palette)",
+      "_note": "All values are official swatches used unmodified; every text/background pair clears WCAG AA, the tightest at 8.93:1.",
+      "_fonts": "Oswald for the uppercase micro-labels (its stated job), Work Sans and Open Sans for headings and body. Georgia is A&M's own sanctioned digital substitute for Crimson Text and is a system font, so it is the guaranteed fallback."
+    },
+    "vars": {
+      "--surround": "#3c001c",
+      "--paper": "#ffffff",
+      "--ink": "#500000",
+      "--ink-soft": "#3e3e3e",
+      "--accent": "#732f2f",
+      "--accent-light": "#500000",
+      "--rule": "#d1d1d1",
+      "--story-bg": "#f6f6f6",
+      "--ask-bg": "#500000",
+      "--ask-ink": "#eaeaea",
+      "--ask-ink-soft": "#d1d1d1",
+      "--ask-heading": "#ffffff",
+      "--ask-accent": "#d6d3c4",
+      "--overlay-bg": "rgba(60,0,28,.96)",
+      "--overlay-ink": "#eaeaea",
+      "--chrome-ink": "#a7a7a7",
+      "--blank-bg": "#000000",
+      "--deck-font": "Work Sans, Open Sans, Georgia, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+      "--ui-font": "Oswald, Work Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+      "--heading-weight": "600",
+      "--heading-tracking": "-0.015em"
+    }
   }
 ]

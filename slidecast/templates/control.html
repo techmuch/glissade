@@ -510,7 +510,7 @@ function buildThemes(){
       '<span class="chip">' +
         '<i style="background:' + (v['--paper']   || '#eee') + '"></i>' +
         '<i style="background:' + (v['--ask-bg']  || '#333') + '"></i>' +
-        '<i style="background:' + (v['--accent-light'] || '#999') + '"></i>' +
+        '<i style="background:' + (v['--accent'] || v['--accent-light'] || '#999') + '"></i>' +
       '</span><span class="nm">' + t.name + '</span>';
     b.onclick = () => post('/api/theme', {id: t.id}).then(r => {
       if(!r.ok) scaleFailed(r);
