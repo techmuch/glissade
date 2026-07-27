@@ -103,15 +103,19 @@ class Project:
     def config(self) -> dict:
         """Optional defaults from glissade.toml. Absent or broken is fine.
 
-        tomllib is 3.11+; on 3.10 the file is simply ignored rather than
-        dragging in a dependency for an optional convenience.
+        tomllib is 3.11+, so tomli backfills it below that — a config file
+        that silently did nothing on some Pythons would be worse than not
+        supporting one at all.
         """
         if not self.config_file.is_file():
             return {}
         try:
             import tomllib
-        except ImportError:
-            return {}
+        except ImportError:  # Python 3.10
+            try:
+                import tomli as tomllib  # type: ignore
+            except ImportError:
+                return {}
         try:
             with self.config_file.open("rb") as fh:
                 data = tomllib.load(fh)

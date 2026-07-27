@@ -15,6 +15,8 @@ import argparse
 import shutil
 import socket
 import sys
+import threading
+import time
 from pathlib import Path
 
 from . import __version__
@@ -67,6 +69,39 @@ def lan_ip() -> str:
         return "127.0.0.1"
     finally:
         s.close()
+
+
+def open_when_ready(url: str, host: str, port: int, timeout: float = 20.0) -> None:
+    """Open the system browser once the server is actually accepting.
+
+    Opening it first is a race the browser usually loses — it lands on
+    "connection refused" and the user has to reload. So a background thread
+    waits for the port to answer, then opens.
+
+    Everything here is best-effort: on a headless box or over SSH there may be
+    no browser to open, and that must not disturb the server.
+    """
+
+    def wait_then_open() -> None:
+        # Bound to every interface? Then this machine's browser wants loopback.
+        target = "127.0.0.1" if host in ("0.0.0.0", "::", "") else host
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            with socket.socket() as probe:
+                probe.settimeout(0.5)
+                if probe.connect_ex((target, port)) == 0:
+                    break
+            time.sleep(0.1)
+        else:
+            return
+        try:
+            import webbrowser
+
+            webbrowser.open(url)
+        except Exception:
+            pass
+
+    threading.Thread(target=wait_then_open, daemon=True).start()
 
 
 def qr_lines(data: str) -> list[str]:
@@ -207,10 +242,9 @@ def cmd_start(args) -> int:
     out()
     sys.stdout.flush()
 
-    if args.open:
-        import webbrowser
-
-        webbrowser.open(f"http://127.0.0.1:{port}/")
+    if args.open or defaults.get("open"):
+        local = f"http://{'127.0.0.1' if host in ('0.0.0.0', '::') else host}:{port}/"
+        open_when_ready(local, host, port)
 
     # Built by hand rather than uvicorn.run() so the app can reach the server
     # and see its shutdown flag; the event stream watches it to end itself.
@@ -571,7 +605,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--host", default=None,
                     help="bind address (default 0.0.0.0, so a phone can reach it)")
     sp.add_argument("--port", type=int, default=None, help="port (default 8000)")
-    sp.add_argument("--open", action="store_true", help="open the deck in your browser")
+    sp.add_argument("--open", action="store_true",
+                    help="open the deck in your browser once the server is up")
     sp.set_defaults(func=cmd_start)
 
     sp = common(sub.add_parser("build", help="write standalone HTML"))

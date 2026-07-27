@@ -207,6 +207,10 @@ Both devices need to be on the same Wi-Fi. The server holds the slide
 position, so whoever advances — phone or laptop — everyone follows, and a
 device that reconnects lands on the right slide.
 
+`glissade start --open` opens the deck in your browser once the server is
+actually accepting connections — put `open = true` in `glissade.toml` to make
+that a project's default.
+
 On Windows the first run may raise a firewall prompt: allow private networks
 so your phone can reach the remote. `--host 127.0.0.1` avoids it if you only
 want the laptop.
