@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glissade"
-version = "0.3.0"
+version = "0.4.0"
 description = "Presentation decks written as JSON, driven from your phone, built into a single self-contained HTML file"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -42,8 +42,8 @@ dependencies = [
 images = ["pillow>=10.0"]
 
 [project.urls]
-Homepage = "https://github.com/davidfullmer/glissade"
-Issues = "https://github.com/davidfullmer/glissade/issues"
+Homepage = "https://github.com/techmuch/glissade"
+Issues = "https://github.com/techmuch/glissade/issues"
 
 [project.scripts]
 glissade = "glissade.cli:main"

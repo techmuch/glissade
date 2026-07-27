@@ -204,7 +204,7 @@ presentation and an apology.
 ## Developing
 
 ```bash
-git clone https://github.com/davidfullmer/glissade && cd glissade
+git clone https://github.com/techmuch/glissade && cd glissade
 uv venv && uv pip install -e ".[images]"
 glissade demo
 ```
