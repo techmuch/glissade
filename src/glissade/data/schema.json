@@ -1,6 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://glissade.dev/schema.json",
+  "$id": "https://glissade.dev/schema/v1.json",
+  "x-glissade-schema": 1,
+  "x-glissade-version": "0.6.0",
   "title": "Glissade deck",
   "description": "A presentation deck. Either an object with metadata and a slides array, or a bare array of slides.",
   "oneOf": [
@@ -20,6 +22,14 @@
       "properties": {
         "$schema": {
           "type": "string"
+        },
+        "glissade": {
+          "type": "string",
+          "description": "Minimum Glissade version this deck needs, e.g. \">=0.6\". Older versions warn rather than rendering it incompletely.",
+          "examples": [
+            ">=0.6",
+            ">=0.6,<1.0"
+          ]
         },
         "title": {
           "type": "string",

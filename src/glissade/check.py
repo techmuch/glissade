@@ -12,14 +12,42 @@ it reports before handing the deck over.
 from __future__ import annotations
 
 import difflib
+import json
+import functools
 from pathlib import Path
 from typing import Any
 
-LAYOUTS = {
-    "title", "title-content", "section", "title-only", "two-content",
-    "comparison", "content-caption", "picture-caption", "media-right",
-    "media-left", "media-full", "media-caption", "grid", "blank",
-}
+from . import __version__
+from .project import SCHEMA_FILE
+
+
+@functools.lru_cache(maxsize=1)
+def _schema() -> dict:
+    """The shipped schema, read once.
+
+    Field names and layouts come from here rather than being repeated, so the
+    checker and the schema cannot disagree about what a deck may contain.
+    """
+    try:
+        with SCHEMA_FILE.open(encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):  # pragma: no cover - shipped with the wheel
+        return {}
+
+
+def _known(defn: str) -> set:
+    return set((_schema().get("$defs", {}).get(defn, {}).get("properties") or {}))
+
+
+LAYOUTS = set(
+    _schema().get("$defs", {}).get("slide", {}).get("properties", {})
+    .get("layout", {}).get("enum")
+    or [
+        "title", "title-content", "section", "title-only", "two-content",
+        "comparison", "content-caption", "picture-caption", "media-right",
+        "media-left", "media-full", "media-caption", "grid", "blank",
+    ]
+)
 MODIFIERS = {"ask", "story", "center"}
 
 # Which layouts actually render a media region. Putting an image on a layout
@@ -46,6 +74,27 @@ class Issue:
 def _did_you_mean(value: str, options) -> str:
     close = difflib.get_close_matches(value, sorted(options), n=1, cutoff=0.6)
     return f"Did you mean {close[0]!r}?" if close else ""
+
+
+def _unknown_fields(node: Any, defn: str, where: str, out: list) -> None:
+    """Flag fields this version doesn't understand.
+
+    They are otherwise silent: an unrecognised slide field rides along in the
+    data and renders nothing, so a deck written for a newer Glissade would
+    lose content without saying a word.
+    """
+    known = _known(defn)
+    if not isinstance(node, dict) or not known:
+        return
+    for key in node:
+        if key in known or key.startswith("_"):
+            continue
+        hint = _did_you_mean(key, known)
+        out.append(Issue(
+            "warning", where,
+            f"{key!r} isn't a field Glissade {__version__} understands — it will be ignored",
+            hint or "If the deck was written for a newer release, run `glissade upgrade`.",
+        ))
 
 
 def _check_media(node: Any, where: str, base: Path, out: list[Issue]) -> None:
@@ -154,10 +203,16 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
         if not visible:
             out.append(Issue("error", where, "slide has no visible content"))
 
+        _unknown_fields(slide, "slide", where, out)
         if slide.get("image"):
             _check_image(slide["image"], where, base, out)
+            _unknown_fields(slide["image"], "image", f"{where} image", out)
         if slide.get("media"):
             _check_media(slide["media"], where, base, out)
+            _unknown_fields(slide["media"], "media", f"{where} media", out)
+        for side in ("left", "right"):
+            if isinstance(slide.get(side), dict):
+                _unknown_fields(slide[side], "block", f"{where} {side}", out)
 
         images = slide.get("images")
         if images is not None:
@@ -217,7 +272,41 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
     return out
 
 
+def check_requirement(deck: dict[str, Any], label: str = "") -> list[Issue]:
+    """Honour a deck's declared minimum version."""
+    from .upgrade import BadRequirement, satisfies
+
+    requirement = deck.get("requires")
+    if not requirement:
+        return []
+    where = f"{label}deck" if label else "deck"
+    try:
+        ok = satisfies(__version__, str(requirement))
+    except BadRequirement as exc:
+        return [Issue("error", where, f"can't read the `glissade` requirement: {exc}",
+                      'Use something like ">=0.6".')]
+    if ok:
+        return []
+    return [Issue(
+        "error", where,
+        f"needs Glissade {requirement}, but this is {__version__}",
+        "Run `glissade upgrade`. Presenting anyway will silently skip anything "
+        "this release doesn't understand.",
+    )]
+
+
 def check_deck(deck: dict[str, Any]) -> list[Issue]:
     """Validate one loaded deck. Media paths resolve beside the deck file."""
     base = Path(deck["path"]).resolve().parent
-    return check_slides(deck.get("slides", []), base, label=f"[{deck['id']}]")
+    label = f"[{deck['id']}] "
+    issues = check_requirement(deck, label)
+    issues += _deck_level(deck, label)
+    return issues + check_slides(deck.get("slides", []), base, label=f"[{deck['id']}]")
+
+
+def _deck_level(deck: dict[str, Any], label: str) -> list[Issue]:
+    out: list[Issue] = []
+    raw = deck.get("raw")
+    if isinstance(raw, dict):
+        _unknown_fields(raw, "deckObject", f"{label}deck", out)
+    return out

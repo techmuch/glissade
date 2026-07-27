@@ -39,11 +39,43 @@ before embedding them. Without it images embed at full size; nothing breaks.
 | `glissade check [deck]` | Validate decks — run this after editing |
 | `glissade decks` / `themes` | List what's available |
 | `glissade demo` | Present the built-in tour and layout gallery |
+| `glissade schema` | Refresh the project's JSON schema copy |
 | `glissade upgrade` | Update to the latest release |
 
 Every command takes `-C PATH` to run as if started elsewhere. Commands find
 your project by walking up from the working directory, the way git does, so
 they work from any subdirectory.
+
+### Versions and compatibility
+
+A deck can declare the release it needs:
+
+```jsonc
+{
+  "glissade": ">=0.6",
+  "title": "My talk",
+  "slides": [ ... ]
+}
+```
+
+Ranges work too (`">=0.6,<1.0"`), and a bare `"0.6"` means *at least* 0.6.
+
+Older releases don't fail silently on it. `glissade check` treats an unmet
+requirement as an error, and `start` and `build` print a warning but still run
+— a deck that renders most of itself beats one that refuses in front of an
+audience.
+
+The same applies to fields. Anything this release doesn't recognise is
+reported rather than quietly ignored:
+
+```
+warn  slide 1: 'transition' isn't a field Glissade 0.6.0 understands — it will be ignored
+        If the deck was written for a newer release, run `glissade upgrade`.
+```
+
+`init` copies the schema into your project, and your editor validates against
+that copy — so it goes stale when you upgrade. `check` notices and tells you to
+run `glissade schema`, which refreshes it.
 
 ### Upgrading
 

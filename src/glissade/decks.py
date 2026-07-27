@@ -40,6 +40,11 @@ def read_deck(path: Path) -> dict[str, Any]:
         "id": path.stem,
         "title": meta.get("title") or _title_from(path.stem),
         "subtitle": meta.get("subtitle", ""),
+        # The version this deck says it needs, if it says.
+        "requires": meta.get("glissade", ""),
+        # The deck object as written, so `check` can see fields this release
+        # doesn't know about instead of silently dropping them.
+        "raw": meta if isinstance(data, dict) else {},
         "path": path,
         "slides": [_normalise(slide, i) for i, slide in enumerate(slides, start=1)],
     }

@@ -151,6 +151,7 @@ def cmd_start(args) -> int:
     deck = args.deck or defaults.get("deck")
 
     app = create_app(project, deck)
+    _warn_if_deck_needs_newer(app.state.decks)
     show = app.state.show
     current = next((d for d in app.state.decks if d["id"] == show.deck), None)
 
@@ -223,6 +224,7 @@ def cmd_build(args) -> int:
     else:
         out_dir = project.build_dir
 
+    _warn_if_deck_needs_newer(chosen)
     results = build_all(project, chosen, out_dir)
     remote: list[tuple] = []
     out()
@@ -258,6 +260,8 @@ def cmd_check(args) -> int:
 
     errors = warnings = 0
     out()
+    if not args._demo:
+        _warn_if_schema_stale(project)
     for deck in chosen:
         issues = check_deck(deck)
         errs = [i for i in issues if i.level == "error"]
@@ -281,6 +285,72 @@ def cmd_check(args) -> int:
     out(f"  No errors. {warnings} warning(s).")
     out()
     return 0
+
+
+def _warn_if_deck_needs_newer(decks: list[dict]) -> None:
+    """Say so before presenting, but still present.
+
+    Refusing to start would be the wrong trade in a room with an audience in
+    it — a deck that renders most of itself beats a deck that renders none.
+    """
+    from .upgrade import BadRequirement, satisfies
+
+    for deck in decks:
+        req = deck.get("requires")
+        if not req:
+            continue
+        try:
+            if satisfies(__version__, str(req)):
+                continue
+        except BadRequirement:
+            out(dim(f"  ! {deck['id']}: can't read its `glissade` requirement {req!r}"))
+            continue
+        out(f"  ! {bold(deck['title'])} asks for Glissade {req}; this is {__version__}.")
+        out(dim("    Anything newer than this release won't render. `glissade upgrade`"))
+        out()
+
+
+def _warn_if_schema_stale(project: Project) -> None:
+    """A project's schema copy is frozen at init; the editor reads that copy."""
+    local = project.root / "glissade.schema.json"
+    if not local.is_file():
+        return
+    try:
+        import json as _json
+
+        theirs = _json.loads(local.read_text(encoding="utf-8"))
+        ours = _json.loads(SCHEMA_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if theirs.get("x-glissade-version") != ours.get("x-glissade-version"):
+        out(f"  ! glissade.schema.json was written by "
+            f"{theirs.get('x-glissade-version', 'an older release')}; "
+            f"this is {ours.get('x-glissade-version', __version__)}.")
+        out(dim("    Your editor validates against that copy. Run `glissade schema`."))
+        out()
+
+
+def cmd_schema(args) -> int:
+    """Refresh the project's copy of the JSON schema."""
+    project = _project(args)
+    target = project.root / "glissade.schema.json"
+    existed = target.is_file()
+    shutil.copyfile(SCHEMA_FILE, target)
+    out()
+    out(f"  {'Updated' if existed else 'Wrote'} {bold(str(target.relative_to(project.root)))}")
+    out(dim(f"  Schema v{_schema_stamp()} — editors validating against it are current again."))
+    out()
+    return 0
+
+
+def _schema_stamp() -> str:
+    try:
+        import json as _json
+
+        return str(_json.loads(SCHEMA_FILE.read_text(encoding="utf-8"))
+                   .get("x-glissade-version", __version__))
+    except (OSError, ValueError):  # pragma: no cover
+        return __version__
 
 
 # --------------------------------------------------------------- upgrade
@@ -432,6 +502,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = common(sub.add_parser("themes", help="list themes"))
     sp.set_defaults(func=cmd_themes)
+
+    sp = common(sub.add_parser("schema", help="refresh the project's JSON schema copy"))
+    sp.set_defaults(func=cmd_schema)
 
     sp = sub.add_parser("upgrade", help="update glissade to the latest release")
     sp.add_argument(

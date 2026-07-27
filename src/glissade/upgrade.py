@@ -148,6 +148,48 @@ def is_newer(candidate: str, current: str) -> bool:
     return parse_version(candidate) > parse_version(current)
 
 
+# A deck may declare the version it needs, e.g. ">=0.6" or ">=0.6,<1.0".
+# Parsed here rather than pulling in packaging(), because the whole point of
+# the dependency list is that installing Glissade can never fail.
+_OPERATORS = ("<=", ">=", "==", "!=", "<", ">")
+
+
+class BadRequirement(ValueError):
+    """The requirement string isn't something we can read."""
+
+
+def satisfies(version: str, requirement: str) -> bool:
+    """True if `version` meets every clause of `requirement`.
+
+    A bare version means "at least this", which is what people mean when
+    they write "0.6" — the alternative reading, exact equality, would break
+    every deck on the next release.
+    """
+    clauses = [c.strip() for c in str(requirement).split(",") if c.strip()]
+    if not clauses:
+        raise BadRequirement("empty requirement")
+
+    have = parse_version(version)
+    for clause in clauses:
+        op = next((o for o in _OPERATORS if clause.startswith(o)), None)
+        wanted = clause[len(op):].strip() if op else clause
+        if not wanted or not wanted[0].isdigit():
+            raise BadRequirement(f"can't read {clause!r}")
+        want = parse_version(wanted)
+        ok = {
+            None: have >= want,
+            ">=": have >= want,
+            ">": have > want,
+            "==": have == want,
+            "!=": have != want,
+            "<=": have <= want,
+            "<": have < want,
+        }[op]
+        if not ok:
+            return False
+    return True
+
+
 def run_upgrade(installer: Installer) -> int:
     """Hand off to the installer. Its output is the user's feedback."""
     env = dict(os.environ)

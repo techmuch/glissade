@@ -30,6 +30,15 @@ glissade build          # write standalone HTML to build/
 `glissade.schema.json` sits beside this file. Keep the `$schema` line — it
 gives editors autocomplete and inline validation.
 
+Optionally declare the release the deck needs:
+
+```jsonc
+"glissade": ">=0.6"
+```
+
+**Only use fields listed in this document.** Anything else is reported by
+`check` and renders nothing — inventing a field does not extend the format.
+
 ---
 
 ## The shape of a slide
