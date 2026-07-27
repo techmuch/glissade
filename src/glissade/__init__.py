@@ -1,16 +1,16 @@
-"""Slidecast — presentation decks that work when the network doesn't.
+"""Glissade — presentation decks that work when the network doesn't.
 
 Decks are JSON. The server drives a projector and a phone remote in sync over
-server-sent events. `slidecast build` turns a deck into one HTML file with
+server-sent events. `glissade build` turns a deck into one HTML file with
 every image and activity embedded, so a presentation survives a room with no
 Wi-Fi.
 
 Installed as a CLI:
 
-    slidecast init      scaffold a project in the current directory
-    slidecast start     present
-    slidecast build     write standalone HTML
-    slidecast check     validate decks before you rely on them
+    glissade init      scaffold a project in the current directory
+    glissade start     present
+    glissade build     write standalone HTML
+    glissade check     validate decks before you rely on them
 """
 
 __version__ = "0.3.0"

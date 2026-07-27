@@ -5,7 +5,7 @@ purpose-built checker rather than a generic schema validator, because the
 useful errors are the ones a schema can't express: a media file that isn't
 there, a layout whose name is a near-miss, a grid with one image in it.
 
-An AI harness authoring decks is expected to run `slidecast check` and fix what
+An AI harness authoring decks is expected to run `glissade check` and fix what
 it reports before handing the deck over.
 """
 

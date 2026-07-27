@@ -8,7 +8,7 @@ dist/
 .pixi/
 
 # Presenter state
-.slidecast/
+.glissade/
 
 # Python
 __pycache__/

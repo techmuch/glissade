@@ -1,16 +1,16 @@
 # Building slides in this project
 
-This directory is a **Slidecast** project. Decks are JSON files in `decks/`.
+This directory is a **Glissade** project. Decks are JSON files in `decks/`.
 This file is the working reference for building them.
 
-Run `slidecast check` after every edit. It catches missing media, unknown
+Run `glissade check` after every edit. It catches missing media, unknown
 layouts, empty slides and YouTube links in the wrong form, and it is the
 fastest way to know a deck is sound. Treat a non-zero exit as work unfinished.
 
 ```bash
-slidecast check          # validate every deck
-slidecast start          # present, with a phone remote
-slidecast build          # write standalone HTML to build/
+glissade check          # validate every deck
+glissade start          # present, with a phone remote
+glissade build          # write standalone HTML to build/
 ```
 
 ---
@@ -19,7 +19,7 @@ slidecast build          # write standalone HTML to build/
 
 ```jsonc
 {
-  "$schema": "./slidecast.schema.json",
+  "$schema": "./glissade.schema.json",
   "title": "Shown in the picker and the browser tab",
   "subtitle": "Optional",
   "order": 1,
@@ -27,7 +27,7 @@ slidecast build          # write standalone HTML to build/
 }
 ```
 
-`slidecast.schema.json` sits beside this file. Keep the `$schema` line — it
+`glissade.schema.json` sits beside this file. Keep the `$schema` line — it
 gives editors autocomplete and inline validation.
 
 ---
@@ -178,9 +178,9 @@ Two things weighed against each other:
 
 ## Before you hand the deck over
 
-1. `slidecast check` exits zero.
+1. `glissade check` exits zero.
 2. Every slide has `notes`.
 3. Every image referenced actually exists.
 4. External embeds are deliberate — `build` lists them, and each is a slide
    that fails without Wi-Fi.
-5. `slidecast build` succeeds.
+5. `glissade build` succeeds.

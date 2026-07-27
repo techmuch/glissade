@@ -1,44 +1,44 @@
-# Slidecast
+# Glissade
 
 Presentation decks written as JSON, driven from your phone, and built into a
 single HTML file that works when the Wi-Fi doesn't.
 
 ```bash
-uv tool install slidecast     # or: pipx install slidecast
+uv tool install glissade     # or: pipx install glissade
 
 mkdir my-talk && cd my-talk
-slidecast init                # scaffold a deck and an AI-agent guide
-slidecast start               # present — prints a QR code for the remote
+glissade init                # scaffold a deck and an AI-agent guide
+glissade start               # present — prints a QR code for the remote
 ```
 
-No project yet? `slidecast demo` runs the decks that ship with the tool from
+No project yet? `glissade demo` runs the decks that ship with the tool from
 anywhere, and they document the whole system.
 
 ## Installing
 
 | | |
 | --- | --- |
-| **uv** (recommended) | `uv tool install slidecast` — installs Python too if you don't have it |
-| **pipx** | `pipx install slidecast` |
-| **pip** | `pip install slidecast` |
-| **Try without installing** | `uvx slidecast demo` |
+| **uv** (recommended) | `uv tool install glissade` — installs Python too if you don't have it |
+| **pipx** | `pipx install glissade` |
+| **pip** | `pip install glissade` |
+| **Try without installing** | `uvx glissade demo` |
 
 One universal wheel covers Windows, macOS and Linux — every dependency is pure
 Python, so installation never needs a compiler. Python 3.10 or newer.
 
-Add `slidecast[images]` to pull in Pillow, which downscales oversized images
+Add `glissade[images]` to pull in Pillow, which downscales oversized images
 before embedding them. Without it images embed at full size; nothing breaks.
 
 ## Commands
 
 | Command | Does |
 | --- | --- |
-| `slidecast init [dir]` | Scaffold a project: a starter deck, `AGENTS.md`, and the JSON schema |
-| `slidecast start` | Present, with a phone remote on the same Wi-Fi |
-| `slidecast build [deck]` | Write standalone HTML to `build/` |
-| `slidecast check [deck]` | Validate decks — run this after editing |
-| `slidecast decks` / `themes` | List what's available |
-| `slidecast demo` | Present the built-in tour and layout gallery |
+| `glissade init [dir]` | Scaffold a project: a starter deck, `AGENTS.md`, and the JSON schema |
+| `glissade start` | Present, with a phone remote on the same Wi-Fi |
+| `glissade build [deck]` | Write standalone HTML to `build/` |
+| `glissade check [deck]` | Validate decks — run this after editing |
+| `glissade decks` / `themes` | List what's available |
+| `glissade demo` | Present the built-in tour and layout gallery |
 
 Every command takes `-C PATH` to run as if started elsewhere. Commands find
 your project by walking up from the working directory, the way git does, so
@@ -49,26 +49,26 @@ they work from any subdirectory.
 ```
 my-talk/
 ├── decks/
-│   ├── talk.json           your deck
-│   └── media/              images and activities it references
-├── AGENTS.md               guide for an AI assistant writing slides
-├── slidecast.schema.json   editor autocomplete and validation
-├── slidecast.toml          optional defaults (deck, port, host)
-├── themes.json             optional — overrides the built-in themes
-└── build/                  generated; rebuild any time
+│   ├── talk.json          your deck
+│   └── media/             images and activities it references
+├── AGENTS.md              guide for an AI assistant writing slides
+├── glissade.schema.json   editor autocomplete and validation
+├── glissade.toml          optional defaults (deck, port, host)
+├── themes.json            optional — overrides the built-in themes
+└── build/                 generated; rebuild any time
 ```
 
 Only `decks/` is required. A directory containing it is a project.
 
 ## Writing decks with an AI assistant
 
-`slidecast init` writes an `AGENTS.md` alongside your deck: the full field
+`glissade init` writes an `AGENTS.md` alongside your deck: the full field
 reference, the layout catalogue, worked examples, and the rules that matter
 (every slide needs speaker notes; media paths are relative to the deck; use
 `/embed/` YouTube URLs). Point Claude Code, Cursor, or any agent at the
 directory and ask it to build your talk.
 
-The loop that makes this work is `slidecast check`. It validates structure and
+The loop that makes this work is `glissade check`. It validates structure and
 the things a schema can't — missing image files, layouts that are near-miss
 typos, grids with one image, YouTube watch links — and exits non-zero so an
 agent knows it isn't done:
@@ -83,7 +83,7 @@ agent knows it isn't done:
 
 ## Presenting
 
-`slidecast start` prints two addresses and a QR code:
+`glissade start` prints two addresses and a QR code:
 
 | Address | Open it on |
 | --- | --- |
@@ -145,7 +145,7 @@ Layouts: `title`, `title-content`, `section`, `title-only`, `two-content`,
 `cls` adds modifiers independent of layout: `"ask"` (dark, for questions),
 `"story"`, `"center"`.
 
-Run `slidecast demo --deck gallery` to see all fourteen.
+Run `glissade demo --deck gallery` to see all fourteen.
 
 ## Media
 
@@ -164,7 +164,7 @@ one file with no folder to forget.
 Embeds mount only while their slide is on screen — otherwise a video keeps
 playing, audibly, after you've moved on. An external embed that can't load
 shows a QR-code fallback rather than a blank frame; <kbd>R</kbd> retries.
-`slidecast build` lists every slide that depends on the network.
+`glissade build` lists every slide that depends on the network.
 
 ## Themes
 
@@ -204,12 +204,12 @@ presentation and an apology.
 ## Developing
 
 ```bash
-git clone https://github.com/davidfullmer/slidecast && cd slidecast
+git clone https://github.com/davidfullmer/glissade && cd glissade
 uv venv && uv pip install -e ".[images]"
-slidecast demo
+glissade demo
 ```
 
-`src/slidecast/` is the package; `templates/` holds the deck and remote HTML;
+`src/glissade/` is the package; `templates/` holds the deck and remote HTML;
 `data/` holds the themes, JSON schema, `init` scaffold and demo decks — all
 shipped inside the wheel so the tool works from any directory.
 

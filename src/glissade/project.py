@@ -1,10 +1,10 @@
 """Where things live.
 
-Slidecast is installed once and run from wherever the user's decks are, so
+Glissade is installed once and run from wherever the user's decks are, so
 nothing may be resolved relative to the package except the tool's own assets.
 
 A *project* is any directory containing `decks/`. Commands search upward from
-the working directory for one, the way git finds a repository, so `slidecast
+the working directory for one, the way git finds a repository, so `glissade
 start` works from anywhere inside the project.
 
 Two kinds of path, kept deliberately separate:
@@ -35,8 +35,8 @@ DEMO_DIR = DATA_DIR / "demo"
 # --- the user's project --------------------------------------------------
 
 DECKS_DIRNAME = "decks"
-STATE_DIRNAME = ".slidecast"
-CONFIG_NAME = "slidecast.toml"
+STATE_DIRNAME = ".glissade"
+CONFIG_NAME = "glissade.toml"
 
 
 class ProjectNotFound(Exception):
@@ -45,8 +45,8 @@ class ProjectNotFound(Exception):
     def __init__(self, start: Path):
         self.start = start
         super().__init__(
-            f"no slidecast project in {start} or any parent directory.\n"
-            f"Run `slidecast init` here to create one."
+            f"no glissade project in {start} or any parent directory.\n"
+            f"Run `glissade init` here to create one."
         )
 
 
@@ -101,7 +101,7 @@ class Project:
         return self.state_dir / "state.json"
 
     def config(self) -> dict:
-        """Optional defaults from slidecast.toml. Absent or broken is fine.
+        """Optional defaults from glissade.toml. Absent or broken is fine.
 
         tomllib is 3.11+; on 3.10 the file is simply ignored rather than
         dragging in a dependency for an optional convenience.
@@ -115,7 +115,7 @@ class Project:
         try:
             with self.config_file.open("rb") as fh:
                 data = tomllib.load(fh)
-            section = data.get("slidecast", data)
+            section = data.get("glissade", data)
             return section if isinstance(section, dict) else {}
         except (OSError, ValueError):
             return {}
@@ -147,7 +147,7 @@ def require_project(start: Path | None = None) -> Project:
 def demo_project() -> Project:
     """The decks that ship with the tool, presented as a read-only project.
 
-    `slidecast demo` runs from anywhere, including a directory that has no
+    `glissade demo` runs from anywhere, including a directory that has no
     project at all, so a new user can see the thing working before writing a
     single line of JSON.
     """
@@ -182,7 +182,7 @@ def _user_cache_dir() -> Path:
         base = Path.home() / "Library" / "Caches"
     else:
         base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
-    path = base / "slidecast"
+    path = base / "glissade"
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError:  # pragma: no cover

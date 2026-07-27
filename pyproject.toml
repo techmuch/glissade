@@ -3,7 +3,7 @@ requires = ["hatchling>=1.21"]
 build-backend = "hatchling.build"
 
 [project]
-name = "slidecast"
+name = "glissade"
 version = "0.3.0"
 description = "Presentation decks written as JSON, driven from your phone, built into a single self-contained HTML file"
 readme = "README.md"
@@ -30,7 +30,7 @@ classifiers = [
 ]
 
 # Everything here is a pure-Python wheel on every platform, so `pip install
-# slidecast` never needs a compiler. Pillow is the one compiled dependency and
+# glissade` never needs a compiler. Pillow is the one compiled dependency and
 # is therefore optional — images embed unresized without it.
 dependencies = [
   "fastapi>=0.110",
@@ -42,21 +42,21 @@ dependencies = [
 images = ["pillow>=10.0"]
 
 [project.urls]
-Homepage = "https://github.com/davidfullmer/slidecast"
-Issues = "https://github.com/davidfullmer/slidecast/issues"
+Homepage = "https://github.com/davidfullmer/glissade"
+Issues = "https://github.com/davidfullmer/glissade/issues"
 
 [project.scripts]
-slidecast = "slidecast.cli:main"
+glissade = "glissade.cli:main"
 
 # Templates, themes, the schema, the init scaffold and the demo decks all live
 # inside the package directory, so they ship in the wheel automatically — the
 # tool has to work from any directory, with nothing alongside it.
 [tool.hatch.build.targets.wheel]
-packages = ["src/slidecast"]
-artifacts = ["src/slidecast/data/**", "src/slidecast/templates/**"]
+packages = ["src/glissade"]
+artifacts = ["src/glissade/data/**", "src/glissade/templates/**"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/slidecast", "README.md", "LICENSE", "pyproject.toml"]
+include = ["src/glissade", "README.md", "LICENSE", "pyproject.toml"]
 
 [tool.ruff]
 line-length = 96

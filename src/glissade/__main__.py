@@ -1,4 +1,4 @@
-"""Allow `python -m slidecast` as well as the installed `slidecast` command."""
+"""Allow `python -m glissade` as well as the installed `glissade` command."""
 
 from .cli import main
 

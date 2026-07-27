@@ -1,5 +1,5 @@
-# Generated decks — rebuild with `slidecast build`
+# Generated decks — rebuild with `glissade build`
 build/
 
 # Presenter state: which deck, theme and text size were last used
-.slidecast/
+.glissade/

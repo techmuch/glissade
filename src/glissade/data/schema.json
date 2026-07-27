@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://slidecast.dev/schema.json",
-  "title": "Slidecast deck",
+  "$id": "https://glissade.dev/schema.json",
+  "title": "Glissade deck",
   "description": "A presentation deck. Either an object with metadata and a slides array, or a bare array of slides.",
   "oneOf": [
     {

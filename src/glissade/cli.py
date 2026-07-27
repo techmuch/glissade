@@ -1,12 +1,12 @@
-"""The `slidecast` command.
+"""The `glissade` command.
 
-    slidecast init      scaffold a project in the current directory
-    slidecast start     present a deck, with a phone remote
-    slidecast build     write standalone HTML for every deck
-    slidecast check     validate decks
-    slidecast decks     list what's here
-    slidecast themes    list available themes
-    slidecast demo      present the decks that ship with the tool
+    glissade init      scaffold a project in the current directory
+    glissade start     present a deck, with a phone remote
+    glissade build     write standalone HTML for every deck
+    glissade check     validate decks
+    glissade decks     list what's here
+    glissade themes    list available themes
+    glissade demo      present the decks that ship with the tool
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ def _decks_or_die(project: Project, wanted: str | None = None) -> list[dict]:
     if not found:
         raise SystemExit(
             f"No decks in {project.decks_dir}.\n"
-            f"Add a .json file there, or run `slidecast init` to scaffold one."
+            f"Add a .json file there, or run `glissade init` to scaffold one."
         )
     if not wanted:
         return found
@@ -106,7 +106,7 @@ def cmd_init(args) -> int:
         if src.is_dir():
             continue
         planned.append((src, target / src.relative_to(SCAFFOLD_DIR)))
-    planned.append((SCHEMA_FILE, target / "slidecast.schema.json"))
+    planned.append((SCHEMA_FILE, target / "glissade.schema.json"))
 
     clashes = [dst for _, dst in planned if dst.exists()]
     if clashes and not args.force:
@@ -121,14 +121,14 @@ def cmd_init(args) -> int:
         shutil.copyfile(src, dst)
 
     out()
-    out(f"  {bold('Slidecast project ready')}  {dim(str(target))}")
+    out(f"  {bold('Glissade project ready')}  {dim(str(target))}")
     out("  " + rule())
     for _, dst in planned:
         out(f"  {dst.relative_to(target)}")
     out()
     out("  Next:")
-    out(f"    {bold('slidecast start')}    present it")
-    out(f"    {bold('slidecast check')}    validate after editing")
+    out(f"    {bold('glissade start')}    present it")
+    out(f"    {bold('glissade check')}    validate after editing")
     out()
     out(dim("  AGENTS.md is written for an AI assistant — point one at this"))
     out(dim("  directory and ask it to build your deck."))
@@ -159,7 +159,7 @@ def cmd_start(args) -> int:
     control = f"http://{ip}:{port}/control"
 
     out()
-    out(f"  {bold('Slidecast')} {dim('v' + __version__)}")
+    out(f"  {bold('Glissade')} {dim('v' + __version__)}")
     out("  " + rule())
     if current:
         out(f"  Deck     {bold(current['title'])}  ({len(current['slides'])} slides)")
@@ -313,10 +313,10 @@ def cmd_themes(args) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="slidecast",
+        prog="glissade",
         description="Presentation decks written as JSON, driven from your phone.",
     )
-    p.add_argument("--version", action="version", version=f"slidecast {__version__}")
+    p.add_argument("--version", action="version", version=f"glissade {__version__}")
     sub = p.add_subparsers(dest="command", metavar="<command>")
 
     def common(sp):
@@ -325,7 +325,7 @@ def build_parser() -> argparse.ArgumentParser:
             help="run as if started in this directory",
         )
         sp.add_argument("--demo", dest="_demo", action="store_true",
-                        help="use the decks that ship with slidecast")
+                        help="use the decks that ship with glissade")
         return sp
 
     sp = sub.add_parser("init", help="scaffold a project in a directory")
@@ -357,7 +357,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp = common(sub.add_parser("themes", help="list themes"))
     sp.set_defaults(func=cmd_themes)
 
-    sp = sub.add_parser("demo", help="present the decks that ship with slidecast")
+    sp = sub.add_parser("demo", help="present the decks that ship with glissade")
     sp.add_argument("--deck", default=None, help="tour or gallery")
     sp.add_argument("--host", default=None)
     sp.add_argument("--port", type=int, default=None)

@@ -112,7 +112,7 @@ def render_deck(
     slides: list[dict[str, Any]],
     live: bool,
     themes: list[dict[str, Any]] | None = None,
-    title: str = "Slidecast",
+    title: str = "Glissade",
 ) -> str:
     """Fill the deck template.
 
@@ -226,7 +226,7 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
     if not all_decks:
         raise SystemExit(
             f"No decks found in {project.decks_dir}.\n"
-            f"Add a .json file there, or run `slidecast init` to scaffold one."
+            f"Add a .json file there, or run `glissade init` to scaffold one."
         )
 
     themes = load_themes(project)
@@ -237,7 +237,7 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
 
     current = deck_lib.resolve(deck_name or settings["deck"], all_decks)
 
-    app = FastAPI(title="Slidecast", docs_url=None, redoc_url=None)
+    app = FastAPI(title="Glissade", docs_url=None, redoc_url=None)
 
     # Slides are prepared (media inlined) once per deck and cached, since
     # base64-encoding images on every request would be wasteful.

@@ -1,5 +1,5 @@
 {
-  "$schema": "../slidecast.schema.json",
+  "$schema": "../glissade.schema.json",
   "title": "My deck",
   "subtitle": "Rename this and start writing",
   "order": 1,
@@ -24,7 +24,7 @@
         "A plain string becomes a bullet",
         { "text": "An object adds a second line", "sub": "Good for a source or an aside" }
       ],
-      "notes": "Every field here is optional. Delete what you don't need.<br><br>See <b>AGENTS.md</b> for the full field reference, or run <b>slidecast demo</b> for a deck that demonstrates all fourteen layouts."
+      "notes": "Every field here is optional. Delete what you don't need.<br><br>See <b>AGENTS.md</b> for the full field reference, or run <b>glissade demo</b> for a deck that demonstrates all fourteen layouts."
     },
     {
       "title": "Q: A discussion stop",
@@ -39,9 +39,9 @@
       "layout": "title-content",
       "heading": "Where to go from here",
       "bullets": [
-        { "text": "slidecast check", "sub": "Validate after editing" },
-        { "text": "slidecast start", "sub": "Present, with the remote on your phone" },
-        { "text": "slidecast build", "sub": "Write a standalone file that needs no network" }
+        { "text": "glissade check", "sub": "Validate after editing" },
+        { "text": "glissade start", "sub": "Present, with the remote on your phone" },
+        { "text": "glissade build", "sub": "Write a standalone file that needs no network" }
       ],
       "notes": "<b>Build the night before.</b> It costs a second and it's the difference between a presentation and an apology."
     }

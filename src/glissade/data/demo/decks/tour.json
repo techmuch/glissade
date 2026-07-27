@@ -1,14 +1,14 @@
 {
-  "title": "Slidecast — A Tour",
+  "title": "Glissade — A Tour",
   "subtitle": "What it does and how to drive it",
   "order": 1,
   "slides": [
     {
       "n": 1,
       "layout": "title",
-      "title": "Title — Slidecast",
+      "title": "Title — Glissade",
       "eyebrow": "A tour",
-      "heading": "Slidecast",
+      "heading": "Glissade",
       "subheading": "Decks that work when the Wi-Fi doesn't",
       "byline": "Press → or tap Next on your phone",
       "notes": "<b>Welcome.</b> This deck is both the documentation and a demonstration — every feature it describes is being used to show it to you.<br><br>If you're reading this on the phone remote, you're already using half of what's here. Press <b>N</b> on the projecting machine to show these notes on screen too."
@@ -318,7 +318,7 @@
       },
       "right": {
         "subheading": "Two decks ship",
-        "body": "<p><b>Slidecast — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fourteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
+        "body": "<p><b>Glissade — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fourteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
       },
       "notes": "<b>B is underused.</b> Blanking the screen during a discussion pulls attention back to the room better than any slide can.<br><br>Now switch to the <b>Layout Gallery</b> from your phone — it picks up where this leaves off."
     },
