@@ -11,9 +11,9 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
-from . import SETTINGS_JSON, TEMPLATE_DIR, THEMES_JSON
 from . import decks as deck_lib
 from .assets import prepare_slides
+from .project import TEMPLATE_DIR, Project, state_path_for
 
 # Text-scale limits. Below ~70% the deck stops being readable from the back of
 # a room; above ~160% the denser slides need scrolling to read.
@@ -44,15 +44,18 @@ def prepared_slides(deck: dict[str, Any]) -> tuple[list[dict[str, Any]], list[st
     return prepare_slides(deck["slides"], base)
 
 
-def load_themes() -> list[dict[str, Any]]:
+def load_themes(project: Project | None = None) -> list[dict[str, Any]]:
     """Read the theme definitions. Adding a theme means adding an entry here —
     no code changes, because the deck styles itself entirely from these tokens.
 
     A missing or broken themes.json must not stop a presentation, so fall back
     to a single built-in theme matching the stylesheet's own defaults.
     """
+    from .project import DEFAULT_THEMES
+
+    source = project.themes_file if project else DEFAULT_THEMES
     try:
-        with THEMES_JSON.open(encoding="utf-8") as fh:
+        with source.open(encoding="utf-8") as fh:
             themes = json.load(fh)
         valid = [
             t
@@ -66,7 +69,9 @@ def load_themes() -> list[dict[str, Any]]:
     return [{"id": "paper", "name": "Paper", "vars": {}}]
 
 
-def load_settings(theme_ids: list[str], deck_ids: list[str]) -> dict[str, Any]:
+def load_settings(
+    state_file: Path, theme_ids: list[str], deck_ids: list[str]
+) -> dict[str, Any]:
     """Restore presenter preferences from the last run. A missing or corrupt
     file is not worth failing over — fall back to the defaults."""
     default = {
@@ -75,7 +80,7 @@ def load_settings(theme_ids: list[str], deck_ids: list[str]) -> dict[str, Any]:
         "deck": deck_ids[0] if deck_ids else None,
     }
     try:
-        with SETTINGS_JSON.open(encoding="utf-8") as fh:
+        with state_file.open(encoding="utf-8") as fh:
             data = json.load(fh)
     except (OSError, ValueError):
         return default
@@ -90,11 +95,12 @@ def load_settings(theme_ids: list[str], deck_ids: list[str]) -> dict[str, Any]:
     }
 
 
-def save_settings(scale: float, theme: str, deck: str | None) -> None:
-    """Persist preferences. Best-effort: a read-only checkout shouldn't stop
-    a presentation."""
+def save_settings(state_file: Path, scale: float, theme: str, deck: str | None) -> None:
+    """Persist preferences. Best-effort: a read-only project (the shipped
+    demos) shouldn't stop a presentation."""
     try:
-        SETTINGS_JSON.write_text(
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        state_file.write_text(
             json.dumps({"scale": scale, "theme": theme, "deck": deck}, indent=2) + "\n",
             encoding="utf-8",
         )
@@ -123,7 +129,7 @@ def render_deck(
 
     return (
         template.replace("__SLIDES_JSON__", embed(slides))
-        .replace("__THEMES_JSON__", embed(themes if themes is not None else load_themes()))
+        .replace("__THEMES_JSON__", embed(themes if themes is not None else []))
         .replace("__TITLE__", embed(title))
         .replace("__LIVE__", "true" if live else "false")
     )
@@ -138,6 +144,7 @@ class Presentation:
     """
 
     total: int
+    state_file: Path | None = None
     theme_ids: list[str] = field(default_factory=list)
     deck_ids: list[str] = field(default_factory=list)
     n: int = 1
@@ -201,7 +208,8 @@ class Presentation:
         return self.set_theme(self.theme_ids[(idx + steps) % len(self.theme_ids)])
 
     def _save(self) -> None:
-        save_settings(self.scale, self.theme, self.deck)
+        if self.state_file is not None:
+            save_settings(self.state_file, self.scale, self.theme, self.deck)
 
     def publish(self) -> dict[str, Any]:
         state = self.state
@@ -213,17 +221,19 @@ class Presentation:
         return state
 
 
-def create_app(deck_name: str | None = None) -> FastAPI:
-    all_decks = deck_lib.discover()
+def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
+    all_decks = deck_lib.discover(project)
     if not all_decks:
         raise SystemExit(
-            "No decks found. Add a .json file to the decks/ directory."
+            f"No decks found in {project.decks_dir}.\n"
+            f"Add a .json file there, or run `slidecast init` to scaffold one."
         )
 
-    themes = load_themes()
+    themes = load_themes(project)
+    state_file = state_path_for(project)
     theme_ids = [t["id"] for t in themes]
     deck_ids = [d["id"] for d in all_decks]
-    settings = load_settings(theme_ids, deck_ids)
+    settings = load_settings(state_file, theme_ids, deck_ids)
 
     current = deck_lib.resolve(deck_name or settings["deck"], all_decks)
 
@@ -249,6 +259,7 @@ def create_app(deck_name: str | None = None) -> FastAPI:
 
     show = Presentation(
         total=len(slides_for(current)),
+        state_file=state_file,
         theme_ids=theme_ids,
         deck_ids=deck_ids,
         scale=settings["scale"],
@@ -257,6 +268,7 @@ def create_app(deck_name: str | None = None) -> FastAPI:
     )
     app.state.show = show
     app.state.decks = all_decks
+    app.state.project = project
 
     def switch(deck_id: str) -> dict[str, Any]:
         """Change the running deck. Bumps `rev` so open displays reload —

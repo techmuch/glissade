@@ -1,12 +1,14 @@
-# pixi environments — recreated from pixi.toml / pixi.lock
+# Build artefacts
+build/
+dist/
+*.egg-info/
+
+# Environments
+.venv/
 .pixi/
 
-# Generated standalone decks — rebuild with `pixi run build`
-build/
-
-# Presenter preferences (deck, theme, text size) — local to the machine
-# and room you're presenting in
-presenter-settings.json
+# Presenter state
+.slidecast/
 
 # Python
 __pycache__/

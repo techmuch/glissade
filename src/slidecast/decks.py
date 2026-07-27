@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from . import DECKS_DIR
+from .project import Project
 
 
 def _title_from(stem: str) -> str:
@@ -41,14 +41,44 @@ def read_deck(path: Path) -> dict[str, Any]:
         "title": meta.get("title") or _title_from(path.stem),
         "subtitle": meta.get("subtitle", ""),
         "path": path,
-        "slides": slides,
+        "slides": [_normalise(slide, i) for i, slide in enumerate(slides, start=1)],
     }
 
 
-def discover(directory: Path | None = None) -> list[dict[str, Any]]:
-    """Every deck in the decks directory, ordered by an optional `order` key
-    then by title, so the picker is stable between runs."""
-    d = directory or DECKS_DIR
+def _normalise(slide: Any, index: int) -> Any:
+    """Fill in the fields the UI needs but authors shouldn't have to write.
+
+    `n` and `title` are documented as optional, and the remote's jump list
+    keys off both — so a deck that omits them must still be navigable. Order
+    always comes from array position, never from a hand-written `n`.
+    """
+    if not isinstance(slide, dict):
+        return slide
+    slide = dict(slide)
+    slide["n"] = index
+    if not slide.get("title"):
+        slide["title"] = _label_for(slide, index)
+    return slide
+
+
+def _label_for(slide: dict, index: int) -> str:
+    """A jump-list label derived from whatever the slide actually says."""
+    import re
+
+    for key in ("heading", "subheading", "eyebrow", "caption", "body", "html"):
+        raw = slide.get(key)
+        if isinstance(raw, str) and raw.strip():
+            text = re.sub(r"<[^>]+>", " ", raw)
+            text = re.sub(r"\s+", " ", text).strip()
+            if text:
+                return text[:57].rstrip() + "…" if len(text) > 58 else text
+    return f"Slide {index}"
+
+
+def discover(directory: Path | Project) -> list[dict[str, Any]]:
+    """Every deck in a directory, ordered by an optional `order` key then by
+    title, so the picker is stable between runs."""
+    d = directory.decks_dir if isinstance(directory, Project) else Path(directory)
     out = []
     if not d.is_dir():
         return out

@@ -209,8 +209,8 @@ def prepare_slides(
     out = copy.deepcopy(slides)
     warnings: list[str] = []
 
-    for slide in out:
-        n = slide.get("n", "?")
+    for index, slide in enumerate(out, start=1):
+        n = slide.get("n", index)
         before = len(warnings)
 
         if isinstance(slide.get("image"), dict):
@@ -241,7 +241,8 @@ def prepare_slides(
 def external_media(slides: list[dict[str, Any]]) -> list[tuple[Any, str]]:
     """Every slide that will need live internet, for the build-time report."""
     found = []
-    for slide in slides:
+    for position, slide in enumerate(slides, start=1):
+        slide.setdefault("n", position)
         for node in (
             slide.get("media"),
             (slide.get("left") or {}).get("media") if isinstance(slide.get("left"), dict) else None,

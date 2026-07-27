@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "slidecast"
+version = "0.3.0"
+description = "Presentation decks written as JSON, driven from your phone, built into a single self-contained HTML file"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "David Fullmer", email = "david.d.fullmer@gmail.com" }]
+keywords = ["presentation", "slides", "deck", "offline", "remote", "projector"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Environment :: Web Environment",
+  "Intended Audience :: Education",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Graphics :: Presentation",
+]
+
+# Everything here is a pure-Python wheel on every platform, so `pip install
+# slidecast` never needs a compiler. Pillow is the one compiled dependency and
+# is therefore optional — images embed unresized without it.
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "qrcode>=7.4",
+]
+
+[project.optional-dependencies]
+images = ["pillow>=10.0"]
+
+[project.urls]
+Homepage = "https://github.com/davidfullmer/slidecast"
+Issues = "https://github.com/davidfullmer/slidecast/issues"
+
+[project.scripts]
+slidecast = "slidecast.cli:main"
+
+# Templates, themes, the schema, the init scaffold and the demo decks all live
+# inside the package directory, so they ship in the wheel automatically — the
+# tool has to work from any directory, with nothing alongside it.
+[tool.hatch.build.targets.wheel]
+packages = ["src/slidecast"]
+artifacts = ["src/slidecast/data/**", "src/slidecast/templates/**"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/slidecast", "README.md", "LICENSE", "pyproject.toml"]
+
+[tool.ruff]
+line-length = 96
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

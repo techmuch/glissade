@@ -1,0 +1,49 @@
+{
+  "$schema": "../slidecast.schema.json",
+  "title": "My deck",
+  "subtitle": "Rename this and start writing",
+  "order": 1,
+  "slides": [
+    {
+      "title": "Title slide",
+      "layout": "title",
+      "eyebrow": "A starting point",
+      "heading": "My deck",
+      "subheading": "Replace this with your own",
+      "byline": "Press → to advance, or use the phone remote",
+      "notes": "<b>These are speaker notes.</b> They show on your phone and, with <b>N</b>, on screen.<br><br>They're the reason the slide can stay this quiet — put what you'll say here, not on the wall."
+    },
+    {
+      "title": "A point with bullets",
+      "layout": "title-content",
+      "tag": "Example",
+      "eyebrow": "The workhorse layout",
+      "heading": "One idea per slide",
+      "body": "<p>Text fields accept HTML, so <em>emphasis</em> works.</p>",
+      "bullets": [
+        "A plain string becomes a bullet",
+        { "text": "An object adds a second line", "sub": "Good for a source or an aside" }
+      ],
+      "notes": "Every field here is optional. Delete what you don't need.<br><br>See <b>AGENTS.md</b> for the full field reference, or run <b>slidecast demo</b> for a deck that demonstrates all fourteen layouts."
+    },
+    {
+      "title": "Q: A discussion stop",
+      "layout": "title-content",
+      "cls": "ask center",
+      "eyebrow": "Discussion",
+      "heading": "What do you want them to remember?",
+      "notes": "<b>Adding <code>\"cls\": \"ask\"</code> inverts a slide to the dark treatment.</b><br><br>Use it for questions. The change in the room does the work, not the words.<br><br>The remote flags these so you can see one coming."
+    },
+    {
+      "title": "Next steps",
+      "layout": "title-content",
+      "heading": "Where to go from here",
+      "bullets": [
+        { "text": "slidecast check", "sub": "Validate after editing" },
+        { "text": "slidecast start", "sub": "Present, with the remote on your phone" },
+        { "text": "slidecast build", "sub": "Write a standalone file that needs no network" }
+      ],
+      "notes": "<b>Build the night before.</b> It costs a second and it's the difference between a presentation and an apology."
+    }
+  ]
+}

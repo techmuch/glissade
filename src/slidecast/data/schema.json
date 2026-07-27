@@ -1,0 +1,262 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://slidecast.dev/schema.json",
+  "title": "Slidecast deck",
+  "description": "A presentation deck. Either an object with metadata and a slides array, or a bare array of slides.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/deckObject"
+    },
+    {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/slide"
+      }
+    }
+  ],
+  "$defs": {
+    "deckObject": {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string",
+          "description": "Shown in the deck picker and browser tab."
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Sort position in the picker. Lower first."
+        },
+        "slides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slide"
+          }
+        }
+      },
+      "required": [
+        "slides"
+      ],
+      "additionalProperties": false
+    },
+    "slide": {
+      "type": "object",
+      "properties": {
+        "n": {
+          "type": "integer",
+          "description": "Slide number. Informational; order comes from array position."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short label for the remote's jump list. Not shown on the slide."
+        },
+        "layout": {
+          "enum": [
+            "title",
+            "title-content",
+            "section",
+            "title-only",
+            "two-content",
+            "comparison",
+            "content-caption",
+            "picture-caption",
+            "media-right",
+            "media-left",
+            "media-full",
+            "media-caption",
+            "grid",
+            "blank"
+          ],
+          "default": "blank",
+          "description": "Omit or use 'blank' to render raw `html`."
+        },
+        "cls": {
+          "type": "string",
+          "description": "Space-separated modifiers: 'ask' (dark, for questions), 'story', 'center'."
+        },
+        "tag": {
+          "type": "string",
+          "description": "Small label in the slide corner."
+        },
+        "eyebrow": {
+          "type": "string"
+        },
+        "heading": {
+          "type": "string"
+        },
+        "subheading": {
+          "type": "string"
+        },
+        "byline": {
+          "type": "string",
+          "description": "Title layout only."
+        },
+        "body": {
+          "type": "string",
+          "description": "HTML allowed."
+        },
+        "bullets": {
+          "$ref": "#/$defs/bullets"
+        },
+        "quote": {
+          "type": "string"
+        },
+        "cite": {
+          "type": "string"
+        },
+        "quoteBig": {
+          "type": "boolean"
+        },
+        "caption": {
+          "type": "string",
+          "description": "content-caption layout: the narrow text column."
+        },
+        "image": {
+          "$ref": "#/$defs/image"
+        },
+        "media": {
+          "$ref": "#/$defs/media"
+        },
+        "images": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/image"
+          },
+          "description": "grid layout only. Two to four images."
+        },
+        "left": {
+          "$ref": "#/$defs/block"
+        },
+        "right": {
+          "$ref": "#/$defs/block"
+        },
+        "aspect": {
+          "type": "string"
+        },
+        "html": {
+          "type": "string",
+          "description": "blank layout only: raw markup, used verbatim."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Speaker notes. HTML allowed. Shown on the phone and with N on screen."
+        }
+      },
+      "additionalProperties": false
+    },
+    "bullets": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "sub": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "image": {
+      "type": "object",
+      "description": "A local image. The path is relative to this deck file and the image is embedded into the built HTML.",
+      "properties": {
+        "src": {
+          "type": "string",
+          "description": "Path relative to the deck file, e.g. media/images/chart.png"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "fit": {
+          "enum": [
+            "contain",
+            "cover"
+          ],
+          "default": "contain"
+        },
+        "caption": {
+          "type": "string",
+          "description": "HTML allowed"
+        }
+      },
+      "required": [
+        "src"
+      ],
+      "additionalProperties": false
+    },
+    "media": {
+      "type": "object",
+      "description": "An iframe. Use `file` for a local activity (works offline), or `src` for an external page (needs the network).",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Local .html, inlined as srcdoc. Offline-safe."
+        },
+        "srcdoc": {
+          "type": "string",
+          "description": "Inline HTML. Offline-safe."
+        },
+        "src": {
+          "type": "string",
+          "description": "External URL. NEEDS LIVE INTERNET. For YouTube use the /embed/ form."
+        },
+        "aspect": {
+          "type": "string",
+          "description": "'16:9', '4:3', or 'auto' to fill the region. Omit for the per-kind default."
+        },
+        "sandbox": {
+          "type": "string"
+        },
+        "allow": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "block": {
+      "type": "object",
+      "description": "One side of a two-content or comparison slide. Text, an image, or an embed.",
+      "properties": {
+        "subheading": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "bullets": {
+          "$ref": "#/$defs/bullets"
+        },
+        "image": {
+          "$ref": "#/$defs/image"
+        },
+        "media": {
+          "$ref": "#/$defs/media"
+        },
+        "aspect": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

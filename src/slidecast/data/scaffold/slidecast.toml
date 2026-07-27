@@ -1,0 +1,5 @@
+# Optional project defaults. Delete this file if you don't need it.
+[slidecast]
+# deck = "welcome"   # which deck `slidecast start` opens
+# port = 8000
+# host = "0.0.0.0"   # 0.0.0.0 lets a phone on the same Wi-Fi reach the remote

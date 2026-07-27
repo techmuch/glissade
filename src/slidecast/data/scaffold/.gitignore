@@ -1,0 +1,5 @@
+# Generated decks — rebuild with `slidecast build`
+build/
+
+# Presenter state: which deck, theme and text size were last used
+.slidecast/

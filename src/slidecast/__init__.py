@@ -1,0 +1,47 @@
+"""Slidecast — presentation decks that work when the network doesn't.
+
+Decks are JSON. The server drives a projector and a phone remote in sync over
+server-sent events. `slidecast build` turns a deck into one HTML file with
+every image and activity embedded, so a presentation survives a room with no
+Wi-Fi.
+
+Installed as a CLI:
+
+    slidecast init      scaffold a project in the current directory
+    slidecast start     present
+    slidecast build     write standalone HTML
+    slidecast check     validate decks before you rely on them
+"""
+
+__version__ = "0.3.0"
+
+from .project import (  # noqa: F401
+    DATA_DIR,
+    DEFAULT_THEMES,
+    DEMO_DIR,
+    PACKAGE_DIR,
+    SCAFFOLD_DIR,
+    SCHEMA_FILE,
+    TEMPLATE_DIR,
+    Project,
+    ProjectNotFound,
+    demo_project,
+    find_project,
+    require_project,
+)
+
+__all__ = [
+    "__version__",
+    "PACKAGE_DIR",
+    "TEMPLATE_DIR",
+    "DATA_DIR",
+    "DEFAULT_THEMES",
+    "SCHEMA_FILE",
+    "SCAFFOLD_DIR",
+    "DEMO_DIR",
+    "Project",
+    "ProjectNotFound",
+    "find_project",
+    "require_project",
+    "demo_project",
+]
