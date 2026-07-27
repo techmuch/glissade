@@ -8,7 +8,7 @@ still works with no network at all.
 
 from pathlib import Path
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = PACKAGE_DIR.parent

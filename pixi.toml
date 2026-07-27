@@ -1,6 +1,6 @@
 [workspace]
 name = "slidecast"
-version = "0.2.0"
+version = "0.2.1"
 description = "Self-contained presentation decks with a phone remote"
 authors = ["David Fullmer <david.d.fullmer@gmail.com>"]
 channels = ["conda-forge"]
