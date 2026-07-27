@@ -305,6 +305,54 @@
   }
   #blank.on{display:block}
 
+  /* Presenter-written live notes, optional on the projector. */
+  #livenotes{
+    position:fixed;
+    right:2.4vw;
+    bottom:5.5vh;
+    width:min(31vw, 520px);
+    min-width:360px;
+    max-height:36vh;
+    z-index:24;
+    display:none;
+    flex-direction:column;
+    background:rgba(20,18,16,.90);
+    color:#efe7db;
+    border:1px solid rgba(192,168,120,.35);
+    border-radius:14px;
+    box-shadow:0 14px 40px rgba(0,0,0,.28);
+    backdrop-filter:blur(10px);
+    overflow:hidden;
+  }
+  #livenotes.on{display:flex}
+  #livenotes .ln-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 16px 10px; border-bottom:1px solid rgba(192,168,120,.22);
+    font-family:var(--ui-font);
+  }
+  #livenotes .ln-title{
+    font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:#d0b07c; font-weight:700;
+  }
+  #livenotes .ln-state{font-size:11px; color:#bfb5a6}
+  #livenotes .ln-tag{
+    display:inline-block; padding:2px 8px; border-radius:999px;
+    background:rgba(111,163,184,.18); color:#cfe0e7;
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    font-family:var(--ui-font);
+  }
+  #livenotes .ln-body{
+    padding:14px 16px 16px; overflow:auto; font-family:var(--ui-font);
+  }
+  #livenotes .ln-body p{
+    font-size:18px; line-height:1.45; color:#efe7db; max-width:none; margin:0 0 10px;
+  }
+  #livenotes .ln-text{
+    font-size:18px; line-height:1.45; color:#efe7db;
+    white-space:pre-wrap; word-break:break-word;
+  }
+  #livenotes .ln-empty{color:#bfb5a6; font-style:italic}
+
   /* Live-connection dot, only shown when served by the lesson server */
   #live{
     position:fixed; top:12px; left:16px; z-index:6;
@@ -335,7 +383,7 @@
     body{background:#fff; overflow:visible}
     #stage{position:static}
     .slide{display:flex !important; page-break-after:always; height:100vh; animation:none}
-    #notes,#help,#live,#blank,#scaletoast{display:none}
+    #notes,#help,#live,#blank,#scaletoast,#livenotes{display:none}
   }
 </style>
 </head>
@@ -347,6 +395,16 @@
 <div id="stage"></div>
 <div id="notes"></div>
 <div id="blank"></div>
+<div id="livenotes" aria-label="Live notes overlay">
+  <div class="ln-head">
+    <div>
+      <div class="ln-title">Live notes</div>
+      <div class="ln-state" id="lnstate">Slide 1</div>
+    </div>
+    <div class="ln-tag">Presenter only</div>
+  </div>
+  <div class="ln-body" id="lnbody"></div>
+</div>
 
 <script>
 const SLIDES = __SLIDES_JSON__;
@@ -361,9 +419,12 @@ const MIN_SCALE = 0.7, MAX_SCALE = 1.6, SCALE_STEP = 0.1;
 const stage = document.getElementById('stage');
 const notesEl = document.getElementById('notes');
 const blankEl = document.getElementById('blank');
+const liveNotesEl = document.getElementById('livenotes');
+const liveNotesBodyEl = document.getElementById('lnbody');
+const liveNotesStateEl = document.getElementById('lnstate');
 const liveEl = document.getElementById('live');
 const toastEl = document.getElementById('scaletoast');
-let i = 0, notesOn = false, blanked = false, scale = 1;
+let i = 0, notesOn = false, blanked = false, scale = 1, liveNotesVisible = false, liveNoteText = '';
 let themeId = (THEMES[0] || {}).id || 'paper';
 
 /* ==================== layout renderer ====================
@@ -746,6 +807,20 @@ function setBlank(on){
   blankEl.classList.toggle('on', blanked);
 }
 
+function liveNotesHTML(text){
+  const raw = String(text || '');
+  if(!raw.trim()) return '<p class="ln-empty">No live notes yet for this slide.</p>';
+  const escaped = raw.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+  return '<div class="ln-text">' + escaped + '</div>';
+}
+function setLiveNotes(text, visible){
+  if(typeof text === 'string') liveNoteText = text;
+  if(typeof visible === 'boolean') liveNotesVisible = visible;
+  liveNotesBodyEl.innerHTML = liveNotesHTML(liveNoteText);
+  liveNotesStateEl.textContent = 'Slide ' + (i + 1) + (liveNoteText ? ' · autosaved' : '');
+  liveNotesEl.classList.toggle('on', !!liveNotesVisible && !!liveNoteText.trim());
+}
+
 /* --- text size -------------------------------------------------------- */
 
 let toastTimer = null;
@@ -852,6 +927,7 @@ document.addEventListener('keydown', e => {
   else if(k === '-' || k === '_' || k === 'Subtract'){ e.preventDefault(); bumpScale(-1); }
   else if(k === '0'){ e.preventDefault(); resetScale(); }
   else if(k === 't' || k === 'T'){ cycleTheme(); }
+  else if(k === 'l' || k === 'L'){ if(LIVE) post('/api/live-notes-visible', {visible: !liveNotesVisible}); }
   else if(k === 'r' || k === 'R'){ retryEmbeds(); }
   else if(k === 'f' || k === 'F'){
     if(!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
@@ -884,6 +960,7 @@ if(LIVE){
       const themeChanged = st.theme != null && st.theme !== themeId;
       render(st.n - 1);
       setBlank(st.blank);
+      setLiveNotes(st.live_note || '', !!st.live_notes_visible);
       applyScale(st.scale, sizeChanged && !first && !themeChanged);
       if(st.theme != null) applyTheme(st.theme, themeChanged && !first);
       first = false;
