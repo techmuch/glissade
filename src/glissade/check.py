@@ -12,8 +12,8 @@ it reports before handing the deck over.
 from __future__ import annotations
 
 import difflib
-import json
 import functools
+import json
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +36,7 @@ def _schema() -> dict:
 
 
 def _known(defn: str) -> set:
-    return set((_schema().get("$defs", {}).get(defn, {}).get("properties") or {}))
+    return set(_schema().get("$defs", {}).get(defn, {}).get("properties") or {})
 
 
 LAYOUTS = set(
