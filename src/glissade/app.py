@@ -204,6 +204,15 @@ class Presentation:
         slide = self.n if n is None else n
         return str(self.live_notes.get(deck_id, {}).get(str(slide), ""))
 
+    def live_notes_for_current_deck(self) -> list[dict[str, Any]]:
+        if not self.deck:
+            return []
+        deck_notes = self.live_notes.get(self.deck, {})
+        out = []
+        for key, text in sorted(deck_notes.items(), key=lambda item: int(item[0])):
+            out.append({"n": int(key), "text": str(text)})
+        return out
+
     @property
     def state(self) -> dict[str, Any]:
         return {
@@ -468,6 +477,7 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
             "n": show.n,
             "text": show.live_note_for(),
             "visible": show.live_notes_visible,
+            "all": show.live_notes_for_current_deck(),
         }
 
     @app.post("/api/live-notes")
