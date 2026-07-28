@@ -482,6 +482,7 @@ function paint(){
   $('lnstatus').className = liveNoteDirty ? '' : (liveNoteText ? 'ok' : '');
   $('showlive').classList.toggle('on', !!liveNotesVisible);
   $('showlive').textContent = liveNotesVisible ? 'Hide on projector' : 'Show on projector';
+  renderLiveNotesReview();
 
   if(nx){
     $('nextbox').style.display = '';
@@ -712,7 +713,9 @@ function queueLiveNoteSave(){
   liveNoteSaveTimer = setTimeout(() => {
     post('/api/live-notes', {n: cur, text: $('livenotes').value}).then(r => {
       liveNoteDirty = false;
+      if(r.ok) allLiveNotes = (r.all_live_notes || []);
       if(!r.ok) $('lnstatus').textContent = 'Could not save live notes.';
+      renderLiveNotesReview();
       paint();
     });
   }, 350);
@@ -853,6 +856,7 @@ Promise.all([
     if(st.deck != null) deckId = st.deck;
     liveNoteText = st.live_note || '';
     liveNotesVisible = !!st.live_notes_visible;
+    if(st.all_live_notes) allLiveNotes = st.all_live_notes;
     /* An older server reports no scale. Flag it as soon as we connect rather
        than letting the presenter discover it by pressing a dead button. */
     serverHasScale = st.scale != null;
