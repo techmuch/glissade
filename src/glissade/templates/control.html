@@ -380,7 +380,10 @@
       <span id="lnstatus">No live notes yet.</span>
       <button id="showlive">Show on projector</button>
     </div>
+<<<<<<< HEAD
     
+=======
+>>>>>>> main
   </div>
 </main>
 
@@ -433,7 +436,11 @@
 let SLIDES = [], THEMES = [], DECKS = [];
 let cur = 1, blanked = false, scale = 1, minScale = 0.7, maxScale = 1.6;
 let painted = null, serverHasScale = true, themeId = null, deckId = null, rev = null;
+<<<<<<< HEAD
 let liveNoteText = '', liveNotesVisible = false, liveNoteSaveTimer = null, liveNoteDirty = false, allLiveNotes = [];
+=======
+let liveNoteText = '', liveNotesVisible = false, liveNoteSaveTimer = null, liveNoteDirty = false;
+>>>>>>> main
 
 const $ = id => document.getElementById(id);
 
@@ -477,7 +484,10 @@ function paint(){
   $('lnstatus').className = liveNoteDirty ? '' : (liveNoteText ? 'ok' : '');
   $('showlive').classList.toggle('on', !!liveNotesVisible);
   $('showlive').textContent = liveNotesVisible ? 'Hide on projector' : 'Show on projector';
+<<<<<<< HEAD
   renderLiveNotesReview();
+=======
+>>>>>>> main
 
   if(nx){
     $('nextbox').style.display = '';
@@ -677,6 +687,7 @@ function applyPreviewTheme(){
   for(const k in map) if(map[k]) r.setProperty(k, map[k]);
 }
 
+<<<<<<< HEAD
 function renderLiveNotesReview(){
   const boxes = [$('lnreview'), $('lnreviewpanel')].filter(Boolean);
   for(const box of boxes){
@@ -701,6 +712,8 @@ function renderLiveNotesReview(){
   }
 }
 
+=======
+>>>>>>> main
 function queueLiveNoteSave(){
   liveNoteDirty = true;
   paint();
@@ -708,9 +721,13 @@ function queueLiveNoteSave(){
   liveNoteSaveTimer = setTimeout(() => {
     post('/api/live-notes', {n: cur, text: $('livenotes').value}).then(r => {
       liveNoteDirty = false;
+<<<<<<< HEAD
       if(r.ok) allLiveNotes = (r.all_live_notes || []);
       if(!r.ok) $('lnstatus').textContent = 'Could not save live notes.';
       renderLiveNotesReview();
+=======
+      if(!r.ok) $('lnstatus').textContent = 'Could not save live notes.';
+>>>>>>> main
       paint();
     });
   }, 350);
@@ -851,7 +868,10 @@ Promise.all([
     if(st.deck != null) deckId = st.deck;
     liveNoteText = st.live_note || '';
     liveNotesVisible = !!st.live_notes_visible;
+<<<<<<< HEAD
     if(st.all_live_notes) allLiveNotes = st.all_live_notes;
+=======
+>>>>>>> main
     /* An older server reports no scale. Flag it as soon as we connect rather
        than letting the presenter discover it by pressing a dead button. */
     serverHasScale = st.scale != null;

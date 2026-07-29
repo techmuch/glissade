@@ -13,7 +13,7 @@ Installed as a CLI:
     glissade check     validate decks before you rely on them
 """
 
-__version__ = "0.8.1"
+__version__ = "0.9.0"
 
 from .project import (  # noqa: F401
     DATA_DIR,

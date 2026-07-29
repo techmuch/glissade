@@ -478,24 +478,35 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
             "n": show.n,
             "text": show.live_note_for(),
             "visible": show.live_notes_visible,
+<<<<<<< HEAD
             "all": show.live_notes_for_current_deck(),
+=======
+>>>>>>> main
         }
 
     @app.post("/api/live-notes")
     async def api_live_notes_set(body: dict[str, Any] | None = None) -> dict[str, Any]:
         body = body or {}
+<<<<<<< HEAD
         state = show.set_live_note(body.get("text", ""), n=body.get("n"))
         state = dict(state)
         state["all_live_notes"] = show.live_notes_for_current_deck()
         return state
+=======
+        return show.set_live_note(body.get("text", ""), n=body.get("n"))
+>>>>>>> main
 
     @app.post("/api/live-notes-visible")
     async def api_live_notes_visible(body: dict[str, Any] | None = None) -> dict[str, Any]:
         body = body or {}
+<<<<<<< HEAD
         state = show.set_live_notes_visible(body.get("visible", not show.live_notes_visible))
         state = dict(state)
         state["all_live_notes"] = show.live_notes_for_current_deck()
         return state
+=======
+        return show.set_live_notes_visible(body.get("visible", not show.live_notes_visible))
+>>>>>>> main
 
     @app.get("/events")
     async def events() -> StreamingResponse:
