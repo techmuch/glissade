@@ -461,7 +461,7 @@ function scaleFailed(r){
   if(openPanelName !== 'settings') openPanel('settings');
   const el = $('sizewarn');
   el.textContent = r.status === 404
-    ? 'This server was started before text sizing existed — restart it (pixi run start).'
+    ? 'This server was started before text sizing existed — restart it (glissade start).'
     : 'Could not reach the server.';
   el.classList.add('on');
 }

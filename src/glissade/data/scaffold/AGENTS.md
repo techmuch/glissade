@@ -9,7 +9,7 @@ fastest way to know a deck is sound. Treat a non-zero exit as work unfinished.
 
 ```bash
 glissade check          # validate every deck
-glissade start          # present, with a phone remote
+glissade start          # present, with a phone remote and live deck reloads
 glissade build          # write standalone HTML to build/
 ```
 

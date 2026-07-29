@@ -208,7 +208,7 @@ def cmd_start(args) -> int:
     host = args.host or str(defaults.get("host", "0.0.0.0"))
     deck = args.deck or defaults.get("deck")
 
-    app = create_app(project, deck)
+    app = create_app(project, deck, watch=not args.no_watch and not args._demo)
     _warn_if_deck_needs_newer(app.state.decks)
     show = app.state.show
     current = next((d for d in app.state.decks if d["id"] == show.deck), None)
@@ -607,6 +607,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--port", type=int, default=None, help="port (default 8000)")
     sp.add_argument("--open", action="store_true",
                     help="open the deck in your browser once the server is up")
+    sp.add_argument("--no-watch", action="store_true",
+                    help="do not auto-reload when deck files change")
     sp.set_defaults(func=cmd_start)
 
     sp = common(sub.add_parser("build", help="write standalone HTML"))
@@ -649,6 +651,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--host", default=None)
     sp.add_argument("--port", type=int, default=None)
     sp.add_argument("--open", action="store_true")
+    sp.add_argument("--no-watch", action="store_true")
     sp.set_defaults(func=cmd_start, _demo=True, dir=None)
 
     return p

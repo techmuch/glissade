@@ -54,11 +54,11 @@
       "heading": "Two commands",
       "left": {
         "subheading": "Present",
-        "body": "<p><b>pixi run start</b></p><p>Serves the deck to the projector and a remote to your phone. Prints both addresses and a QR code.</p>"
+        "body": "<p><b>glissade start</b></p><p>Serves the deck to the projector and a remote to your phone. Prints both addresses and a QR code, then watches the project for deck and theme changes.</p>"
       },
       "right": {
         "subheading": "Build",
-        "body": "<p><b>pixi run build</b></p><p>Writes every deck to <b>build/</b> as a standalone file. No server needed to open it.</p>"
+        "body": "<p><b>glissade build</b></p><p>Writes every deck to <b>build/</b> as a standalone file. No server needed to open it.</p>"
       },
       "notes": "<b>layout: \"two-content\"</b> — two independent regions side by side.<br><br>Start is what you use in the room. Build is what you do the night before, so there's a file on the laptop that works even if nothing else does."
     },
@@ -268,7 +268,7 @@
       "eyebrow": "The one thing that needs the network",
       "heading": "External embeds",
       "body": "A YouTube URL can't be embedded into a file. If it can't load, this slide shows a QR code instead of a blank frame — press R to retry.",
-      "notes": "<b>layout: \"media-full\"</b> — media fills the slide, text sits in a gradient panel.<br><br>Use the <b>/embed/</b> URL form, not the watch link.<br><br><b>pixi run build</b> lists every slide like this one, so you know your network dependencies before you're standing in front of a room.<br><br>Embeds mount only while their slide is showing — otherwise a video would keep playing, audibly, after you moved on."
+      "notes": "<b>layout: \"media-full\"</b> — media fills the slide, text sits in a gradient panel.<br><br>Use the <b>/embed/</b> URL form, not the watch link.<br><br><b>glissade build</b> lists every slide like this one, so you know your network dependencies before you're standing in front of a room.<br><br>Embeds mount only while their slide is showing — otherwise a video would keep playing, audibly, after you moved on."
     },
     {
       "n": 18,
