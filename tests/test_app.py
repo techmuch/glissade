@@ -47,3 +47,13 @@ def test_app_routes(tmp_path, sample_deck_file):
     resp = client.post("/api/live-notes", json={"n": 1, "text": "Remember to speak clearly."})
     assert resp.status_code == 200
     assert resp.json()["live_note"] == "Remember to speak clearly."
+    assert len(resp.json().get("all_live_notes", [])) == 1
+    assert resp.json()["all_live_notes"][0] == {"n": 1, "text": "Remember to speak clearly."}
+
+    # 7. GET /api/live-notes
+    resp = client.get("/api/live-notes")
+    assert resp.status_code == 200
+    notes_data = resp.json()
+    assert notes_data["text"] == "Remember to speak clearly."
+    assert len(notes_data["all"]) == 1
+    assert notes_data["all"][0] == {"n": 1, "text": "Remember to speak clearly."}
