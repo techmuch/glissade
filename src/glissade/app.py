@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -25,6 +26,11 @@ DEFAULT_SCALE = 1.0
 # How long an idle event stream waits before sending a comment, to stop routers
 # and phone browsers dropping it.
 HEARTBEAT_SECONDS = 15
+
+# The live server polls the project for changes so authoring can happen with
+# the deck open. Stdlib polling keeps the install compiler-free everywhere.
+WATCH_INTERVAL_SECONDS = 0.25
+WATCH_DEBOUNCE_SECONDS = 0.15
 
 
 def clamp_scale(value: Any, fallback: float = DEFAULT_SCALE) -> float:
@@ -145,6 +151,56 @@ def save_live_notes(notes_file: Path, notes: dict[str, dict[str, str]]) -> None:
         pass
 
 
+def project_snapshot(project: Project) -> dict[str, tuple[int, int] | None]:
+    """A cheap fingerprint of the files a live presentation depends on.
+
+    Deck JSON and deck-local media all live under decks/, so watching that tree
+    catches both rewritten slides and swapped images. The local themes.json is
+    tracked even when absent, so creating or deleting it also reloads clients.
+    """
+    snapshot: dict[str, tuple[int, int] | None] = {}
+
+    if project.decks_dir.is_dir():
+        for path in sorted(project.decks_dir.rglob("*")):
+            if not path.is_file():
+                continue
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            snapshot[str(path.resolve())] = (stat.st_mtime_ns, stat.st_size)
+
+    local_themes = project.root / "themes.json"
+    if local_themes.is_file():
+        try:
+            stat = local_themes.stat()
+            snapshot[str(local_themes.resolve())] = (stat.st_mtime_ns, stat.st_size)
+        except OSError:
+            snapshot[str(local_themes.resolve())] = None
+    else:
+        snapshot[str(local_themes.resolve())] = None
+
+    return snapshot
+
+
+def discover_live_decks(project: Project) -> list[dict[str, Any]]:
+    """Read the project's decks, but fail on any broken JSON file.
+
+    `deck_lib.discover()` skips unreadable decks for CLI listing and checking,
+    which is friendly there. Live reload wants the opposite trade: one half-
+    written file from an editor or AI should keep the last good presentation on
+    screen instead of silently swapping to a different subset of decks.
+    """
+    decks = deck_lib.discover(project)
+    expected = {str(path.resolve()) for path in sorted(project.decks_dir.glob("*.json"))}
+    seen = {str(Path(deck["path"]).resolve()) for deck in decks}
+    skipped = sorted(Path(path).name for path in expected - seen)
+    if skipped:
+        names = ", ".join(skipped)
+        raise ValueError(f"can't reload until these deck files parse again: {names}")
+    return decks
+
+
 def render_deck(
     slides: list[dict[str, Any]],
     live: bool,
@@ -196,6 +252,7 @@ class Presentation:
     # slides are baked into the page they were served.
     rev: int = 0
     listeners: set[asyncio.Queue] = field(default_factory=set)
+    reload_error: str = ""
 
     def live_note_for(self, n: int | None = None, deck: str | None = None) -> str:
         deck_id = deck if deck is not None else self.deck
@@ -228,6 +285,7 @@ class Presentation:
             "min_scale": MIN_SCALE,
             "max_scale": MAX_SCALE,
             "all_live_notes": self.live_notes_for_current_deck(),
+            "reload_error": self.reload_error,
         }
 
     def goto(self, n: int) -> dict[str, Any]:
@@ -309,7 +367,14 @@ class Presentation:
         return state
 
 
-def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
+def create_app(
+    project: Project,
+    deck_name: str | None = None,
+    *,
+    watch: bool = False,
+    watch_interval: float = WATCH_INTERVAL_SECONDS,
+    watch_debounce: float = WATCH_DEBOUNCE_SECONDS,
+) -> FastAPI:
     all_decks = deck_lib.discover(project)
     if not all_decks:
         raise SystemExit(
@@ -327,7 +392,20 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
 
     current = deck_lib.resolve(deck_name or settings["deck"], all_decks)
 
-    app = FastAPI(title="Glissade", docs_url=None, redoc_url=None)
+    @contextlib.asynccontextmanager
+    async def lifespan(app: FastAPI):
+        if watch:
+            app.state.watch_task = asyncio.create_task(watch_project())
+        try:
+            yield
+        finally:
+            task = getattr(app.state, "watch_task", None)
+            if task is not None:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
+
+    app = FastAPI(title="Glissade", docs_url=None, redoc_url=None, lifespan=lifespan)
 
     # Slides are prepared (media inlined) once per deck and cached, since
     # base64-encoding images on every request would be wasteful.
@@ -361,6 +439,72 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
     app.state.show = show
     app.state.decks = all_decks
     app.state.project = project
+    app.state.themes = themes
+
+    def reload_project_state() -> dict[str, Any]:
+        """Reload decks, themes and prepared assets after an on-disk change.
+
+        Reload is atomic from the clients' point of view: either the new files
+        parse and everyone is told to refresh, or the last good presentation
+        keeps running and only an error message changes.
+        """
+        nonlocal all_decks, current, themes, theme_ids, deck_ids
+
+        new_decks = discover_live_decks(project)
+        if not new_decks:
+            raise ValueError(f"no readable decks found in {project.decks_dir}")
+        new_themes = load_themes(project)
+        new_theme_ids = [t["id"] for t in new_themes]
+        new_deck_ids = [d["id"] for d in new_decks]
+        selected = show.deck if show.deck in new_deck_ids else None
+        new_current = deck_lib.resolve(selected, new_decks)
+        if new_current is None:
+            raise ValueError(f"no readable decks found in {project.decks_dir}")
+
+        all_decks = new_decks
+        current = new_current
+        themes = new_themes
+        theme_ids = new_theme_ids
+        deck_ids = new_deck_ids
+        cache.clear()
+
+        show.deck_ids = new_deck_ids
+        show.theme_ids = new_theme_ids
+        show.deck = new_current["id"]
+        if show.theme not in new_theme_ids:
+            show.theme = new_theme_ids[0] if new_theme_ids else "paper"
+        show.total = len(slides_for(new_current))
+        show.n = max(1, min(show.total, show.n))
+        show.reload_error = ""
+        show.rev += 1
+        show._save()
+        app.state.decks = all_decks
+        app.state.themes = themes
+        return show.publish()
+
+    async def watch_project() -> None:
+        snapshot = project_snapshot(project)
+        while True:
+            await asyncio.sleep(watch_interval)
+            latest = project_snapshot(project)
+            if latest == snapshot:
+                continue
+            await asyncio.sleep(watch_debounce)
+            latest = project_snapshot(project)
+            if latest == snapshot:
+                continue
+            snapshot = latest
+            try:
+                state = reload_project_state()
+                deck = deck_by_id(show.deck)
+                print(f"  ↻ reloaded {deck['id']} ({len(deck['slides'])} slides)")
+            except Exception as exc:
+                show.reload_error = str(exc)
+                state = show.publish()
+                print(f"  ! reload failed: {exc}")
+            app.state.last_reload_state = state
+
+    app.state.reload_project = reload_project_state
 
     def switch(deck_id: str) -> dict[str, Any]:
         """Change the running deck. Bumps `rev` so open displays reload —
@@ -385,7 +529,12 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
         """The projected deck."""
         deck = deck_by_id(show.deck)
         return no_store(
-            render_deck(slides_for(deck), live=True, themes=themes, title=deck["title"])
+            render_deck(
+                slides_for(deck),
+                live=True,
+                themes=app.state.themes,
+                title=deck["title"],
+            )
         )
 
     @app.get("/control", response_class=HTMLResponse)
@@ -401,7 +550,7 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
 
     @app.get("/api/themes")
     async def api_themes() -> JSONResponse:
-        return JSONResponse(themes, headers={"Cache-Control": "no-store"})
+        return JSONResponse(app.state.themes, headers={"Cache-Control": "no-store"})
 
     @app.get("/api/decks")
     async def api_decks() -> JSONResponse:

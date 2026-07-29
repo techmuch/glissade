@@ -221,9 +221,16 @@ items during the meeting. Those notes autosave per slide and can optionally be
 shown on the projector as an overlay. The overlay is plain text: line breaks
 are preserved, and the projector toggles it with <kbd>L</kbd>.
 
+`glissade start` also watches your project while it is running. Edit a deck
+JSON file, swap an image under `decks/`, or change `themes.json`, and every
+connected display and remote refreshes to the newest valid version
+automatically. If an edit leaves the deck invalid JSON, Glissade keeps showing
+the last good version and logs the reload error instead.
+
 `glissade start --open` opens the deck in your browser once the server is
 actually accepting connections — put `open = true` in `glissade.toml` to make
-that a project's default.
+that a project's default. Use `--no-watch` if you want a fixed presentation
+that ignores on-disk changes.
 
 On Windows the first run may raise a firewall prompt: allow private networks
 so your phone can reach the remote. `--host 127.0.0.1` avoids it if you only
