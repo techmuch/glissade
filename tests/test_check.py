@@ -53,6 +53,43 @@ def test_check_slides_missing_notes_warning(tmp_path):
     warnings = [i for i in issues if i.level == "warning"]
     assert any("no speaker notes" in w.message for w in warnings)
 
+
+def test_check_slides_quad_chart_valid(tmp_path):
+    slides = [
+        {
+            "layout": "quad-chart",
+            "heading": "Quarterly view",
+            "quads": [
+                {"subheading": "North", "body": "<p>Steady growth.</p>"},
+                {"subheading": "South", "body": "<p>Launch in September.</p>"},
+                {"subheading": "East", "body": "<p>Partner-led pipeline.</p>"},
+                {"subheading": "West", "body": "<p>Margin recovery.</p>"},
+            ],
+            "notes": "Talk through each region clockwise."
+        }
+    ]
+    issues = check_slides(slides, tmp_path)
+    errors = [i for i in issues if i.level == "error"]
+    assert len(errors) == 0
+
+
+def test_check_slides_quad_chart_requires_four_quads(tmp_path):
+    slides = [
+        {
+            "layout": "quad-chart",
+            "heading": "Quarterly view",
+            "quads": [
+                {"subheading": "North", "body": "<p>Steady growth.</p>"},
+                {"subheading": "South", "body": "<p>Launch in September.</p>"},
+                {"subheading": "East", "body": "<p>Partner-led pipeline.</p>"},
+            ],
+            "notes": "Talk through each region clockwise."
+        }
+    ]
+    issues = check_slides(slides, tmp_path)
+    errors = [i for i in issues if i.level == "error"]
+    assert any("quad-chart needs exactly four `quads`" in e.message for e in errors)
+
 def test_check_requirement_satisfied():
     deck = {"requires": ">=0.1.0"}
     issues = check_requirement(deck)

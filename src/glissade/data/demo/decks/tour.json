@@ -127,7 +127,7 @@
       "eyebrow": "decks/your-deck.json",
       "heading": "Anatomy of a slide",
       "caption": "<p>Pick a <b>layout</b>, fill the fields it uses. Skip any you don't need — nothing is required.</p><p>Text fields accept HTML, so emphasis and quotation marks behave.</p>",
-      "notes": "<b>layout: \"content-caption\"</b> — a wide media region beside a narrower text column.<br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>, <code>quote</code>, <code>image</code>, <code>media</code>, <code>images</code>, <code>left</code>, <code>right</code>, <code>caption</code>, <code>notes</code>, <code>tag</code>, <code>cls</code>.<br><br>The <b>Layout Gallery</b> deck shows all fourteen layouts. Switch to it from the remote."
+      "notes": "<b>layout: \"content-caption\"</b> — a wide media region beside a narrower text column.<br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>, <code>quote</code>, <code>image</code>, <code>media</code>, <code>images</code>, <code>left</code>, <code>right</code>, <code>quads</code>, <code>caption</code>, <code>notes</code>, <code>tag</code>, <code>cls</code>.<br><br>The <b>Layout Gallery</b> deck shows all fifteen layouts. Switch to it from the remote."
     },
     {
       "n": 9,
@@ -318,7 +318,7 @@
       },
       "right": {
         "subheading": "Two decks ship",
-        "body": "<p><b>Glissade — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fourteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
+        "body": "<p><b>Glissade — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fifteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
       },
       "notes": "<b>B is underused.</b> Blanking the screen during a discussion pulls attention back to the room better than any slide can.<br><br>Now switch to the <b>Layout Gallery</b> from your phone — it picks up where this leaves off."
     },

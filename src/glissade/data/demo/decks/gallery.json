@@ -256,6 +256,43 @@
     },
     {
       "n": 17,
+      "layout": "quad-chart",
+      "title": "quad-chart",
+      "tag": "PowerPoint set",
+      "eyebrow": "Four views at once",
+      "heading": "quad-chart",
+      "subheading": "Each quadrant gets a subtitle and either text or media.",
+      "quads": [
+        {
+          "subheading": "Problem",
+          "body": "<p>Summarise the constraint or tension in one short paragraph.</p>"
+        },
+        {
+          "subheading": "Evidence",
+          "image": {
+            "src": "media/images/gradient-amber.jpg",
+            "alt": "Abstract gradient",
+            "fit": "cover"
+          },
+          "aspect": "4:3"
+        },
+        {
+          "subheading": "Options",
+          "bullets": [
+            "Maintain the current path",
+            "Run a pilot in one region",
+            "Commit fully next quarter"
+          ]
+        },
+        {
+          "subheading": "Recommendation",
+          "body": "<p>Use the fourth box for the call to action, the next step, or the decision.</p>"
+        }
+      ],
+      "notes": "<b>layout: \"quad-chart\"</b><br><br>Use <code>quads</code> with exactly four entries. Each quadrant takes a <code>subheading</code>, plus <code>body</code>, <code>bullets</code>, an <code>image</code>, or <code>media</code>."
+    },
+    {
+      "n": 18,
       "layout": "blank",
       "title": "blank (freeform)",
       "tag": "Escape hatch",
@@ -263,11 +300,11 @@
       "notes": "<b>layout: \"blank\"</b> (or omit <code>layout</code> entirely)<br><br>Your markup goes in <code>html</code> and is used verbatim. The deck's own classes are available: <code>eyebrow</code>, <code>lead</code>, <code>byline</code>, <code>dialogue</code>, plus <code>h1</code>–<code>h3</code>, <code>blockquote</code>, <code>cite</code>, <code>ul</code>."
     },
     {
-      "n": 18,
+      "n": 19,
       "layout": "title-content",
       "cls": "center",
       "title": "End",
-      "eyebrow": "That's all fourteen",
+      "eyebrow": "That's all fifteen",
       "heading": "Copy what you need",
       "body": "<p>Every slide here is a working example in <b>decks/gallery.json</b>.</p>",
       "notes": "<b>Close.</b> Switch back to <b>Glissade — A Tour</b> from the remote for the how-and-why."

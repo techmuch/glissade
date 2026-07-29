@@ -45,7 +45,7 @@ LAYOUTS = set(
     or [
         "title", "title-content", "section", "title-only", "two-content",
         "comparison", "content-caption", "picture-caption", "media-right",
-        "media-left", "media-full", "media-caption", "grid", "blank",
+        "media-left", "media-full", "media-caption", "grid", "quad-chart", "blank",
     ]
 )
 MODIFIERS = {"ask", "story", "center"}
@@ -55,6 +55,7 @@ MODIFIERS = {"ask", "story", "center"}
 MEDIA_LAYOUTS = {
     "two-content", "comparison", "content-caption", "picture-caption",
     "media-right", "media-left", "media-full", "media-caption", "grid",
+    "quad-chart",
 }
 TEXT_ONLY = {"title", "title-only", "section", "title-content"}
 
@@ -148,7 +149,11 @@ def _check_image(node: Any, where: str, base: Path, out: list[Issue]) -> None:
     if not (base / str(src)).is_file():
         out.append(Issue("error", where, f"image not found: {src}"))
     if node.get("fit") and node["fit"] not in ("contain", "cover"):
-        out.append(Issue("warning", where, f"fit should be 'contain' or 'cover', got {node['fit']!r}"))
+        out.append(Issue(
+            "warning",
+            where,
+            f"fit should be 'contain' or 'cover', got {node['fit']!r}",
+        ))
 
 
 def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
@@ -198,7 +203,7 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
         # Something has to render.
         visible = any(slide.get(k) for k in (
             "heading", "subheading", "body", "bullets", "quote", "caption",
-            "image", "media", "images", "left", "right", "html", "eyebrow",
+            "image", "media", "images", "left", "right", "quads", "html", "eyebrow",
         ))
         if not visible:
             out.append(Issue("error", where, "slide has no visible content"))
@@ -218,12 +223,16 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
         if images is not None:
             if known and layout != "grid":
                 out.append(Issue(
-                    "warning", where, f"`images` only renders on the grid layout, not {layout!r}"
+                    "warning",
+                    where,
+                    f"`images` only renders on the grid layout, not {layout!r}",
                 ))
             if not isinstance(images, list) or not 2 <= len(images) <= 4:
+                count = len(images) if isinstance(images, list) else "?"
                 out.append(Issue(
-                    "error", where,
-                    f"grid needs two to four images, got {len(images) if isinstance(images, list) else '?'}",
+                    "error",
+                    where,
+                    f"grid needs two to four images, got {count}",
                 ))
             else:
                 for i, img in enumerate(images, start=1):
@@ -245,8 +254,40 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
                     _check_image(block["image"], f"{where} {side}", base, out)
                 if block.get("media"):
                     _check_media(block["media"], f"{where} {side}", base, out)
-        if layout in ("two-content", "comparison") and not (slide.get("left") or slide.get("right")):
+        if layout in ("two-content", "comparison") and not (
+            slide.get("left") or slide.get("right")
+        ):
             out.append(Issue("error", where, f"{layout} needs `left` and `right`"))
+
+        quads = slide.get("quads")
+        if quads is not None:
+            if known and layout != "quad-chart":
+                out.append(Issue(
+                    "warning",
+                    where,
+                    f"`quads` only renders on the quad-chart layout, not {layout!r}",
+                ))
+            if not isinstance(quads, list) or len(quads) != 4:
+                out.append(Issue("error", where, "quad-chart needs exactly four `quads`"))
+            else:
+                for q_idx, quad in enumerate(quads, start=1):
+                    q_where = f"{where} quad {q_idx}"
+                    if not isinstance(quad, dict):
+                        out.append(Issue("error", q_where, "quad must be an object"))
+                        continue
+                    _unknown_fields(quad, "quad", q_where, out)
+                    if quad.get("image"):
+                        _check_image(quad["image"], q_where, base, out)
+                    if quad.get("media"):
+                        _check_media(quad["media"], q_where, base, out)
+                    q_visible = any(
+                        quad.get(k)
+                        for k in ("subheading", "body", "bullets", "image", "media")
+                    )
+                    if not q_visible:
+                        out.append(Issue("error", q_where, "quad has no visible content"))
+        elif layout == "quad-chart":
+            out.append(Issue("error", where, "quad-chart layout with no `quads`"))
 
         if layout in TEXT_ONLY and (slide.get("image") or slide.get("media")):
             out.append(Issue(
