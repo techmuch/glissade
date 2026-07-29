@@ -226,6 +226,13 @@ def prepare_slides(
                 if isinstance(block.get("media"), dict):
                     _inline_media(block["media"], base, warnings)
 
+        for quad in slide.get("quads") or []:
+            if isinstance(quad, dict):
+                if isinstance(quad.get("image"), dict):
+                    _inline_image(quad["image"], base, warnings)
+                if isinstance(quad.get("media"), dict):
+                    _inline_media(quad["media"], base, warnings)
+
         if isinstance(slide.get("media"), dict):
             _inline_media(slide["media"], base, warnings)
 
@@ -241,14 +248,22 @@ def external_media(slides: list[dict[str, Any]]) -> list[tuple[Any, str]]:
     found = []
     for position, slide in enumerate(slides, start=1):
         slide.setdefault("n", position)
-        for node in (
+        nodes = [
             slide.get("media"),
             (slide.get("left") or {}).get("media") if isinstance(slide.get("left"), dict) else None,
             (slide.get("right") or {}).get("media") if isinstance(slide.get("right"), dict) else None,
-        ):
+        ]
+        for quad in slide.get("quads") or []:
+            if isinstance(quad, dict):
+                nodes.append(quad.get("media"))
+        for node in nodes:
             if isinstance(node, dict) and node.get("external") and node.get("src"):
                 found.append((slide.get("n", "?"), node["src"]))
-        img = slide.get("image")
-        if isinstance(img, dict) and img.get("remote"):
-            found.append((slide.get("n", "?"), img.get("src", "")))
+        images = [slide.get("image")]
+        for quad in slide.get("quads") or []:
+            if isinstance(quad, dict):
+                images.append(quad.get("image"))
+        for img in images:
+            if isinstance(img, dict) and img.get("remote"):
+                found.append((slide.get("n", "?"), img.get("src", "")))
     return found

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glissade"
-version = "0.10.0"
+version = "0.11.0_beta"
 description = "Presentation decks written as JSON, driven from your phone, built into a single self-contained HTML file"
 readme = "README.md"
 requires-python = ">=3.10"

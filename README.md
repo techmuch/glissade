@@ -4,7 +4,7 @@ Presentation decks written as JSON, driven from your phone, and built into a
 single HTML file that works when the Wi-Fi doesn't.
 
 ```bash
-uv tool install glissade     # or: pipx install glissade
+uv tool install --from git+https://github.com/techmuch/glissade glissade
 
 mkdir my-talk && cd my-talk
 glissade init                # scaffold a deck and an AI-agent guide
@@ -16,18 +16,26 @@ anywhere, and they document the whole system.
 
 ## Installing
 
+Glissade is not on PyPI yet, so install it from GitHub for now.
+
 | | |
 | --- | --- |
-| **uv** (recommended) | `uv tool install glissade` — installs Python too if you don't have it |
-| **pipx** | `pipx install glissade` |
-| **pip** | `pip install glissade` |
-| **Try without installing** | `uvx glissade demo` |
+| **uv** (recommended) | `uv tool install --from git+https://github.com/techmuch/glissade glissade` — installs Python too if you don't have it |
+| **pipx** | `pipx install git+https://github.com/techmuch/glissade.git` |
+| **pip** | `pip install git+https://github.com/techmuch/glissade.git` |
+| **Try without installing** | `uvx --from git+https://github.com/techmuch/glissade glissade demo` |
 
 One universal wheel covers Windows, macOS and Linux — every dependency is pure
 Python, so installation never needs a compiler. Python 3.10 or newer.
 
-Add `glissade[images]` to pull in Pillow, which downscales oversized images
-before embedding them. Without it images embed at full size; nothing breaks.
+If you want Pillow for image downscaling, install the `images` extra from Git
+instead, for example:
+
+```bash
+pip install 'git+https://github.com/techmuch/glissade.git#egg=glissade[images]'
+```
+
+Without Pillow, images embed at full size; nothing breaks.
 
 ## Commands
 
@@ -270,12 +278,12 @@ Pick a `layout` and fill the fields it uses. Nothing is required.
 
 Layouts: `title`, `title-content`, `section`, `title-only`, `two-content`,
 `comparison`, `content-caption`, `picture-caption`, `media-right`,
-`media-left`, `media-full`, `media-caption`, `grid`, `blank`.
+`media-left`, `media-full`, `media-caption`, `grid`, `quad-chart`, `blank`.
 
 `cls` adds modifiers independent of layout: `"ask"` (dark, for questions),
 `"story"`, `"center"`.
 
-Run `glissade demo --deck gallery` to see all fourteen.
+Run `glissade demo --deck gallery` to see all fifteen.
 
 ## Media
 
@@ -333,10 +341,40 @@ presentation and an apology.
 
 ## Developing
 
+Use `uv` plus the cross-platform task script:
+
 ```bash
 git clone https://github.com/techmuch/glissade && cd glissade
-uv venv && uv pip install -e ".[images]"
-glissade demo
+uv run python scripts/dev.py install
+uv run python scripts/dev.py run
+```
+
+That installs Python 3.12 if needed, creates `.venv`, and installs the editable
+project with the `dev` and `images` extras. Override the Python version if you
+need to:
+
+```bash
+uv run python scripts/dev.py install --python 3.11
+```
+
+Common tasks:
+
+```bash
+uv run python scripts/dev.py install      # bootstrap .venv
+uv run python scripts/dev.py test         # run the full test suite
+uv run python scripts/dev.py test -- tests/test_check.py -q
+uv run python scripts/dev.py run          # defaults to: glissade demo
+uv run python scripts/dev.py run -- start
+uv run python scripts/dev.py build        # build dist/ packages
+```
+
+If you prefer the raw `uv` commands:
+
+```bash
+uv python install 3.12
+uv venv .venv --python 3.12
+uv pip install --python .venv/bin/python -e ".[dev,images]"   # Windows: .venv\Scripts\python.exe
+uv run --python .venv/bin/python pytest -q                     # Windows: .venv\Scripts\python.exe
 ```
 
 `src/glissade/` is the package; `templates/` holds the deck and remote HTML;
@@ -344,5 +382,5 @@ glissade demo
 shipped inside the wheel so the tool works from any directory.
 
 ```bash
-python -m build            # sdist + universal wheel into dist/
+uv build                   # sdist + universal wheel into dist/
 ```
