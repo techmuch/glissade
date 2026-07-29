@@ -204,6 +204,15 @@ class Presentation:
         slide = self.n if n is None else n
         return str(self.live_notes.get(deck_id, {}).get(str(slide), ""))
 
+    def live_notes_for_current_deck(self) -> list[dict[str, Any]]:
+        if not self.deck:
+            return []
+        deck_notes = self.live_notes.get(self.deck, {})
+        out = []
+        for key, text in sorted(deck_notes.items(), key=lambda item: int(item[0])):
+            out.append({"n": int(key), "text": str(text)})
+        return out
+
     @property
     def state(self) -> dict[str, Any]:
         return {
@@ -218,6 +227,7 @@ class Presentation:
             "total": self.total,
             "min_scale": MIN_SCALE,
             "max_scale": MAX_SCALE,
+            "all_live_notes": self.live_notes_for_current_deck(),
         }
 
     def goto(self, n: int) -> dict[str, Any]:
@@ -468,17 +478,24 @@ def create_app(project: Project, deck_name: str | None = None) -> FastAPI:
             "n": show.n,
             "text": show.live_note_for(),
             "visible": show.live_notes_visible,
+            "all": show.live_notes_for_current_deck(),
         }
 
     @app.post("/api/live-notes")
     async def api_live_notes_set(body: dict[str, Any] | None = None) -> dict[str, Any]:
         body = body or {}
-        return show.set_live_note(body.get("text", ""), n=body.get("n"))
+        state = show.set_live_note(body.get("text", ""), n=body.get("n"))
+        state = dict(state)
+        state["all_live_notes"] = show.live_notes_for_current_deck()
+        return state
 
     @app.post("/api/live-notes-visible")
     async def api_live_notes_visible(body: dict[str, Any] | None = None) -> dict[str, Any]:
         body = body or {}
-        return show.set_live_notes_visible(body.get("visible", not show.live_notes_visible))
+        state = show.set_live_notes_visible(body.get("visible", not show.live_notes_visible))
+        state = dict(state)
+        state["all_live_notes"] = show.live_notes_for_current_deck()
+        return state
 
     @app.get("/events")
     async def events() -> StreamingResponse:

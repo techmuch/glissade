@@ -224,10 +224,11 @@ want the laptop.
 ### The remote
 
 The main view holds what you read while presenting — the current slide's
-speaker notes, a preview of the next one, and a **Live notes** editor for
-capturing audience feedback as you go. Everything else sits behind a header
-button: **Deck**, **Slides** (jump list), and a gear for text size and theme.
-**Blank** blacks out the projector.
+speaker notes, a preview of the next one, and capturing audience feedback as you go. A **Notes** drawer shows every captured
+live note across the deck and jumps back to that slide when you tap an entry.
+Everything else sits behind a header button: **Deck**, **Slides** (jump list),
+**Notes** (captured live notes), and a gear for text size and theme. **Blank**
+blacks out the projector.
 
 Live notes are saved automatically to `.glissade/live-notes.json` in a normal
 project. For the built-in demo decks, which live in the installed package,

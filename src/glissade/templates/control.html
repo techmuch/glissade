@@ -272,6 +272,31 @@
     touch-action:manipulation;
   }
   .lnmeta button.on{background:var(--accent); color:var(--bg); border-color:var(--accent)}
+  .lnlistbtn{
+    background:var(--panel2); color:var(--soft); border:1px solid var(--line);
+    border-radius:7px; padding:7px 11px; font-size:13px; font-weight:600;
+    font-family:inherit; flex:none; touch-action:manipulation;
+  }
+  .lnlistbtn.on{color:var(--bg); background:var(--accent); border-color:var(--accent)}
+
+  .lnreview{
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+    margin-top:12px; display:none;
+  }
+  .lnreview.on{display:block}
+  .lnentry{padding:10px 12px; border-bottom:1px solid #2f2a24}
+  .lnentry:last-child{border-bottom:none}
+  .lnentry button{
+    display:block; width:100%; text-align:left; background:none; border:none; color:inherit;
+    font:inherit; padding:0; touch-action:manipulation;
+  }
+  .lnentry .hd{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:5px;
+  }
+  .lnentry .sl{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:700}
+  .lnentry .tt{font-size:13px; color:var(--text); font-weight:600; line-height:1.25}
+  .lnentry .tx{font-size:12.5px; line-height:1.45; color:var(--soft); white-space:pre-wrap}
+  .lnentry.empty{padding:12px; font-size:12.5px; color:var(--soft)}
 
   /* ---------- theme picker ---------- */
   .themes{
@@ -330,6 +355,7 @@
   <button class="listbtn" id="blankbtn">Blank</button>
   <button class="listbtn" id="deckbtn">Deck</button>
   <button class="listbtn" id="jumpbtn">Slides</button>
+  <button class="lnlistbtn" id="notesbtn">Notes</button>
   <button class="listbtn icon" id="setbtn" aria-label="Settings"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.46.66.79 1.18.91H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
 </header>
 
@@ -354,6 +380,10 @@
       <span id="lnstatus">No live notes yet.</span>
       <button id="showlive">Show on projector</button>
     </div>
+<<<<<<< HEAD
+    
+=======
+>>>>>>> main
   </div>
 </main>
 
@@ -373,6 +403,13 @@
     <div class="panel" id="panel-deck">
       <div id="decklist"></div>
       <p class="hint">Switching decks starts the new one at slide 1.</p>
+    </div>
+
+    <div class="panel" id="panel-notes">
+      <div class="pad">
+        <p class="sub" style="margin-top:0">Review every captured live note for this deck in one place.</p>
+        <div class="lnreview" id="lnreviewpanel"></div>
+      </div>
     </div>
 
     <div class="panel" id="panel-settings">
@@ -399,7 +436,11 @@
 let SLIDES = [], THEMES = [], DECKS = [];
 let cur = 1, blanked = false, scale = 1, minScale = 0.7, maxScale = 1.6;
 let painted = null, serverHasScale = true, themeId = null, deckId = null, rev = null;
+<<<<<<< HEAD
+let liveNoteText = '', liveNotesVisible = false, liveNoteSaveTimer = null, liveNoteDirty = false, allLiveNotes = [];
+=======
 let liveNoteText = '', liveNotesVisible = false, liveNoteSaveTimer = null, liveNoteDirty = false;
+>>>>>>> main
 
 const $ = id => document.getElementById(id);
 
@@ -443,6 +484,10 @@ function paint(){
   $('lnstatus').className = liveNoteDirty ? '' : (liveNoteText ? 'ok' : '');
   $('showlive').classList.toggle('on', !!liveNotesVisible);
   $('showlive').textContent = liveNotesVisible ? 'Hide on projector' : 'Show on projector';
+<<<<<<< HEAD
+  renderLiveNotesReview();
+=======
+>>>>>>> main
 
   if(nx){
     $('nextbox').style.display = '';
@@ -642,6 +687,33 @@ function applyPreviewTheme(){
   for(const k in map) if(map[k]) r.setProperty(k, map[k]);
 }
 
+<<<<<<< HEAD
+function renderLiveNotesReview(){
+  const boxes = [$('lnreview'), $('lnreviewpanel')].filter(Boolean);
+  for(const box of boxes){
+    if(!allLiveNotes.length){
+      box.className = 'lnreview on';
+      box.innerHTML = '<div class="lnentry empty">No captured notes yet.</div>';
+      continue;
+    }
+    box.className = 'lnreview on';
+    box.innerHTML = allLiveNotes.map(entry => {
+      const title = (SLIDES[entry.n - 1] || {}).title || ('Slide ' + entry.n);
+      const text = String(entry.text || '').replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+      const safeTitle = String(title).replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+      return '<div class="lnentry"><button data-n="' + entry.n + '">' +
+        '<div class="hd"><span class="sl">Slide ' + entry.n + '</span><span class="tt">' + safeTitle + '</span></div>' +
+        '<div class="tx">' + text + '</div>' +
+        '</button></div>';
+    }).join('');
+    box.querySelectorAll('button[data-n]').forEach(btn => {
+      btn.onclick = () => { post('/api/goto', {n: Number(btn.dataset.n)}); closeDrawer(); };
+    });
+  }
+}
+
+=======
+>>>>>>> main
 function queueLiveNoteSave(){
   liveNoteDirty = true;
   paint();
@@ -649,7 +721,13 @@ function queueLiveNoteSave(){
   liveNoteSaveTimer = setTimeout(() => {
     post('/api/live-notes', {n: cur, text: $('livenotes').value}).then(r => {
       liveNoteDirty = false;
+<<<<<<< HEAD
+      if(r.ok) allLiveNotes = (r.all_live_notes || []);
       if(!r.ok) $('lnstatus').textContent = 'Could not save live notes.';
+      renderLiveNotesReview();
+=======
+      if(!r.ok) $('lnstatus').textContent = 'Could not save live notes.';
+>>>>>>> main
       paint();
     });
   }, 350);
@@ -675,6 +753,7 @@ function buildList(){
 const PANELS = {
   slides:   {title: 'Jump to slide', btn: 'jumpbtn'},
   deck:     {title: 'Choose a deck',  btn: 'deckbtn'},
+  notes:    {title: 'All captured notes', btn: 'notesbtn'},
   settings: {title: 'Settings',       btn: 'setbtn'}
 };
 let openPanelName = null;
@@ -705,6 +784,7 @@ $('smaller').onclick  = () => post('/api/scale', {step: -1}).then(scaleFailed);
 $('resetsize').onclick = () => post('/api/scale', {scale: 1}).then(scaleFailed);
 $('jumpbtn').onclick  = () => openPanel('slides');
 $('deckbtn').onclick  = () => openPanel('deck');
+$('notesbtn').onclick = () => openPanel('notes');
 $('setbtn').onclick   = () => openPanel('settings');
 $('close').onclick    = closeDrawer;
 $('livenotes').addEventListener('input', queueLiveNoteSave);
@@ -770,6 +850,7 @@ Promise.all([
   buildDecks();
   buildList();
   applyPreviewTheme();
+  renderLiveNotesReview();
   paint();
 });
 
@@ -787,6 +868,10 @@ Promise.all([
     if(st.deck != null) deckId = st.deck;
     liveNoteText = st.live_note || '';
     liveNotesVisible = !!st.live_notes_visible;
+<<<<<<< HEAD
+    if(st.all_live_notes) allLiveNotes = st.all_live_notes;
+=======
+>>>>>>> main
     /* An older server reports no scale. Flag it as soon as we connect rather
        than letting the presenter discover it by pressing a dead button. */
     serverHasScale = st.scale != null;
@@ -799,6 +884,8 @@ Promise.all([
   };
   es.onerror = () => { $('dot').classList.remove('ok'); es.close(); setTimeout(connect, 1500); };
 })();
+
+
 </script>
 </body>
 </html>
