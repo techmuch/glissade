@@ -227,7 +227,7 @@
       "eyebrow": "Needs live internet",
       "heading": "An external embed",
       "body": "If it can't load within six seconds, a QR code appears instead of a blank frame. Press R to retry.",
-      "notes": "<b>External embed.</b> <code>\"media\": {\"src\": \"https://www.youtube.com/embed/…\"}</code><br><br>Use the <b>/embed/</b> URL form, not <code>watch?v=</code>.<br><br><code>pixi run build</code> lists every slide like this one."
+      "notes": "<b>External embed.</b> <code>\"media\": {\"src\": \"https://www.youtube.com/embed/…\"}</code><br><br>Use the <b>/embed/</b> URL form, not <code>watch?v=</code>.<br><br><code>glissade build</code> lists every slide like this one."
     },
     {
       "n": 16,
