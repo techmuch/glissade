@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://glissade.dev/schema/v1.json",
   "x-glissade-schema": 1,
-  "x-glissade-version": "0.11.0_beta",
+  "x-glissade-version": "0.12.0",
   "title": "Glissade deck",
   "description": "A presentation deck. Either an object with metadata and a slides array, or a bare array of slides.",
   "oneOf": [

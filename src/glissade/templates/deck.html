@@ -196,10 +196,16 @@
   .slide.lay p{margin-bottom:0}
   .slide.lay .stack ul{margin-top:.6vh}
   .slide.lay li{margin-bottom:1.8vh}
-  /* Title-content slides can be bullet-heavy; let those lists run wider than
-     the default prose measure so they use more of the slide without changing
-     other layouts. */
-  .slide.lay[data-layout="title-content"] .text-region > ul{max-width:60ch}
+  /* Title-content slides should use the full readable width of the slide
+     rather than the narrower default prose measure. Leave a right margin that
+     matches the slide's left gutter so the text block still feels framed. */
+  .slide.lay[data-layout="title-content"] .text-region{width:100%}
+  .slide.lay[data-layout="title-content"] .text-region .subhead,
+  .slide.lay[data-layout="title-content"] .text-region p,
+  .slide.lay[data-layout="title-content"] .text-region ul,
+  .slide.lay[data-layout="title-content"] .text-region blockquote{
+    max-width:calc(100% - 6vw);
+  }
 
   .subhead{
     font-size:calc(2.6vh * var(--scale)); line-height:1.35;
