@@ -5,7 +5,6 @@ import argparse
 import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -59,7 +58,6 @@ def passthrough(argv: list[str]) -> list[str]:
     return argv[1:] if argv and argv[0] == "--" else argv
 
 
-
 def cmd_test(args: argparse.Namespace) -> None:
     python = require_venv(ROOT / args.venv)
     extra = passthrough(args.args)
@@ -81,27 +79,70 @@ def cmd_build(args: argparse.Namespace) -> None:
 
 
 def parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Cross-platform developer tasks for Glissade.")
+    p = argparse.ArgumentParser(
+        description="Cross-platform developer tasks for Glissade."
+    )
     sub = p.add_subparsers(dest="command", required=True)
 
-    install = sub.add_parser("install", help="Install Python if needed, create .venv, and install dev dependencies.")
-    install.add_argument("--python", default=DEFAULT_PYTHON, help=f"Python version for the local venv (default: {DEFAULT_PYTHON})")
-    install.add_argument("--venv", default=".venv", help="Virtualenv directory (default: .venv)")
-    install.add_argument("--extras", default=DEFAULT_EXTRAS, help=f"Extras to install from the project (default: {DEFAULT_EXTRAS})")
+    install = sub.add_parser(
+        "install",
+        help="Install Python if needed, create .venv, and install dev dependencies.",
+    )
+    install.add_argument(
+        "--python",
+        default=DEFAULT_PYTHON,
+        help=f"Python version for the local venv (default: {DEFAULT_PYTHON})",
+    )
+    install.add_argument(
+        "--venv",
+        default=".venv",
+        help="Virtualenv directory (default: .venv)",
+    )
+    install.add_argument(
+        "--extras",
+        default=DEFAULT_EXTRAS,
+        help=f"Extras to install from the project (default: {DEFAULT_EXTRAS})",
+    )
     install.set_defaults(func=cmd_install)
 
     test = sub.add_parser("test", help="Run pytest inside the local .venv.")
-    test.add_argument("--venv", default=".venv", help="Virtualenv directory (default: .venv)")
-    test.add_argument("args", nargs=argparse.REMAINDER, help="Arguments passed through to pytest")
+    test.add_argument(
+        "--venv",
+        default=".venv",
+        help="Virtualenv directory (default: .venv)",
+    )
+    test.add_argument(
+        "args",
+        nargs=argparse.REMAINDER,
+        help="Arguments passed through to pytest",
+    )
     test.set_defaults(func=cmd_test)
 
-    run_p = sub.add_parser("run", help="Run Glissade inside the local .venv. Defaults to `glissade demo`.")
-    run_p.add_argument("--venv", default=".venv", help="Virtualenv directory (default: .venv)")
-    run_p.add_argument("args", nargs=argparse.REMAINDER, help="Arguments passed through to `python -m glissade`")
+    run_p = sub.add_parser(
+        "run",
+        help="Run Glissade inside the local .venv. Defaults to `glissade demo`.",
+    )
+    run_p.add_argument(
+        "--venv",
+        default=".venv",
+        help="Virtualenv directory (default: .venv)",
+    )
+    run_p.add_argument(
+        "args",
+        nargs=argparse.REMAINDER,
+        help="Arguments passed through to `python -m glissade`",
+    )
     run_p.set_defaults(func=cmd_run)
 
-    build = sub.add_parser("build", help="Build distributable packages into dist/ using `uv build`.")
-    build.add_argument("args", nargs=argparse.REMAINDER, help="Arguments passed through to `uv build`")
+    build = sub.add_parser(
+        "build",
+        help="Build distributable packages into dist/ using `uv build`.",
+    )
+    build.add_argument(
+        "args",
+        nargs=argparse.REMAINDER,
+        help="Arguments passed through to `uv build`",
+    )
     build.set_defaults(func=cmd_build)
 
     return p

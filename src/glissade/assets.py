@@ -248,10 +248,12 @@ def external_media(slides: list[dict[str, Any]]) -> list[tuple[Any, str]]:
     found = []
     for position, slide in enumerate(slides, start=1):
         slide.setdefault("n", position)
+        left = slide.get("left") if isinstance(slide.get("left"), dict) else {}
+        right = slide.get("right") if isinstance(slide.get("right"), dict) else {}
         nodes = [
             slide.get("media"),
-            (slide.get("left") or {}).get("media") if isinstance(slide.get("left"), dict) else None,
-            (slide.get("right") or {}).get("media") if isinstance(slide.get("right"), dict) else None,
+            left.get("media"),
+            right.get("media"),
         ]
         for quad in slide.get("quads") or []:
             if isinstance(quad, dict):
