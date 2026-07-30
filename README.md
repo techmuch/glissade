@@ -370,11 +370,13 @@ Common tasks:
 
 ```bash
 uv run python scripts/dev.py install      # bootstrap .venv
-uv run python scripts/dev.py test         # run the full test suite
+uv run python scripts/dev.py test         # run the default test suite (excludes browser e2e)
 uv run python scripts/dev.py test -- tests/test_check.py -q
 uv run python scripts/dev.py run          # defaults to: glissade demo
 uv run python scripts/dev.py run -- start
 uv run python scripts/dev.py build        # build dist/ packages
+uv run python scripts/dev.py e2e-install  # install Playwright's browser binaries
+uv run python scripts/dev.py e2e          # run browser end-to-end tests
 ```
 
 If you prefer the raw `uv` commands:
@@ -384,11 +386,17 @@ uv python install 3.12
 uv venv .venv --python 3.12
 uv pip install --python .venv/bin/python -e ".[dev,images]"   # Windows: .venv\Scripts\python.exe
 uv run --python .venv/bin/python pytest -q                     # Windows: .venv\Scripts\python.exe
+uv run --python .venv/bin/python python -m playwright install chromium
+uv run --python .venv/bin/python pytest -m e2e tests/e2e -q
 ```
 
 `src/glissade/` is the package; `templates/` holds the deck and remote HTML;
 `data/` holds the themes, JSON schema, `init` scaffold and demo decks — all
 shipped inside the wheel so the tool works from any directory.
+
+Browser behavior is covered by Playwright end-to-end tests in `tests/e2e/`.
+They start a real `glissade` server, drive both the projector and remote UIs,
+and verify live navigation, live notes, and watch-mode reloads.
 
 ```bash
 uv build                   # sdist + universal wheel into dist/
