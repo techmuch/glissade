@@ -1,4 +1,4 @@
-from glissade.cli import main
+from glissade.cli import build_parser, main
 
 
 def test_cli_init_and_decks(tmp_path, monkeypatch):
@@ -42,3 +42,16 @@ def test_cli_check_command(tmp_path, monkeypatch):
     # Run glissade check on scaffolded project
     ret = main(["check"])
     assert ret == 0
+
+
+def test_cli_start_watch_defaults():
+    parser = build_parser()
+
+    args = parser.parse_args(["start"])
+    assert args.no_watch is False
+
+    args = parser.parse_args(["start", "--no-watch"])
+    assert args.no_watch is True
+
+    args = parser.parse_args(["demo"])
+    assert args.no_watch is False

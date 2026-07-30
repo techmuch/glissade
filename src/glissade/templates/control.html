@@ -461,7 +461,7 @@ function scaleFailed(r){
   if(openPanelName !== 'settings') openPanel('settings');
   const el = $('sizewarn');
   el.textContent = r.status === 404
-    ? 'This server was started before text sizing existed — restart it (pixi run start).'
+    ? 'This server was started before text sizing existed — restart it (glissade start).'
     : 'Could not reach the server.';
   el.classList.add('on');
 }
@@ -573,8 +573,9 @@ function previewHTML(s){
   if(s.heading) h += '<h2>' + esc(s.heading) + '</h2>';
   if(s.subheading) h += '<p>' + esc(s.subheading) + '</p>';
 
-  const media = s.media || (s.left && s.left.media) || (s.right && s.right.media);
-  const image = s.image || (s.left && s.left.image) || (s.right && s.right.image);
+  const firstQuad = Array.isArray(s.quads) ? s.quads.find(q => q && typeof q === 'object') : null;
+  const media = s.media || (s.left && s.left.media) || (s.right && s.right.media) || (firstQuad && firstQuad.media);
+  const image = s.image || (s.left && s.left.image) || (s.right && s.right.image) || (firstQuad && firstQuad.image);
 
   if(image && image.src) h += '<img class="pv-thumb" src="' + image.src + '" alt="">';
 
@@ -598,6 +599,12 @@ function previewHTML(s){
   if(s.bullets && s.bullets.length){
     h += '<ul>' + s.bullets.map(b =>
       '<li>' + (b && typeof b === 'object' ? esc(b.text) : esc(b)) + '</li>').join('') + '</ul>';
+  }
+  if(Array.isArray(s.quads) && s.quads.length){
+    h += '<ul>' + s.quads.slice(0, 4).map(q => {
+      const label = q && typeof q === 'object' ? (q.subheading || q.body || (q.image ? 'Image' : '') || (q.media ? 'Embed' : '')) : '';
+      return '<li>' + esc(label) + '</li>';
+    }).join('') + '</ul>';
   }
   if(s.caption) h += '<p>' + s.caption + '</p>';
   return h;

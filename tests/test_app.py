@@ -1,3 +1,5 @@
+import json
+
 from fastapi.testclient import TestClient
 
 from glissade.app import clamp_scale, create_app
@@ -57,3 +59,62 @@ def test_app_routes(tmp_path, sample_deck_file):
     assert notes_data["text"] == "Remember to speak clearly."
     assert len(notes_data["all"]) == 1
     assert notes_data["all"][0] == {"n": 1, "text": "Remember to speak clearly."}
+
+
+def test_reload_project_state_refreshes_slides_and_bumps_rev(tmp_path, sample_deck_file):
+    project = find_project(tmp_path)
+    app = create_app(project)
+    client = TestClient(app)
+
+    before = client.get("/api/state").json()
+    assert before["rev"] == 0
+    assert before["reload_error"] == ""
+
+    deck_path = sample_deck_file
+    data = json.loads(deck_path.read_text(encoding="utf-8"))
+    data["slides"][0]["heading"] = "Fresh heading from disk"
+    data["slides"].append(
+        {
+            "title": "New ending",
+            "layout": "title",
+            "heading": "Thanks",
+            "body": "<p>Reloaded.</p>",
+            "notes": "Wrap up.",
+        }
+    )
+    deck_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    app.state.reload_project()
+
+    after = client.get("/api/state").json()
+    assert after["rev"] == 1
+    assert after["total"] == 3
+    assert after["reload_error"] == ""
+
+    slides = client.get("/api/slides").json()
+    assert slides[0]["heading"] == "Fresh heading from disk"
+    assert slides[-1]["heading"] == "Thanks"
+
+
+def test_reload_project_state_keeps_last_good_deck_on_invalid_json(tmp_path, sample_deck_file):
+    project = find_project(tmp_path)
+    app = create_app(project)
+    client = TestClient(app)
+
+    sample_deck_file.write_text("{ not valid json", encoding="utf-8")
+
+    before = client.get("/api/slides").json()
+    state = client.get("/api/state").json()
+    assert state["rev"] == 0
+
+    try:
+        app.state.reload_project()
+    except ValueError as exc:
+        app.state.show.reload_error = str(exc)
+        app.state.show.publish()
+
+    after = client.get("/api/slides").json()
+    state = client.get("/api/state").json()
+    assert after == before
+    assert state["rev"] == 0
+    assert "can't reload until these deck files parse again" in state["reload_error"]

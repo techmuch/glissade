@@ -54,11 +54,11 @@
       "heading": "Two commands",
       "left": {
         "subheading": "Present",
-        "body": "<p><b>pixi run start</b></p><p>Serves the deck to the projector and a remote to your phone. Prints both addresses and a QR code.</p>"
+        "body": "<p><b>glissade start</b></p><p>Serves the deck to the projector and a remote to your phone. Prints both addresses and a QR code, then watches the project for deck and theme changes.</p>"
       },
       "right": {
         "subheading": "Build",
-        "body": "<p><b>pixi run build</b></p><p>Writes every deck to <b>build/</b> as a standalone file. No server needed to open it.</p>"
+        "body": "<p><b>glissade build</b></p><p>Writes every deck to <b>build/</b> as a standalone file. No server needed to open it.</p>"
       },
       "notes": "<b>layout: \"two-content\"</b> — two independent regions side by side.<br><br>Start is what you use in the room. Build is what you do the night before, so there's a file on the laptop that works even if nothing else does."
     },
@@ -127,7 +127,7 @@
       "eyebrow": "decks/your-deck.json",
       "heading": "Anatomy of a slide",
       "caption": "<p>Pick a <b>layout</b>, fill the fields it uses. Skip any you don't need — nothing is required.</p><p>Text fields accept HTML, so emphasis and quotation marks behave.</p>",
-      "notes": "<b>layout: \"content-caption\"</b> — a wide media region beside a narrower text column.<br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>, <code>quote</code>, <code>image</code>, <code>media</code>, <code>images</code>, <code>left</code>, <code>right</code>, <code>caption</code>, <code>notes</code>, <code>tag</code>, <code>cls</code>.<br><br>The <b>Layout Gallery</b> deck shows all fourteen layouts. Switch to it from the remote."
+      "notes": "<b>layout: \"content-caption\"</b> — a wide media region beside a narrower text column.<br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>, <code>quote</code>, <code>image</code>, <code>media</code>, <code>images</code>, <code>left</code>, <code>right</code>, <code>quads</code>, <code>caption</code>, <code>notes</code>, <code>tag</code>, <code>cls</code>.<br><br>The <b>Layout Gallery</b> deck shows all fifteen layouts. Switch to it from the remote."
     },
     {
       "n": 9,
@@ -268,7 +268,7 @@
       "eyebrow": "The one thing that needs the network",
       "heading": "External embeds",
       "body": "A YouTube URL can't be embedded into a file. If it can't load, this slide shows a QR code instead of a blank frame — press R to retry.",
-      "notes": "<b>layout: \"media-full\"</b> — media fills the slide, text sits in a gradient panel.<br><br>Use the <b>/embed/</b> URL form, not the watch link.<br><br><b>pixi run build</b> lists every slide like this one, so you know your network dependencies before you're standing in front of a room.<br><br>Embeds mount only while their slide is showing — otherwise a video would keep playing, audibly, after you moved on."
+      "notes": "<b>layout: \"media-full\"</b> — media fills the slide, text sits in a gradient panel.<br><br>Use the <b>/embed/</b> URL form, not the watch link.<br><br><b>glissade build</b> lists every slide like this one, so you know your network dependencies before you're standing in front of a room.<br><br>Embeds mount only while their slide is showing — otherwise a video would keep playing, audibly, after you moved on."
     },
     {
       "n": 18,
@@ -318,7 +318,7 @@
       },
       "right": {
         "subheading": "Two decks ship",
-        "body": "<p><b>Glissade — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fourteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
+        "body": "<p><b>Glissade — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fifteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
       },
       "notes": "<b>B is underused.</b> Blanking the screen during a discussion pulls attention back to the room better than any slide can.<br><br>Now switch to the <b>Layout Gallery</b> from your phone — it picks up where this leaves off."
     },
