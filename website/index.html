@@ -66,8 +66,9 @@
       </a>
 
       <nav class="nav-links">
-        <a href="#features">Features</a>
+        <a href="#walkthrough">First Talk</a>
         <a href="#demo">Live Demo</a>
+        <a href="#features">Features</a>
         <a href="#layouts">Layouts</a>
         <a href="#cli">CLI Commands</a>
         <a href="#ai-workflow">AI Agents</a>
@@ -151,6 +152,102 @@
           </div>
         </div>
 
+        <a href="#walkthrough" class="hero-jump-link">See the step-by-step walkthrough ↓</a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- First-Talk Walkthrough -->
+  <section class="walkthrough-section" id="walkthrough">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title">Build Your First Talk in Five Minutes</h2>
+        <p class="section-subtitle">
+          Follow the exact path most people take: install the CLI, scaffold a talk, start the live server,
+          edit JSON with instant reloads, then export one offline HTML file.
+        </p>
+      </div>
+
+      <div class="walkthrough-shell">
+        <div class="walkthrough-steps" id="walkthroughSteps" aria-label="First talk walkthrough steps">
+          <button class="walkthrough-step active" data-step="install" aria-pressed="true">
+            <span class="walkthrough-step-num">1</span>
+            <span class="walkthrough-step-copy">
+              <strong>Install</strong>
+              <span>Get one CLI on your machine.</span>
+            </span>
+          </button>
+          <button class="walkthrough-step" data-step="init" aria-pressed="false">
+            <span class="walkthrough-step-num">2</span>
+            <span class="walkthrough-step-copy">
+              <strong>Init</strong>
+              <span>Scaffold a valid Glissade project.</span>
+            </span>
+          </button>
+          <button class="walkthrough-step" data-step="start" aria-pressed="false">
+            <span class="walkthrough-step-num">3</span>
+            <span class="walkthrough-step-copy">
+              <strong>Start</strong>
+              <span>Open the projector and phone remote.</span>
+            </span>
+          </button>
+          <button class="walkthrough-step" data-step="edit" aria-pressed="false">
+            <span class="walkthrough-step-num">4</span>
+            <span class="walkthrough-step-copy">
+              <strong>Edit</strong>
+              <span>Change JSON and watch everything update.</span>
+            </span>
+          </button>
+          <button class="walkthrough-step" data-step="build" aria-pressed="false">
+            <span class="walkthrough-step-num">5</span>
+            <span class="walkthrough-step-copy">
+              <strong>Build</strong>
+              <span>Ship one standalone offline HTML file.</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="walkthrough-panel">
+          <div class="walkthrough-panel-head">
+            <div>
+              <div class="walkthrough-kicker" id="walkthroughKicker">Step 1 · Install</div>
+              <h3 class="walkthrough-title" id="walkthroughTitle">Install Glissade</h3>
+              <p class="walkthrough-description" id="walkthroughDescription">
+                Start with a single command. No Node bundler, no browser extension, and no compiler toolchain.
+              </p>
+            </div>
+            <div class="walkthrough-badges" id="walkthroughBadges">
+              <span class="walkthrough-badge">Cross-platform</span>
+              <span class="walkthrough-badge">Zero compiler setup</span>
+            </div>
+          </div>
+
+          <div class="walkthrough-command-card">
+            <div class="walkthrough-command-head">
+              <span>Command to run</span>
+              <button class="copy-btn" id="copyWalkthroughBtn" title="Copy walkthrough command">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span class="copy-text">Copy</span>
+              </button>
+            </div>
+            <pre class="walkthrough-command"><code id="walkthroughCommand">uv tool install --from git+https://github.com/techmuch/glissade glissade</code></pre>
+          </div>
+
+          <div class="walkthrough-body">
+            <div class="walkthrough-result-card">
+              <div class="view-header" id="walkthroughResultTitle">What happens next</div>
+              <div class="walkthrough-visual" id="walkthroughVisual"></div>
+            </div>
+            <div class="walkthrough-detail-card">
+              <div class="view-header">Why this step matters</div>
+              <ul class="walkthrough-detail-list" id="walkthroughDetails"></ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -395,24 +492,40 @@
           <div class="badge-pill bg-purple-pill">
             <span>🤖 AI-First Slide Authoring</span>
           </div>
-          <h2>Pair Program Your Slides with AI Agents</h2>
+          <h2>Bring Your Own Agent</h2>
           <p>
-            When you run <code>glissade init</code>, it scaffolds an <code>AGENTS.md</code> file in your project. This guide teaches Claude Code, Cursor, or Antigravity how to write valid Glissade JSON decks with proper speaker notes and layout constraints.
+            When you run <code>glissade init</code>, it scaffolds an <code>AGENTS.md</code> guide and <code>glissade.schema.json</code>. That gives Claude Code, Antigravity, OpenCode, Cursor, VS Code agent workflows, and other file-based coding agents enough structure to generate valid decks with less babysitting.
           </p>
+
+          <div class="agent-tool-row" aria-label="AI tools that work well with Glissade">
+            <span class="agent-tool-pill">Claude Code</span>
+            <span class="agent-tool-pill">Antigravity</span>
+            <span class="agent-tool-pill">OpenCode</span>
+            <span class="agent-tool-pill">Cursor</span>
+            <span class="agent-tool-pill">VS Code</span>
+          </div>
+
           <ul class="ai-checklist">
-            <li>✓ Auto-validates schema with <code>glissade check</code></li>
-            <li>✓ Automatically formats YouTube links into <code>/embed/</code> URLs</li>
-            <li>✓ Catches misspelled layouts like <code>media-rite</code> → <code>media-right</code></li>
+            <li>✓ Gives agents project-specific rules in <code>AGENTS.md</code></li>
+            <li>✓ Lets editors validate JSON live with <code>glissade.schema.json</code></li>
+            <li>✓ Verifies output with <code>glissade check</code> before you present</li>
           </ul>
         </div>
         <div class="ai-prompt-box">
           <div class="prompt-header">Prompting Your Agent</div>
+          <div class="agent-tabs" id="agentTabs" aria-label="AI tool prompt examples">
+            <button class="agent-tab active" data-agent="claude" aria-pressed="true">Claude Code</button>
+            <button class="agent-tab" data-agent="antigravity" aria-pressed="false">Antigravity</button>
+            <button class="agent-tab" data-agent="opencode" aria-pressed="false">OpenCode</button>
+            <button class="agent-tab" data-agent="cursor" aria-pressed="false">Cursor / VS Code</button>
+          </div>
           <div class="prompt-body">
+            <div class="agent-context-line" id="agentContextLine">Example workflow for Claude Code</div>
             <span class="user-avatar">👤 User:</span>
-            <p class="prompt-quote">"Read <code>AGENTS.md</code> and create a 5-slide deck in <code>decks/talk.json</code> explaining why local-first software matters. Use the <code>media-right</code> layout for slide 2."</p>
+            <p class="prompt-quote" id="agentPromptQuote">"Read <code>AGENTS.md</code> and create a 5-slide deck in <code>decks/talk.json</code> explaining why local-first software matters. Use the <code>media-right</code> layout for slide 2."</p>
             <div class="agent-response">
               <span class="agent-avatar">🤖 Agent:</span>
-              <p>Checked <code>AGENTS.md</code>. Created <code>decks/talk.json</code> with 5 slides and verified structure with <code>glissade check</code> — 0 errors!</p>
+              <p id="agentResponseText">Checked <code>AGENTS.md</code>. Created <code>decks/talk.json</code> with 5 slides and verified structure with <code>glissade check</code> — 0 errors!</p>
             </div>
           </div>
         </div>

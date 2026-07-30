@@ -381,6 +381,409 @@ code {
   color: var(--text-dim);
 }
 
+.hero-jump-link {
+  display: inline-block;
+  margin-top: 24px;
+  color: var(--accent-amber-light);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.hero-jump-link:hover {
+  text-decoration: underline;
+}
+
+/* -------------------------------------------------------------------------- */
+/* First-Talk Walkthrough                                                     */
+.walkthrough-section {
+  padding: 88px 0;
+}
+
+.walkthrough-shell {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.walkthrough-steps {
+  display: grid;
+  gap: 12px;
+}
+
+.walkthrough-step {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.walkthrough-step:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.walkthrough-step.active {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: var(--shadow-glow);
+}
+
+.walkthrough-step-num {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--accent-amber-light);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.walkthrough-step-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.walkthrough-step-copy strong {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.walkthrough-step-copy span {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.walkthrough-panel {
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.walkthrough-panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 28px 16px;
+  align-items: flex-start;
+}
+
+.walkthrough-kicker {
+  color: var(--accent-amber-light);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.walkthrough-title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.walkthrough-description {
+  color: var(--text-muted);
+  max-width: 660px;
+}
+
+.walkthrough-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.walkthrough-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.walkthrough-command-card,
+.walkthrough-result-card,
+.walkthrough-detail-card {
+  background: rgba(11, 15, 25, 0.55);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+}
+
+.walkthrough-command-card {
+  margin: 0 28px 20px;
+  overflow: hidden;
+}
+
+.walkthrough-command-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-card);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.walkthrough-command {
+  margin: 0;
+  padding: 18px 20px;
+  overflow-x: auto;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.walkthrough-body {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+  padding: 0 28px 28px;
+}
+
+.walkthrough-visual {
+  padding: 24px;
+  min-height: 280px;
+}
+
+.walkthrough-detail-list {
+  padding: 20px 24px 24px 42px;
+  color: var(--text-muted);
+}
+
+.walkthrough-detail-list li + li {
+  margin-top: 12px;
+}
+
+.wt-mini-terminal,
+.wt-file-tree,
+.wt-diff-card,
+.wt-artifact-card {
+  background: #0b1120;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.wt-mini-terminal {
+  overflow: hidden;
+}
+
+.wt-mini-terminal-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.wt-mini-terminal-bar span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.wt-mini-terminal-body {
+  padding: 18px;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: #dbeafe;
+}
+
+.wt-prompt {
+  color: var(--accent-purple);
+  margin-right: 8px;
+}
+
+.wt-success {
+  color: #86efac;
+}
+
+.wt-dim {
+  color: #93c5fd;
+}
+
+.wt-file-tree,
+.wt-artifact-card {
+  padding: 20px;
+}
+
+.wt-folder {
+  color: var(--accent-amber-light);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.wt-file,
+.wt-artifact-file {
+  font-family: var(--font-mono);
+  color: #d1d5db;
+}
+
+.wt-indent {
+  padding-left: 20px;
+}
+
+.wt-dual-preview {
+  display: grid;
+  grid-template-columns: 1.5fr 0.9fr;
+  gap: 16px;
+  align-items: end;
+}
+
+.wt-caption {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.wt-slide-card {
+  background: #faf8f5;
+  color: #111;
+  border-radius: 14px;
+  padding: 22px;
+  min-height: 190px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.wt-slide-card h4 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.wt-phone-card {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 16px;
+  min-height: 190px;
+}
+
+.wt-phone-dot {
+  color: #86efac;
+  font-size: 0.8rem;
+  margin-bottom: 18px;
+}
+
+.wt-phone-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  margin-bottom: 18px;
+}
+
+.wt-phone-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.wt-phone-buttons span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+}
+
+.wt-diff-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 20px;
+}
+
+.wt-diff-side {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.wt-diff-side-active {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.wt-diff-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.wt-diff-arrow {
+  color: var(--accent-amber-light);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.wt-live-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #86efac;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.wt-artifact-file {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.wt-artifact-note {
+  color: var(--text-muted);
+  max-width: 28ch;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Simulator Section                                                          */
 /* -------------------------------------------------------------------------- */
@@ -858,6 +1261,25 @@ code {
   margin-bottom: 20px;
 }
 
+.agent-tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.agent-tool-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .ai-checklist {
   list-style: none;
 }
@@ -883,9 +1305,44 @@ code {
   color: var(--accent-purple);
 }
 
+.agent-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 14px 16px 0;
+}
+
+.agent-tab {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  border-radius: var(--radius-full);
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.agent-tab:hover,
+.agent-tab.active {
+  color: var(--text-main);
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(139, 92, 246, 0.12);
+}
+
 .prompt-body {
   padding: 20px;
   font-size: 0.9rem;
+}
+
+.agent-context-line {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 14px;
 }
 
 .prompt-quote {
@@ -991,7 +1448,7 @@ code {
 
 /* Responsive */
 @media (max-width: 900px) {
-  .simulator-wrapper, .layout-preview-grid, .ai-card {
+  .simulator-wrapper, .layout-preview-grid, .ai-card, .walkthrough-shell, .walkthrough-body, .wt-dual-preview {
     grid-template-columns: 1fr;
   }
   .hero-title {
@@ -999,5 +1456,45 @@ code {
   }
   .nav-links {
     display: none;
+  }
+  .walkthrough-panel-head {
+    flex-direction: column;
+  }
+  .walkthrough-badges {
+    justify-content: flex-start;
+  }
+  .wt-diff-card {
+    grid-template-columns: 1fr;
+  }
+  .wt-diff-arrow {
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .walkthrough-section {
+    padding: 72px 0;
+  }
+  .walkthrough-command-card,
+  .walkthrough-body {
+    margin: 0 16px 16px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .walkthrough-body {
+    padding: 0 16px 20px;
+    margin: 0;
+  }
+  .walkthrough-panel-head {
+    padding: 20px 16px 14px;
+  }
+  .walkthrough-command-card {
+    margin: 0 16px 16px;
+  }
+  .walkthrough-visual {
+    padding: 16px;
+  }
+  .walkthrough-detail-list {
+    padding: 18px 18px 22px 36px;
   }
 }
