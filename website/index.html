@@ -121,7 +121,7 @@
           <div class="terminal-body">
             <div class="code-line">
               <span class="prompt">$</span>
-              <code id="installCommand">uv tool install glissade</code>
+              <code id="installCommand">uv tool install --from git+https://github.com/techmuch/glissade glissade</code>
               <button class="copy-btn" id="copyInstallBtn" title="Copy command">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -327,6 +327,16 @@
             Ships with <strong>Paper</strong>, <strong>Georgia Tech</strong>, and <strong>Texas A&M</strong> themes out of the box. Drop a <code>themes.json</code> to apply custom brand swatches.
           </p>
         </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-amber">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+          </div>
+          <h3>Live Hot-Reloading</h3>
+          <p>
+            <code>glissade start</code> automatically watches your project. Edit deck JSON, replace images, or change themes, and all connected screens refresh live without losing position.
+          </p>
+        </div>
       </div>
     </div>
   </section>
@@ -335,8 +345,8 @@
   <section class="layouts-section" id="layouts">
     <div class="container">
       <div class="section-header text-center">
-        <h2 class="section-title">14 Expressive Slide Layouts</h2>
-        <p class="section-subtitle">Pick from versatile layouts designed for code, images, media splits, grid showcases, and discussion points.</p>
+        <h2 class="section-title">15 Expressive Slide Layouts</h2>
+        <p class="section-subtitle">Pick from versatile layouts designed for code, images, media splits, grid showcases, quad-charts, and discussion points.</p>
       </div>
 
       <div class="layouts-catalogue">
@@ -345,6 +355,7 @@
           <button class="layout-tab active" data-layout="title">title</button>
           <button class="layout-tab" data-layout="media-right">media-right</button>
           <button class="layout-tab" data-layout="grid">grid</button>
+          <button class="layout-tab" data-layout="quad-chart">quad-chart</button>
           <button class="layout-tab" data-layout="comparison">comparison</button>
           <button class="layout-tab" data-layout="ask">ask (discussion)</button>
         </div>

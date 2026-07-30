@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
 /* Install Command Tabs & Copy                                                */
 /* -------------------------------------------------------------------------- */
 const COMMANDS = {
-  uv: 'uv tool install glissade',
-  pipx: 'pipx install glissade',
-  pip: 'pip install glissade',
-  uvx: 'uvx glissade demo'
+  uv: 'uv tool install --from git+https://github.com/techmuch/glissade glissade',
+  pipx: 'pipx install git+https://github.com/techmuch/glissade.git',
+  pip: 'pip install git+https://github.com/techmuch/glissade.git',
+  uvx: 'uvx --from git+https://github.com/techmuch/glissade glissade demo'
 };
 
 function initInstallTabs() {
@@ -242,6 +242,28 @@ const LAYOUT_DATA = {
         <div class="grid-card"><strong>Offline</strong><p style="font-size: 0.85rem;">Single HTML build</p></div>
         <div class="grid-card"><strong>Remote</strong><p style="font-size: 0.85rem;">Phone Wi-Fi sync</p></div>
         <div class="grid-card"><strong>AI Ready</strong><p style="font-size: 0.85rem;">AGENTS.md guided</p></div>
+      </div>
+    `
+  },
+  'quad-chart': {
+    json: `{
+  "title": "Strategy Quad",
+  "layout": "quad-chart",
+  "heading": "2x2 Matrix Analysis",
+  "quads": [
+    { "title": "Q1: Growth", "body": "Core user features" },
+    { "title": "Q2: Scale", "body": "Performance optimization" },
+    { "title": "Q3: Retain", "body": "Developer docs & DX" },
+    { "title": "Q4: Explore", "body": "AI-assisted workflows" }
+  ]
+}`,
+    html: `
+      <h3 style="font-size: 1.4rem; margin-bottom: 12px;">2x2 Matrix Analysis</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="grid-card"><strong>Q1: Growth</strong><p style="font-size: 0.8rem;">Core user features</p></div>
+        <div class="grid-card"><strong>Q2: Scale</strong><p style="font-size: 0.8rem;">Performance optimization</p></div>
+        <div class="grid-card"><strong>Q3: Retain</strong><p style="font-size: 0.8rem;">Developer docs & DX</p></div>
+        <div class="grid-card"><strong>Q4: Explore</strong><p style="font-size: 0.8rem;">AI-assisted workflows</p></div>
       </div>
     `
   },
