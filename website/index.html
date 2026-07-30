@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glissade — Presentation Decks Written in JSON, Driven from your Phone</title>
+  <meta name="description" content="Glissade is a zero-compiler Python presentation tool. Write slides in JSON, control them over Wi-Fi with your phone, and export standalone single-file HTML decks that work without internet." />
+  
+  <!-- Canonical Link -->
+  <link rel="canonical" href="https://techmuch.github.io/glissade/" />
+
+  <!-- Open Graph / Social Media -->
+  <meta property="og:title" content="Glissade — Presentation Decks Written in JSON" />
+  <meta property="og:description" content="Presentation decks written as JSON, driven from your phone, and built into a single HTML file that works when the Wi-Fi doesn't." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://techmuch.github.io/glissade/" />
+
+  <!-- Twitter Card Data -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Glissade — Presentation Decks Written in JSON" />
+  <meta name="twitter:description" content="Presentation decks written as JSON, driven from your phone, and built into a single HTML file that works when the Wi-Fi doesn't." />
+
+  <!-- Schema.org JSON-LD Structured Data for Search Engine Rich Snippets -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Glissade",
+    "operatingSystem": "Cross-platform (macOS, Linux, Windows)",
+    "applicationCategory": "DeveloperApplication",
+    "license": "https://opensource.org/licenses/MIT",
+    "description": "Presentation decks written as JSON, driven from your phone, and built into a single HTML file that works when the Wi-Fi doesn't.",
+    "url": "https://techmuch.github.io/glissade/",
+    "author": {
+      "@type": "Person",
+      "name": "David Fullmer",
+      "email": "david.d.fullmer@gmail.com"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+
+  <!-- Google Fonts: Outfit & Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand-logo">
+        <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6h16M4 12h16M4 18h10"/>
+          <circle cx="19" cy="18" r="2" fill="currentColor"/>
+        </svg>
+        <span class="brand-name">glissade</span>
+        <span class="version-badge">v0.9.0</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#demo">Live Demo</a>
+        <a href="#layouts">Layouts</a>
+        <a href="#cli">CLI Commands</a>
+        <a href="#ai-workflow">AI Agents</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/techmuch/glissade" target="_blank" rel="noopener" class="btn-github">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-glow"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="badge-pill">
+          <span class="sparkle">✨</span>
+          <span>Zero Compilers • 100% Offline • Mobile Remote Sync</span>
+        </div>
+
+        <h1 class="hero-title">
+          Presentation decks written as JSON.<br />
+          <span class="text-gradient">Driven from your phone.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Built into a standalone, single HTML file that works seamlessly when the venue Wi-Fi fails. Pure Python, instant setup, and AI-agent ready out of the box.
+        </p>
+
+        <!-- Install Terminal Card -->
+        <div class="terminal-card">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-tabs" id="installTabs">
+              <button class="tab-btn active" data-tool="uv">uv (recommended)</button>
+              <button class="tab-btn" data-tool="pipx">pipx</button>
+              <button class="tab-btn" data-tool="pip">pip</button>
+              <button class="tab-btn" data-tool="uvx">Try without installing</button>
+            </div>
+          </div>
+          <div class="terminal-body">
+            <div class="code-line">
+              <span class="prompt">$</span>
+              <code id="installCommand">uv tool install glissade</code>
+              <button class="copy-btn" id="copyInstallBtn" title="Copy command">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span class="copy-text">Copy</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quickstart Workflow Pill -->
+        <div class="quickstart-flow">
+          <div class="flow-step">
+            <span class="step-num">1</span>
+            <span><code>mkdir my-talk && cd my-talk</code></span>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <span class="step-num">2</span>
+            <span><code>glissade init</code></span>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight">
+            <span class="step-num">3</span>
+            <span><code>glissade start</code></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Demo Section (Phone Remote + Projector Screen Simulator) -->
+  <section class="demo-section" id="demo">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title">Experience the Dual-Screen Sync</h2>
+        <p class="section-subtitle">
+          Scan a QR code on the projector to open the phone remote on the same Wi-Fi. Try tapping the phone controls below to advance the live deck!
+        </p>
+      </div>
+
+      <div class="simulator-wrapper">
+        
+        <!-- Laptop / Projector Display -->
+        <div class="laptop-frame">
+          <div class="laptop-bar">
+            <div class="bar-dots"><span></span><span></span><span></span></div>
+            <div class="bar-title">Projector Screen (http://192.168.1.45:8000/)</div>
+            <div class="screen-controls">
+              <button class="screen-btn" id="toggleNotesBtn" title="Toggle Speaker Notes [N]">Speaker Notes [N]</button>
+              <button class="screen-btn" id="toggleLiveOverlayBtn" title="Toggle Live Overlay [L]">Overlay [L]</button>
+              <button class="screen-btn" id="cycleThemeBtn" title="Cycle Theme [T]">Theme: <span id="themeName">Paper</span></button>
+            </div>
+          </div>
+          
+          <div class="laptop-screen" id="projectorDisplay">
+            <!-- Rendered Slide Content -->
+            <div class="slide-container" id="currentSlideDisplay">
+              <!-- Slide content injected dynamically via JS -->
+            </div>
+
+            <!-- Speaker Notes Drawer (Toggled by N) -->
+            <div class="notes-panel hidden" id="speakerNotesPanel">
+              <div class="notes-header">
+                <span>📝 Presenter Speaker Notes</span>
+                <span class="shortcut">Shortcut: N</span>
+              </div>
+              <p id="speakerNotesText">Focus on explaining the offline-first HTML generation here. Mention that images are automatically downscaled & inlined.</p>
+            </div>
+
+            <!-- Live Notes Overlay (Toggled by L) -->
+            <div class="live-overlay hidden" id="liveOverlayDisplay">
+              <div class="overlay-header">📌 Audience Live Notes (Overlay)</div>
+              <div class="overlay-content" id="overlayText">Q: Can we customize fonts? A: Yes via themes.json!</div>
+            </div>
+          </div>
+
+          <div class="laptop-base"></div>
+        </div>
+
+        <!-- Phone Remote Frame -->
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-header">
+              <div class="phone-status">
+                <span>⚡ Glissade Remote</span>
+                <span class="connection-status">● Live</span>
+              </div>
+              <div class="slide-indicator">
+                Slide <span id="currentSlideNum">1</span> of <span id="totalSlideNum">4</span>
+              </div>
+            </div>
+
+            <!-- Slide Title Preview -->
+            <div class="phone-slide-info">
+              <div class="info-label">NOW SHOWING</div>
+              <div class="info-title" id="remoteSlideTitle">Introducing Glissade</div>
+            </div>
+
+            <!-- Speaker Notes preview on phone -->
+            <div class="phone-notes-box">
+              <div class="box-title">Speaker Notes</div>
+              <div class="box-text" id="remoteSpeakerNotes">Welcome everyone. Start by running `glissade demo` to show how fast it works.</div>
+            </div>
+
+            <!-- Phone Remote Buttons -->
+            <div class="phone-controls">
+              <button class="remote-btn btn-nav" id="prevSlideBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                <span>Prev</span>
+              </button>
+              
+              <button class="remote-btn btn-blank" id="blankScreenBtn">
+                <span>Blank [B]</span>
+              </button>
+
+              <button class="remote-btn btn-nav btn-primary" id="nextSlideBtn">
+                <span>Next</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+
+            <!-- Real-time Live Notes Input -->
+            <div class="phone-live-notes">
+              <label for="liveNotesInput">Live Note Capture</label>
+              <input type="text" id="liveNotesInput" placeholder="Type audience feedback or question..." />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title">Built for Modern Tech Talks</h2>
+        <p class="section-subtitle">Everything you need to deliver high-stakes presentations without brittle cloud dependencies.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon bg-amber">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+          </div>
+          <h3>Offline-First HTML Export</h3>
+          <p>
+            <code>glissade build</code> inlines all images, CSS, and fonts into a single standalone HTML deck. Open it locally without internet, web servers, or cloud subscriptions.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-cyan">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+          </div>
+          <h3>Phone Remote over Wi-Fi</h3>
+          <p>
+            Scan a QR code on the projector to turn your phone into a remote control. Advance slides, read speaker notes, and capture live audience feedback in real time.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-purple">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
+          <h3>AI-Agent Ready (`AGENTS.md`)</h3>
+          <p>
+            `glissade init` scaffolds an <code>AGENTS.md</code> guide and <code>glissade.schema.json</code>. Ask Claude, Cursor, or Antigravity to write your entire talk automatically.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-emerald">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </div>
+          <h3>Strict Validation & Instant Fix</h3>
+          <p>
+            <code>glissade check</code> validates slide layouts, missing image paths, and embed links. Run <code>--fix</code> to automatically correct typos and YouTube embed URLs.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-rose">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4l3 3"></path></svg>
+          </div>
+          <h3>Zero Compiler Setup</h3>
+          <p>
+            Pure Python dependencies mean <code>pip install glissade</code> never requires a C compiler or build toolchain on macOS, Windows, or Linux.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-blue">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+          </div>
+          <h3>WCAG AA Themes</h3>
+          <p>
+            Ships with <strong>Paper</strong>, <strong>Georgia Tech</strong>, and <strong>Texas A&M</strong> themes out of the box. Drop a <code>themes.json</code> to apply custom brand swatches.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Slide Layout Catalogue -->
+  <section class="layouts-section" id="layouts">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title">14 Expressive Slide Layouts</h2>
+        <p class="section-subtitle">Pick from versatile layouts designed for code, images, media splits, grid showcases, and discussion points.</p>
+      </div>
+
+      <div class="layouts-catalogue">
+        <!-- Layout Tabs -->
+        <div class="layout-nav" id="layoutNav">
+          <button class="layout-tab active" data-layout="title">title</button>
+          <button class="layout-tab" data-layout="media-right">media-right</button>
+          <button class="layout-tab" data-layout="grid">grid</button>
+          <button class="layout-tab" data-layout="comparison">comparison</button>
+          <button class="layout-tab" data-layout="ask">ask (discussion)</button>
+        </div>
+
+        <!-- Layout Preview Box -->
+        <div class="layout-preview-grid">
+          <!-- Code View -->
+          <div class="code-view">
+            <div class="view-header">JSON Deck Source</div>
+            <pre class="json-code"><code id="layoutJsonCode">{
+  "title": "Glissade Launch",
+  "layout": "title",
+  "eyebrow": "RELEASE 0.9.0",
+  "heading": "Presentation decks written as JSON",
+  "subheading": "Driven from your phone",
+  "notes": "Introduce the core philosophy of Glissade."
+}</code></pre>
+          </div>
+
+          <!-- Rendered Slide Preview -->
+          <div class="rendered-view">
+            <div class="view-header">Rendered Output</div>
+            <div class="slide-preview-box" id="layoutVisualPreview">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Workflow Showcase -->
+  <section class="ai-section" id="ai-workflow">
+    <div class="container">
+      <div class="ai-card">
+        <div class="ai-content">
+          <div class="badge-pill bg-purple-pill">
+            <span>🤖 AI-First Slide Authoring</span>
+          </div>
+          <h2>Pair Program Your Slides with AI Agents</h2>
+          <p>
+            When you run <code>glissade init</code>, it scaffolds an <code>AGENTS.md</code> file in your project. This guide teaches Claude Code, Cursor, or Antigravity how to write valid Glissade JSON decks with proper speaker notes and layout constraints.
+          </p>
+          <ul class="ai-checklist">
+            <li>✓ Auto-validates schema with <code>glissade check</code></li>
+            <li>✓ Automatically formats YouTube links into <code>/embed/</code> URLs</li>
+            <li>✓ Catches misspelled layouts like <code>media-rite</code> → <code>media-right</code></li>
+          </ul>
+        </div>
+        <div class="ai-prompt-box">
+          <div class="prompt-header">Prompting Your Agent</div>
+          <div class="prompt-body">
+            <span class="user-avatar">👤 User:</span>
+            <p class="prompt-quote">"Read <code>AGENTS.md</code> and create a 5-slide deck in <code>decks/talk.json</code> explaining why local-first software matters. Use the <code>media-right</code> layout for slide 2."</p>
+            <div class="agent-response">
+              <span class="agent-avatar">🤖 Agent:</span>
+              <p>Checked <code>AGENTS.md</code>. Created <code>decks/talk.json</code> with 5 slides and verified structure with <code>glissade check</code> — 0 errors!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLI Reference Table -->
+  <section class="cli-section" id="cli">
+    <div class="container">
+      <div class="section-header text-center">
+        <h2 class="section-title">Simple, Intuitive CLI Commands</h2>
+        <p class="section-subtitle">Run commands from any subdirectory. Glissade walks up parent directories to find your project.</p>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="cli-table">
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Action / Function</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>glissade init [dir]</code></td>
+              <td>Scaffold a project: starter deck, <code>AGENTS.md</code> guide, and JSON schema.</td>
+            </tr>
+            <tr>
+              <td><code>glissade start</code></td>
+              <td>Start live presentation server and display QR code for phone remote.</td>
+            </tr>
+            <tr>
+              <td><code>glissade build [deck]</code></td>
+              <td>Compile deck into a single standalone HTML file inside <code>build/</code>.</td>
+            </tr>
+            <tr>
+              <td><code>glissade check [deck]</code></td>
+              <td>Validate deck structure. Use <code>--fix</code> to auto-correct typos and embed links.</td>
+            </tr>
+            <tr>
+              <td><code>glissade demo</code></td>
+              <td>Run built-in interactive tour and layout gallery immediately from anywhere.</td>
+            </tr>
+            <tr>
+              <td><code>glissade update</code></td>
+              <td>Refresh project's <code>AGENTS.md</code> and schema to match upgraded tool version.</td>
+            </tr>
+            <tr>
+              <td><code>glissade upgrade</code></td>
+              <td>Update Glissade to the latest release using your environment's package manager.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <div class="brand-title">Glissade</div>
+        <p>Presentation decks written as JSON, driven from your phone.</p>
+        <div class="footer-meta">Created by David Fullmer • MIT License</div>
+      </div>
+
+      <div class="footer-links">
+        <a href="https://github.com/techmuch/glissade" target="_blank" rel="noopener">GitHub Repository</a>
+        <a href="https://pypi.org/project/glissade/" target="_blank" rel="noopener">PyPI Package</a>
+        <a href="https://github.com/techmuch/glissade/issues" target="_blank" rel="noopener">Issue Tracker</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

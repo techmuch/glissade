@@ -14,5 +14,9 @@ dist/
 __pycache__/
 *.py[cod]
 
+# Website
+website/node_modules/
+website/dist/
+
 # macOS
 .DS_Store
