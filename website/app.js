@@ -198,7 +198,7 @@ const LAYOUT_DATA = {
   "notes": "Introduce the core philosophy of Glissade."
 }`,
     html: `
-      <div class="slide-eyebrow">RELEASE 0.13.0</div>
+      <div class="slide-eyebrow">RELEASE 0.14.0</div>
       <h2 class="slide-heading" style="font-size: 2rem;">Presentation decks written as JSON</h2>
       <p style="color: #666; font-size: 1.1rem;">Driven from your phone</p>
     `
