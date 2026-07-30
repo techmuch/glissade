@@ -198,7 +198,7 @@ const LAYOUT_DATA = {
   "notes": "Introduce the core philosophy of Glissade."
 }`,
     html: `
-      <div class="slide-eyebrow">RELEASE 0.9.0</div>
+      <div class="slide-eyebrow">RELEASE 0.13.0</div>
       <h2 class="slide-heading" style="font-size: 2rem;">Presentation decks written as JSON</h2>
       <p style="color: #666; font-size: 1.1rem;">Driven from your phone</p>
     `
@@ -249,21 +249,23 @@ const LAYOUT_DATA = {
     json: `{
   "title": "Strategy Quad",
   "layout": "quad-chart",
+  "eyebrow": "Four views at once",
   "heading": "2x2 Matrix Analysis",
   "quads": [
-    { "title": "Q1: Growth", "body": "Core user features" },
-    { "title": "Q2: Scale", "body": "Performance optimization" },
-    { "title": "Q3: Retain", "body": "Developer docs & DX" },
-    { "title": "Q4: Explore", "body": "AI-assisted workflows" }
+    { "subheading": "Problem", "body": "<p>Summarise constraint in one short paragraph.</p>" },
+    { "subheading": "Evidence", "body": "<p>Data and metrics supporting the claim.</p>" },
+    { "subheading": "Options", "bullets": ["Option A: Pilot", "Option B: Rollout"] },
+    { "subheading": "Recommendation", "body": "<p>Call to action or key decision.</p>" }
   ]
 }`,
     html: `
-      <h3 style="font-size: 1.4rem; margin-bottom: 12px;">2x2 Matrix Analysis</h3>
+      <div class="slide-eyebrow" style="font-size: 0.75rem;">Four views at once</div>
+      <h3 style="font-size: 1.3rem; margin-bottom: 10px;">2x2 Matrix Analysis</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        <div class="grid-card"><strong>Q1: Growth</strong><p style="font-size: 0.8rem;">Core user features</p></div>
-        <div class="grid-card"><strong>Q2: Scale</strong><p style="font-size: 0.8rem;">Performance optimization</p></div>
-        <div class="grid-card"><strong>Q3: Retain</strong><p style="font-size: 0.8rem;">Developer docs & DX</p></div>
-        <div class="grid-card"><strong>Q4: Explore</strong><p style="font-size: 0.8rem;">AI-assisted workflows</p></div>
+        <div class="grid-card" style="padding: 10px;"><strong>Problem</strong><p style="font-size: 0.8rem; margin-top: 4px;">Summarise constraint in one short paragraph.</p></div>
+        <div class="grid-card" style="padding: 10px;"><strong>Evidence</strong><p style="font-size: 0.8rem; margin-top: 4px;">Data and metrics supporting the claim.</p></div>
+        <div class="grid-card" style="padding: 10px;"><strong>Options</strong><ul style="font-size: 0.8rem; margin-top: 4px; padding-left: 14px;"><li>Option A: Pilot</li><li>Option B: Rollout</li></ul></div>
+        <div class="grid-card" style="padding: 10px;"><strong>Recommendation</strong><p style="font-size: 0.8rem; margin-top: 4px;">Call to action or key decision.</p></div>
       </div>
     `
   },
