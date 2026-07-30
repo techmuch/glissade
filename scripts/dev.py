@@ -78,6 +78,22 @@ def cmd_build(args: argparse.Namespace) -> None:
     run([uv(), "build", *passthrough(args.args)])
 
 
+def cmd_e2e_install(args: argparse.Namespace) -> None:
+    python = require_venv(ROOT / args.venv)
+    run([str(python), "-m", "playwright", "install", args.browser])
+
+
+def cmd_e2e(args: argparse.Namespace) -> None:
+    python = require_venv(ROOT / args.venv)
+    extra = passthrough(args.args)
+    cmd = [str(python), "-m", "pytest", "-m", "e2e"]
+    if not extra:
+        cmd.extend(["tests/e2e", "-q"])
+    else:
+        cmd.extend(extra)
+    run(cmd)
+
+
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description="Cross-platform developer tasks for Glissade."
@@ -144,6 +160,38 @@ def parser() -> argparse.ArgumentParser:
         help="Arguments passed through to `uv build`",
     )
     build.set_defaults(func=cmd_build)
+
+    e2e_install = sub.add_parser(
+        "e2e-install",
+        help="Install Playwright browser binaries into the local .venv.",
+    )
+    e2e_install.add_argument(
+        "--venv",
+        default=".venv",
+        help="Virtualenv directory (default: .venv)",
+    )
+    e2e_install.add_argument(
+        "--browser",
+        default="chromium",
+        help="Browser to install for Playwright (default: chromium)",
+    )
+    e2e_install.set_defaults(func=cmd_e2e_install)
+
+    e2e = sub.add_parser(
+        "e2e",
+        help="Run browser end-to-end tests inside the local .venv.",
+    )
+    e2e.add_argument(
+        "--venv",
+        default=".venv",
+        help="Virtualenv directory (default: .venv)",
+    )
+    e2e.add_argument(
+        "args",
+        nargs=argparse.REMAINDER,
+        help="Arguments passed through to pytest for e2e tests",
+    )
+    e2e.set_defaults(func=cmd_e2e)
 
     return p
 
