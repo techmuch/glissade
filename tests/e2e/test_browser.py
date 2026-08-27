@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 from playwright.async_api import Page, async_playwright, expect
 
-
 pytestmark = [pytest.mark.e2e, pytest.mark.anyio]
 
 
@@ -111,24 +110,29 @@ async def open_pages(base_url: str):
         await playwright.stop()
 
 
-async def test_remote_navigation_updates_projector(tmp_path: Path, sample_deck_data: dict):
+async def test_remote_navigation_updates_projector(
+    tmp_path: Path, sample_deck_data: dict
+):
     with running_server(tmp_path, sample_deck_data) as server:
         async with open_pages(server["base_url"]) as (projector, remote):
-            await expect(projector.locator(".slide.active")).to_contain_text("Welcome to Glissade")
+            active_slide = projector.locator(".slide.active")
+            await expect(active_slide).to_contain_text("Welcome to Glissade")
             await expect(remote.locator("#count")).to_have_text("1 / 2")
 
             await remote.locator("#next").click()
 
             await expect(remote.locator("#count")).to_have_text("2 / 2")
-            await expect(projector.locator(".slide.active")).to_contain_text("Self-contained decks")
+            await expect(active_slide).to_contain_text("Self-contained decks")
 
             await remote.locator("#prev").click()
 
             await expect(remote.locator("#count")).to_have_text("1 / 2")
-            await expect(projector.locator(".slide.active")).to_contain_text("Welcome to Glissade")
+            await expect(active_slide).to_contain_text("Welcome to Glissade")
 
 
-async def test_live_notes_round_trip_to_remote_and_projector(tmp_path: Path, sample_deck_data: dict):
+async def test_live_notes_round_trip_to_remote_and_projector(
+    tmp_path: Path, sample_deck_data: dict
+):
     with running_server(tmp_path, sample_deck_data) as server:
         async with open_pages(server["base_url"]) as (projector, remote):
             note = "Ask about rollout timing"
@@ -147,7 +151,8 @@ async def test_live_reload_refreshes_open_pages(tmp_path: Path, sample_deck_data
         async with open_pages(server["base_url"]) as (projector, remote):
             deck_path = server["deck_path"]
 
-            await expect(projector.locator(".slide.active")).to_contain_text("Welcome to Glissade")
+            active_slide = projector.locator(".slide.active")
+            await expect(active_slide).to_contain_text("Welcome to Glissade")
             await expect(remote.locator("#nowtitle")).to_have_text("Welcome Slide")
 
             data = json.loads(deck_path.read_text(encoding="utf-8"))
@@ -155,11 +160,13 @@ async def test_live_reload_refreshes_open_pages(tmp_path: Path, sample_deck_data
             data["slides"][0]["title"] = "Updated Slide Title"
             deck_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
-            await expect(projector.locator(".slide.active")).to_contain_text("Updated from watch mode")
+            await expect(active_slide).to_contain_text("Updated from watch mode")
             await expect(remote.locator("#nowtitle")).to_have_text("Updated Slide Title")
 
 
-async def test_notes_drawer_lists_captured_notes_and_jumps(tmp_path: Path, sample_deck_data: dict):
+async def test_notes_drawer_lists_captured_notes_and_jumps(
+    tmp_path: Path, sample_deck_data: dict
+):
     with running_server(tmp_path, sample_deck_data) as server:
         async with open_pages(server["base_url"]) as (_, remote):
             await remote.locator("#livenotes").fill("Remember the intro story")
@@ -170,7 +177,8 @@ async def test_notes_drawer_lists_captured_notes_and_jumps(tmp_path: Path, sampl
 
             await remote.locator("#notesbtn").click()
             await expect(remote.locator("#drawertitle")).to_have_text("All captured notes")
-            await expect(remote.locator("#lnreviewpanel")).to_contain_text("Remember the intro story")
+            review_panel = remote.locator("#lnreviewpanel")
+            await expect(review_panel).to_contain_text("Remember the intro story")
 
             await remote.locator("#lnreviewpanel button[data-n='1']").click()
             await expect(remote.locator("#count")).to_have_text("1 / 2")

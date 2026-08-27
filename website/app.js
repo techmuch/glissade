@@ -85,7 +85,7 @@ const WALKTHROUGH_STEPS = {
           <div><span class="wt-prompt">$</span> uv tool install --from git+https://github.com/techmuch/glissade glissade</div>
           <div class="wt-success">Installed 1 executable: glissade</div>
           <div class="wt-dim"><span class="wt-prompt">$</span> glissade --version</div>
-          <div class="wt-success">glissade 0.14.0</div>
+          <div class="wt-success">glissade 0.14.1</div>
         </div>
       </div>
     `
@@ -442,13 +442,13 @@ const LAYOUT_DATA = {
     json: `{
   "title": "Glissade Launch",
   "layout": "title",
-  "eyebrow": "RELEASE 0.9.0",
+  "eyebrow": "RELEASE 0.14.1",
   "heading": "Presentation decks written as JSON",
   "subheading": "Driven from your phone",
   "notes": "Introduce the core philosophy of Glissade."
 }`,
     html: `
-      <div class="slide-eyebrow">RELEASE 0.14.0</div>
+      <div class="slide-eyebrow">RELEASE 0.14.1</div>
       <h2 class="slide-heading" style="font-size: 2rem;">Presentation decks written as JSON</h2>
       <p style="color: #666; font-size: 1.1rem;">Driven from your phone</p>
     `
