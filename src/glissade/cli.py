@@ -71,6 +71,25 @@ def lan_ip() -> str:
         s.close()
 
 
+def find_available_port(host: str, start_port: int, max_port: int = 65535) -> int:
+    """Find the first available TCP port on host starting from start_port.
+
+    If start_port is occupied, increments the port number until an open port
+    is found so starting the server doesn't fail when another instance or
+    service is already listening.
+    """
+    family = socket.AF_INET6 if ":" in host and host not in ("0.0.0.0", "") else socket.AF_INET
+    port = max(1, start_port)
+    while port <= max_port:
+        try:
+            with socket.socket(family, socket.SOCK_STREAM) as probe:
+                probe.bind((host, port))
+                return port
+        except OSError:
+            port += 1
+    raise SystemExit(f"No free ports available starting from {start_port} on {host}.")
+
+
 def open_when_ready(url: str, host: str, port: int, timeout: float = 20.0) -> None:
     """Open the system browser once the server is actually accepting.
 
@@ -204,9 +223,10 @@ def cmd_start(args) -> int:
 
     project = demo_project() if args._demo else _project(args)
     defaults = project.config()
-    port = args.port or int(defaults.get("port", 8000))
+    requested_port = args.port or int(defaults.get("port", 8000))
     host = args.host or str(defaults.get("host", "0.0.0.0"))
     deck = args.deck or defaults.get("deck")
+    port = find_available_port(host, requested_port)
 
     app = create_app(project, deck, watch=not args.no_watch and not args._demo)
     _warn_if_deck_needs_newer(app.state.decks)
