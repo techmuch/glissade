@@ -48,9 +48,9 @@
   }
   .listbtn.icon svg{display:block}
   @media (max-width:400px){
-    header{gap:6px; padding:10px 10px}
-    .listbtn{padding:7px 9px; font-size:12.5px}
-    .count{font-size:12px}
+    header{gap:5px; padding:10px 8px}
+    .listbtn, .lnlistbtn{padding:7px 8px; font-size:12px}
+    .count{font-size:11.5px}
   }
 
   /* ---------- scrolling middle ---------- */
@@ -443,8 +443,11 @@ function post(path, body){
   return fetch(path, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify(body || {})
-  }).then(r => ({ok:r.ok, status:r.status}))
-    .catch(() => ({ok:false, status:0}));
+  }).then(async r => {
+    let data = {};
+    try { data = await r.json(); } catch(e) {}
+    return Object.assign({ok: r.ok, status: r.status}, data);
+  }).catch(() => ({ok:false, status:0}));
 }
 
 function scaleFailed(r){
@@ -460,7 +463,7 @@ function scaleFailed(r){
 
 function paint(){
   if(!SLIDES.length) return;
-  const s = SLIDES[cur - 1];
+  const s = SLIDES[cur - 1] || SLIDES[0];
   const nx = SLIDES[cur];
 
   $('count').textContent = cur + ' / ' + SLIDES.length;
@@ -841,6 +844,9 @@ Promise.all([
   applyPreviewTheme();
   renderLiveNotesReview();
   paint();
+}).catch(() => {
+  $('nowtitle').textContent = 'Could not load deck';
+  $('nownotes').innerHTML = '<i>Could not connect to Glissade. Make sure <code>glissade start</code> is running on this network.</i>';
 });
 
 (function connect(){
