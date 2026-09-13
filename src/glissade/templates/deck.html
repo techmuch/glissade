@@ -431,18 +431,100 @@
     text-transform:uppercase; color:var(--ask-accent); margin-top:5px;
   }
 
+  /* Deck switcher overlay, toggled with D */
+  #deckpicker{
+    position:fixed; inset:0; z-index:35;
+    display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.68);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+  }
+  #deckpicker.on{display:flex}
+  .dp-card{
+    background:rgba(20,18,16,.96);
+    color:var(--overlay-ink,#e6e0d4);
+    border:1px solid rgba(192,168,120,.35);
+    border-radius:14px;
+    box-shadow:0 18px 50px rgba(0,0,0,.5);
+    width:min(90vw, 560px);
+    max-height:80vh;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    font-family:var(--ui-font);
+    animation:dp-fade .15s ease-out;
+  }
+  @keyframes dp-fade{
+    from{opacity:0; transform:scale(.97)}
+    to{opacity:1; transform:scale(1)}
+  }
+  .dp-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    padding:16px 20px 14px;
+    border-bottom:1px solid rgba(192,168,120,.2);
+  }
+  .dp-title{
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent-light,#b8955a); font-weight:700;
+  }
+  .dp-hint{
+    font-size:11.5px; color:var(--chrome-ink,#9a9186); letter-spacing:.02em;
+  }
+  .dp-list{
+    padding:10px 12px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .dp-item{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 14px; border-radius:8px;
+    background:transparent; border:1px solid transparent;
+    cursor:pointer; text-align:left; color:inherit;
+    transition:background .1s ease, border-color .1s ease;
+  }
+  .dp-item:hover, .dp-item.focused{
+    background:rgba(255,255,255,.07);
+    border-color:rgba(192,168,120,.4);
+  }
+  .dp-item.active{
+    border-color:var(--accent,#7a5c2e);
+    background:rgba(192,168,120,.12);
+  }
+  .dp-key{
+    font-size:11px; font-weight:700; color:var(--accent-light,#b8955a);
+    background:rgba(0,0,0,.3); border:1px solid rgba(192,168,120,.3);
+    border-radius:4px; padding:2px 7px; min-width:22px; text-align:center;
+    flex:none; font-variant-numeric:tabular-nums;
+  }
+  .dp-info{flex:1; min-width:0}
+  .dp-name{
+    font-size:15px; font-weight:600; line-height:1.3;
+    color:#f4eee3; display:flex; align-items:center; gap:8px;
+  }
+  .dp-badge{
+    font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    padding:2px 6px; border-radius:3px;
+    background:var(--ask-bg,#2f3a3f); color:var(--ask-accent,#b8955a);
+  }
+  .dp-desc{
+    font-size:12px; color:var(--chrome-ink,#9a9186); margin-top:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .dp-count{
+    font-size:12px; color:var(--chrome-ink,#9a9186);
+    letter-spacing:.04em; flex:none; font-variant-numeric:tabular-nums;
+  }
+
   @media print{
     body{background:#fff; overflow:visible}
     #stage{position:static}
     .slide{display:flex !important; page-break-after:always; height:100vh; animation:none}
-    #notes,#help,#live,#blank,#scaletoast,#livenotes{display:none}
+    #notes,#help,#live,#blank,#scaletoast,#livenotes,#deckpicker{display:none}
   }
 </style>
 </head>
 <body>
 
 <div id="live"><i></i><span>connecting…</span></div>
-<div id="help">← → navigate &nbsp;·&nbsp; N notes &nbsp;·&nbsp; B blank &nbsp;·&nbsp; + − text &nbsp;·&nbsp; T theme &nbsp;·&nbsp; R reload embed &nbsp;·&nbsp; F fullscreen</div>
+<div id="help">← → navigate &nbsp;·&nbsp; N notes &nbsp;·&nbsp; B blank &nbsp;·&nbsp; D decks &nbsp;·&nbsp; + − text &nbsp;·&nbsp; T theme &nbsp;·&nbsp; R reload embed &nbsp;·&nbsp; F fullscreen</div>
 <div id="scaletoast"><b id="scaleval">100%</b><span>text size</span></div>
 <div id="stage"></div>
 <div id="notes"></div>
@@ -457,12 +539,23 @@
   </div>
   <div class="ln-body" id="lnbody"></div>
 </div>
+<div id="deckpicker" aria-label="Deck switcher" role="dialog" aria-modal="true">
+  <div class="dp-card">
+    <div class="dp-head">
+      <div class="dp-title">Switch Deck</div>
+      <div class="dp-hint">↑↓ navigate · Enter select · Esc close</div>
+    </div>
+    <div class="dp-list" id="dplist" role="listbox"></div>
+  </div>
+</div>
 
 <script>
 const SLIDES = __SLIDES_JSON__;
 const THEMES = __THEMES_JSON__;
+const DECKS = __DECKS_JSON__;
 const DECK_TITLE = __TITLE__;
 const LIVE = __LIVE__;
+let currentDeckId = __CURRENT_DECK__;
 
 document.title = DECK_TITLE;
 
@@ -476,8 +569,11 @@ const liveNotesBodyEl = document.getElementById('lnbody');
 const liveNotesStateEl = document.getElementById('lnstate');
 const liveEl = document.getElementById('live');
 const toastEl = document.getElementById('scaletoast');
+const deckPickerEl = document.getElementById('deckpicker');
+const dpListEl = document.getElementById('dplist');
 let i = 0, notesOn = false, blanked = false, scale = 1, liveNotesVisible = false, liveNoteText = '';
 let themeId = (THEMES[0] || {}).id || 'paper';
+let deckPickerOpen = false, dpFocusedIdx = 0;
 
 /* ==================== layout renderer ====================
    Every layout is built from three region kinds: text, image, and embed.
@@ -962,6 +1058,122 @@ function cycleTheme(){
   requestTheme(THEMES[(idx + 1 + THEMES.length) % THEMES.length].id);
 }
 
+/* --- deck switcher ---------------------------------------------------- */
+
+function renderDeckPickerList(){
+  dpListEl.innerHTML = '';
+  const esc = s => String(s || '').replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+  DECKS.forEach((d, idx) => {
+    const isCurrent = d.id === currentDeckId;
+    const isFocused = idx === dpFocusedIdx;
+    const item = document.createElement('div');
+    item.className = 'dp-item' + (isCurrent ? ' active' : '') + (isFocused ? ' focused' : '');
+    item.setAttribute('role', 'option');
+    item.setAttribute('aria-selected', isFocused ? 'true' : 'false');
+    item.dataset.id = d.id;
+    item.dataset.index = idx;
+
+    const num = idx < 9 ? (idx + 1) : '';
+    const keyHtml = num ? '<span class="dp-key">' + num + '</span>' : '';
+    const badgeHtml = isCurrent ? '<span class="dp-badge">Current</span>' : '';
+    const descHtml = d.subtitle ? '<div class="dp-desc">' + esc(d.subtitle) + '</div>' : '';
+
+    item.innerHTML = keyHtml +
+      '<div class="dp-info">' +
+        '<div class="dp-name">' + esc(d.title || d.id) + badgeHtml + '</div>' +
+        descHtml +
+      '</div>' +
+      '<span class="dp-count">' + (d.count || 0) + ' slides</span>';
+
+    item.addEventListener('click', () => {
+      selectDeck(d.id);
+    });
+    dpListEl.appendChild(item);
+  });
+
+  const focusedItem = dpListEl.querySelector('.dp-item.focused');
+  if(focusedItem && focusedItem.scrollIntoView){
+    focusedItem.scrollIntoView({block: 'nearest'});
+  }
+}
+
+function openDeckPicker(){
+  if(!LIVE){
+    toast('Live only', 'deck switching requires server');
+    return;
+  }
+  if(!DECKS || DECKS.length < 2){
+    const name = DECKS && DECKS[0] ? (DECKS[0].title || DECKS[0].id) : '1 deck';
+    toast(name, 'only deck in project');
+    return;
+  }
+  deckPickerOpen = true;
+  const curIdx = DECKS.findIndex(d => d.id === currentDeckId);
+  dpFocusedIdx = curIdx >= 0 ? curIdx : 0;
+  renderDeckPickerList();
+  deckPickerEl.classList.add('on');
+}
+
+function closeDeckPicker(){
+  deckPickerOpen = false;
+  deckPickerEl.classList.remove('on');
+}
+
+function selectDeck(deckId){
+  if(deckId === currentDeckId){
+    closeDeckPicker();
+    return;
+  }
+  closeDeckPicker();
+  post('/api/deck', {id: deckId}).then(r => {
+    if(!r.ok){
+      toast('Failed', 'could not switch deck');
+    }
+  });
+}
+
+function handleDeckPickerKey(e){
+  const k = e.key;
+  if(k === 'Escape' || k === 'd' || k === 'D'){
+    e.preventDefault();
+    closeDeckPicker();
+    return;
+  }
+  if(k === 'ArrowDown' || k === 'j' || k === 'Tab'){
+    e.preventDefault();
+    dpFocusedIdx = (dpFocusedIdx + 1) % DECKS.length;
+    renderDeckPickerList();
+    return;
+  }
+  if(k === 'ArrowUp' || k === 'k'){
+    e.preventDefault();
+    dpFocusedIdx = (dpFocusedIdx - 1 + DECKS.length) % DECKS.length;
+    renderDeckPickerList();
+    return;
+  }
+  if(k === 'Enter'){
+    e.preventDefault();
+    if(DECKS[dpFocusedIdx]){
+      selectDeck(DECKS[dpFocusedIdx].id);
+    }
+    return;
+  }
+  if(/^[1-9]$/.test(k)){
+    const num = parseInt(k, 10);
+    if(num >= 1 && num <= DECKS.length){
+      e.preventDefault();
+      selectDeck(DECKS[num - 1].id);
+      return;
+    }
+  }
+}
+
+deckPickerEl.addEventListener('click', e => {
+  if(e.target === deckPickerEl){
+    closeDeckPicker();
+  }
+});
+
 /* In live mode the server owns the slide index, so navigation is a request,
    not a local change — that keeps the projector and the phone in step. */
 function go(n){
@@ -981,6 +1193,10 @@ function post(path, body){
 }
 
 document.addEventListener('keydown', e => {
+  if(deckPickerOpen){
+    handleDeckPickerKey(e);
+    return;
+  }
   const k = e.key;
   if(k === 'ArrowRight' || k === 'ArrowDown' || k === ' ' || k === 'PageDown'){ e.preventDefault(); go(i + 1); }
   else if(k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp'){ e.preventDefault(); go(i - 1); }
@@ -988,6 +1204,7 @@ document.addEventListener('keydown', e => {
   else if(k === 'End'){ go(SLIDES.length - 1); }
   else if(k === 'n' || k === 'N'){ setNotes(!notesOn); }
   else if(k === 'b' || k === 'B'){ LIVE ? post('/api/blank', {blank: !blanked}) : setBlank(!blanked); }
+  else if(k === 'd' || k === 'D'){ openDeckPicker(); }
   /* '=' is the unshifted key on most layouts, so + works without Shift. */
   else if(k === '+' || k === '=' || k === 'Add'){ e.preventDefault(); bumpScale(1); }
   else if(k === '-' || k === '_' || k === 'Subtract'){ e.preventDefault(); bumpScale(-1); }
@@ -1001,6 +1218,7 @@ document.addEventListener('keydown', e => {
   }
 });
 stage.addEventListener('click', e => {
+  if(deckPickerOpen) return;
   go(e.clientX < window.innerWidth * 0.25 ? i - 1 : i + 1);
 });
 
@@ -1015,6 +1233,7 @@ if(LIVE){
     };
     es.onmessage = ev => {
       const st = JSON.parse(ev.data);
+      if(st.deck != null) currentDeckId = st.deck;
       /* The slides were baked into this page when it was served, so a deck
          change means the page itself is stale — reload rather than trying to
          swap 20 slides in place. */

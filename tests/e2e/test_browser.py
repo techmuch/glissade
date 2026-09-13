@@ -182,3 +182,64 @@ async def test_notes_drawer_lists_captured_notes_and_jumps(
 
             await remote.locator("#lnreviewpanel button[data-n='1']").click()
             await expect(remote.locator("#count")).to_have_text("1 / 2")
+
+
+async def test_deck_picker_overlay_keyboard_navigation_and_switching(
+    tmp_path: Path, sample_deck_data: dict
+):
+    decks_dir = tmp_path / "decks"
+    decks_dir.mkdir(parents=True, exist_ok=True)
+    appendix_deck = {
+        "title": "Appendix Talk",
+        "format": 1,
+        "glissade": ">=0.6",
+        "slides": [
+            {
+                "title": "Appendix First Slide",
+                "layout": "title",
+                "heading": "Appendix Headline",
+                "body": "<p>Deep dive material.</p>",
+                "notes": "Extra material.",
+            }
+        ],
+    }
+    (decks_dir / "appendix.json").write_text(
+        json.dumps(appendix_deck, indent=2), encoding="utf-8"
+    )
+
+    with running_server(tmp_path, sample_deck_data) as server:
+        async with open_pages(server["base_url"]) as (projector, remote):
+            picker = projector.locator("#deckpicker")
+            await expect(picker).not_to_have_class("on")
+
+            # Press 'd' to open deck picker
+            await projector.keyboard.press("d")
+            await expect(picker).to_have_class("on")
+            await expect(projector.locator(".dp-title")).to_have_text("Switch Deck")
+            await expect(projector.locator(".dp-item")).to_have_count(2)
+
+            # Press 'Escape' to dismiss without switching
+            await projector.keyboard.press("Escape")
+            await expect(picker).not_to_have_class("on")
+
+            # Re-open picker with 'd'
+            await projector.keyboard.press("d")
+            await expect(picker).to_have_class("on")
+
+            # Click the inactive deck
+            other_item = projector.locator(".dp-item:not(.active)")
+            other_name = await other_item.locator(".dp-name").inner_text()
+            await other_item.click()
+
+            # Picker closes upon selection
+            await expect(picker).not_to_have_class("on")
+
+            # Projector reloads and renders the new deck
+            active_slide = projector.locator(".slide.active")
+            if "Appendix" in other_name:
+                await expect(active_slide).to_contain_text("Appendix Headline")
+                await expect(remote.locator("#nowtitle")).to_have_text("Appendix First Slide")
+            else:
+                await expect(active_slide).to_contain_text("Welcome to Glissade")
+                await expect(remote.locator("#nowtitle")).to_have_text("Welcome Slide")
+

@@ -965,6 +965,106 @@ code {
   display: none;
 }
 
+/* Deck Picker Overlay in Simulator */
+.deck-picker-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.deck-picker-overlay.hidden {
+  display: none;
+}
+.dp-card-sim {
+  background: rgba(20, 18, 16, 0.95);
+  border: 1px solid rgba(192, 168, 120, 0.4);
+  border-radius: 12px;
+  width: 85%;
+  max-width: 440px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+.dp-head-sim {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(192, 168, 120, 0.2);
+}
+.dp-title-sim {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-amber);
+}
+.dp-hint-sim {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+.dp-list-sim {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dp-item-sim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+.dp-item-sim:hover, .dp-item-sim.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(192, 168, 120, 0.4);
+}
+.dp-key-sim {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-amber);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(192, 168, 120, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.dp-info-sim {
+  flex: 1;
+  min-width: 0;
+}
+.dp-name-sim {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dp-badge-sim {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--accent-amber);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.dp-desc-sim {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+.dp-count-sim {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
 .notes-header, .overlay-header {
   font-size: 0.8rem;
   font-weight: 700;

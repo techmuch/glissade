@@ -72,7 +72,7 @@
           <circle cx="19" cy="18" r="2" fill="currentColor"/>
         </svg>
         <span class="brand-name">glissade</span>
-        <span class="version-badge">v0.14.3</span>
+        <span class="version-badge">v0.14.4</span>
       </a>
 
       <nav class="nav-links">
@@ -283,6 +283,7 @@
               <button class="screen-btn" id="toggleNotesBtn" title="Toggle Speaker Notes [N]">Speaker Notes [N]</button>
               <button class="screen-btn" id="toggleLiveOverlayBtn" title="Toggle Live Overlay [L]">Overlay [L]</button>
               <button class="screen-btn" id="cycleThemeBtn" title="Cycle Theme [T]">Theme: <span id="themeName">Paper</span></button>
+              <button class="screen-btn" id="switchDeckBtn" title="Switch Deck [D]">Deck [D]</button>
             </div>
           </div>
           
@@ -305,6 +306,34 @@
             <div class="live-overlay hidden" id="liveOverlayDisplay">
               <div class="overlay-header">📌 Audience Live Notes (Overlay)</div>
               <div class="overlay-content" id="overlayText">Q: Can we customize fonts? A: Yes via themes.json!</div>
+            </div>
+
+            <!-- Deck Switcher HUD (Toggled by D) -->
+            <div class="deck-picker-overlay hidden" id="deckPickerOverlay">
+              <div class="dp-card-sim">
+                <div class="dp-head-sim">
+                  <span class="dp-title-sim">Switch Deck</span>
+                  <span class="dp-hint-sim">Shortcut: D · Esc</span>
+                </div>
+                <div class="dp-list-sim" id="dpSimList">
+                  <div class="dp-item-sim active" data-deck="0">
+                    <span class="dp-key-sim">1</span>
+                    <div class="dp-info-sim">
+                      <div class="dp-name-sim">Launch Talk <span class="dp-badge-sim">Current</span></div>
+                      <div class="dp-desc-sim">Main introductory presentation</div>
+                    </div>
+                    <span class="dp-count-sim">4 slides</span>
+                  </div>
+                  <div class="dp-item-sim" data-deck="1">
+                    <span class="dp-key-sim">2</span>
+                    <div class="dp-info-sim">
+                      <div class="dp-name-sim">Appendix & Architecture</div>
+                      <div class="dp-desc-sim">Deep dive specs and schemas</div>
+                    </div>
+                    <span class="dp-count-sim">2 slides</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -444,6 +473,16 @@
             <code>glissade start</code> automatically watches your project. Edit deck JSON, replace images, or change themes, and all connected screens refresh live without losing position.
           </p>
         </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-cyan">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          </div>
+          <h3>Multi-Deck HUD Switcher</h3>
+          <p>
+            Store multiple talks in <code>decks/</code>. Press <kbd>D</kbd> on the projector anytime to open an on-screen switcher and jump between main talks, appendices, and demos without touching your phone.
+          </p>
+        </div>
       </div>
     </div>
   </section>
@@ -475,7 +514,7 @@
             <pre class="json-code"><code id="layoutJsonCode">{
   "title": "Glissade Launch",
   "layout": "title",
-  "eyebrow": "RELEASE 0.14.3",
+  "eyebrow": "RELEASE 0.14.4",
   "heading": "Presentation decks written as JSON",
   "subheading": "Driven from your phone",
   "notes": "Introduce the core philosophy of Glissade."

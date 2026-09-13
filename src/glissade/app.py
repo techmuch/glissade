@@ -206,6 +206,8 @@ def render_deck(
     live: bool,
     themes: list[dict[str, Any]] | None = None,
     title: str = "Glissade",
+    decks: list[dict[str, Any]] | None = None,
+    current_deck_id: str | None = None,
 ) -> str:
     """Fill the deck template.
 
@@ -223,6 +225,8 @@ def render_deck(
     return (
         template.replace("__SLIDES_JSON__", embed(slides))
         .replace("__THEMES_JSON__", embed(themes if themes is not None else []))
+        .replace("__DECKS_JSON__", embed(decks if decks is not None else []))
+        .replace("__CURRENT_DECK__", embed(current_deck_id or ""))
         .replace("__TITLE__", embed(title))
         .replace("__LIVE__", "true" if live else "false")
     )
@@ -528,12 +532,23 @@ def create_app(
     async def display() -> HTMLResponse:
         """The projected deck."""
         deck = deck_by_id(show.deck)
+        deck_summaries = [
+            {
+                "id": d["id"],
+                "title": d.get("title", d["id"]),
+                "subtitle": d.get("subtitle", ""),
+                "count": len(d.get("slides", [])),
+            }
+            for d in app.state.decks
+        ]
         return no_store(
             render_deck(
                 slides_for(deck),
                 live=True,
                 themes=app.state.themes,
                 title=deck["title"],
+                decks=deck_summaries,
+                current_deck_id=deck["id"],
             )
         )
 

@@ -259,6 +259,7 @@ Glissade keeps them in your user cache instead.
 | <kbd>N</kbd> | speaker notes on screen |
 | <kbd>L</kbd> | toggle the live-notes overlay |
 | <kbd>B</kbd> | blank the screen |
+| <kbd>D</kbd> | switch deck overlay |
 | <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd> | text size (70–160%) |
 | <kbd>T</kbd> | cycle theme |
 | <kbd>R</kbd> | reload a failed embed |

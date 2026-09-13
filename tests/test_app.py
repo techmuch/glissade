@@ -118,3 +118,47 @@ def test_reload_project_state_keeps_last_good_deck_on_invalid_json(tmp_path, sam
     assert after == before
     assert state["rev"] == 0
     assert "can't reload until these deck files parse again" in state["reload_error"]
+
+
+def test_display_renders_deck_switcher_modal_and_multi_deck(tmp_path, sample_deck_file):
+    decks_dir = tmp_path / "decks"
+    second_deck = {
+        "title": "Appendix Talk",
+        "subtitle": "Bonus Slides",
+        "slides": [
+            {
+                "title": "Appendix Slide 1",
+                "layout": "title",
+                "heading": "Appendix",
+                "notes": "Extra material.",
+            }
+        ],
+    }
+    (decks_dir / "appendix.json").write_text(json.dumps(second_deck), encoding="utf-8")
+
+    project = find_project(tmp_path)
+    app = create_app(project)
+    client = TestClient(app)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert 'id="deckpicker"' in resp.text
+    assert "Appendix Talk" in resp.text
+    assert '"id": "appendix"' in resp.text
+
+    # Test switching deck via /api/deck
+    current_deck = app.state.show.deck
+    target_deck = "talk" if current_deck == "appendix" else "appendix"
+    target_title = "Test Presentation" if target_deck == "talk" else "Appendix Talk"
+
+    switch_resp = client.post("/api/deck", json={"id": target_deck})
+    assert switch_resp.status_code == 200
+    state = switch_resp.json()
+    assert state["deck"] == target_deck
+    assert state["rev"] == 1
+
+    # / now renders the switched deck
+    resp2 = client.get("/")
+    assert resp2.status_code == 200
+    assert target_title in resp2.text
+

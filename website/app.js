@@ -85,7 +85,7 @@ const WALKTHROUGH_STEPS = {
           <div><span class="wt-prompt">$</span> uv tool install --from git+https://github.com/techmuch/glissade glissade</div>
           <div class="wt-success">Installed 1 executable: glissade</div>
           <div class="wt-dim"><span class="wt-prompt">$</span> glissade --version</div>
-          <div class="wt-success">glissade 0.14.3</div>
+          <div class="wt-success">glissade 0.14.4</div>
         </div>
       </div>
     `
@@ -305,37 +305,66 @@ function initAgentTabs() {
   renderAgent('claude');
 }
 
-const DEMO_SLIDES = [
+const DEMO_DECKS = [
   {
-    title: 'Introducing Glissade',
-    eyebrow: 'OVERVIEW',
-    heading: 'Presentation Decks Written in JSON',
-    body: '<p>Built into a single HTML file that works when the Wi-Fi doesn\'t. No compilers, pure Python.</p>',
-    notes: 'Welcome everyone. Start by running `glissade demo` to show how fast it works.'
+    id: 'intro',
+    name: 'Launch Talk',
+    desc: 'Main introductory presentation',
+    slides: [
+      {
+        title: 'Introducing Glissade',
+        eyebrow: 'OVERVIEW',
+        heading: 'Presentation Decks Written in JSON',
+        body: '<p>Built into a single HTML file that works when the Wi-Fi doesn\'t. No compilers, pure Python.</p>',
+        notes: 'Welcome everyone. Start by running `glissade demo` to show how fast it works.'
+      },
+      {
+        title: 'Phone Remote Sync',
+        eyebrow: 'WI-FI CONTROL',
+        heading: 'Scan QR & Control From Your Phone',
+        body: '<p>Both devices connect on the same Wi-Fi. Advances slides, previews upcoming slides, and captures live audience notes.</p>',
+        notes: 'Emphasize that the phone connects directly over the local network — zero external cloud servers required.'
+      },
+      {
+        title: 'Zero-Wi-Fi Single File Build',
+        eyebrow: 'OFFLINE FIRST',
+        heading: 'Build The Night Before',
+        body: '<p><code>glissade build</code> inlines images, fonts, and stylesheets into one single HTML file. No missing folder to forget.</p>',
+        notes: 'Point out the optional `glissade[images]` feature which automatically downscales heavy images.'
+      },
+      {
+        title: 'AI Agent Workflows',
+        eyebrow: 'PROMPTING',
+        heading: 'AGENTS.md & Schema Validation',
+        body: '<p>Point Claude, Cursor, or Antigravity at your project and let them generate complete, schema-valid talks automatically.</p>',
+        notes: 'Remind the audience to run `glissade check --fix` after AI finishes writing slides.'
+      }
+    ]
   },
   {
-    title: 'Phone Remote Sync',
-    eyebrow: 'WI-FI CONTROL',
-    heading: 'Scan QR & Control From Your Phone',
-    body: '<p>Both devices connect on the same Wi-Fi. Advances slides, previews upcoming slides, and captures live audience notes.</p>',
-    notes: 'Emphasize that the phone connects directly over the local network — zero external cloud servers required.'
-  },
-  {
-    title: 'Zero-Wi-Fi Single File Build',
-    eyebrow: 'OFFLINE FIRST',
-    heading: 'Build The Night Before',
-    body: '<p><code>glissade build</code> inlines images, fonts, and stylesheets into one single HTML file. No missing folder to forget.</p>',
-    notes: 'Point out the optional `glissade[images]` feature which automatically downscales heavy images.'
-  },
-  {
-    title: 'AI Agent Workflows',
-    eyebrow: 'PROMPTING',
-    heading: 'AGENTS.md & Schema Validation',
-    body: '<p>Point Claude, Cursor, or Antigravity at your project and let them generate complete, schema-valid talks automatically.</p>',
-    notes: 'Remind the audience to run `glissade check --fix` after AI finishes writing slides.'
+    id: 'appendix',
+    name: 'Appendix & Architecture',
+    desc: 'Deep dive specs and schemas',
+    slides: [
+      {
+        title: 'Architecture & Engine',
+        eyebrow: 'DEEP DIVE',
+        heading: 'FastAPI, SSE & Pure Python Wheel',
+        body: '<p>Zero node, zero webpack. Server-Sent Events sync projector and remote instantly across the network.</p>',
+        notes: 'Switching decks resets to slide 1 and syncs all clients.'
+      },
+      {
+        title: 'Deck Switcher [D]',
+        eyebrow: 'MULTI-DECK',
+        heading: 'Press D Anytime on Projector',
+        body: '<p>Jump between multiple talks without touching your phone or exiting presentation mode.</p>',
+        notes: 'Press D again or Esc to close the overlay HUD.'
+      }
+    ]
   }
 ];
 
+let currentDeckIdx = 0;
 let currentSlideIdx = 0;
 const THEMES = [
   { id: 'paper', name: 'Paper', class: 'theme-paper' },
@@ -368,10 +397,18 @@ function initSimulator() {
   const themeNameEl = document.getElementById('themeName');
   const screenEl = document.getElementById('projectorDisplay');
 
-  totalNumEl.textContent = DEMO_SLIDES.length;
+  const switchDeckBtn = document.getElementById('switchDeckBtn');
+  const deckPickerOverlay = document.getElementById('deckPickerOverlay');
+  const dpSimItems = document.querySelectorAll('.dp-item-sim');
+
+  function getSlides() {
+    return DEMO_DECKS[currentDeckIdx].slides;
+  }
 
   function renderSlide(index) {
-    const slide = DEMO_SLIDES[index];
+    const slides = getSlides();
+    totalNumEl.textContent = slides.length;
+    const slide = slides[index];
     slideNumEl.textContent = index + 1;
     remoteTitleEl.textContent = slide.title;
     remoteNotesEl.textContent = slide.notes;
@@ -385,12 +422,14 @@ function initSimulator() {
   }
 
   prevBtn.addEventListener('click', () => {
-    currentSlideIdx = (currentSlideIdx - 1 + DEMO_SLIDES.length) % DEMO_SLIDES.length;
+    const slides = getSlides();
+    currentSlideIdx = (currentSlideIdx - 1 + slides.length) % slides.length;
     renderSlide(currentSlideIdx);
   });
 
   nextBtn.addEventListener('click', () => {
-    currentSlideIdx = (currentSlideIdx + 1) % DEMO_SLIDES.length;
+    const slides = getSlides();
+    currentSlideIdx = (currentSlideIdx + 1) % slides.length;
     renderSlide(currentSlideIdx);
   });
 
@@ -430,6 +469,42 @@ function initSimulator() {
     themeNameEl.textContent = theme.name;
   });
 
+  if (switchDeckBtn && deckPickerOverlay) {
+    switchDeckBtn.addEventListener('click', () => {
+      deckPickerOverlay.classList.toggle('hidden');
+    });
+
+    dpSimItems.forEach((item, idx) => {
+      item.addEventListener('click', () => {
+        currentDeckIdx = idx;
+        currentSlideIdx = 0;
+        dpSimItems.forEach((el, i) => {
+          el.classList.toggle('active', i === currentDeckIdx);
+          const badge = el.querySelector('.dp-badge-sim');
+          if (i === currentDeckIdx) {
+            if (!badge) {
+              const nameEl = el.querySelector('.dp-name-sim');
+              const span = document.createElement('span');
+              span.className = 'dp-badge-sim';
+              span.textContent = 'Current';
+              nameEl.appendChild(span);
+            }
+          } else if (badge) {
+            badge.remove();
+          }
+        });
+        deckPickerOverlay.classList.add('hidden');
+        renderSlide(0);
+      });
+    });
+
+    deckPickerOverlay.addEventListener('click', (e) => {
+      if (e.target === deckPickerOverlay) {
+        deckPickerOverlay.classList.add('hidden');
+      }
+    });
+  }
+
   // Initial render
   renderSlide(0);
 }
@@ -442,13 +517,13 @@ const LAYOUT_DATA = {
     json: `{
   "title": "Glissade Launch",
   "layout": "title",
-  "eyebrow": "RELEASE 0.14.3",
+  "eyebrow": "RELEASE 0.14.4",
   "heading": "Presentation decks written as JSON",
   "subheading": "Driven from your phone",
   "notes": "Introduce the core philosophy of Glissade."
 }`,
     html: `
-      <div class="slide-eyebrow">RELEASE 0.14.3</div>
+      <div class="slide-eyebrow">RELEASE 0.14.4</div>
       <h2 class="slide-heading" style="font-size: 2rem;">Presentation decks written as JSON</h2>
       <p style="color: #666; font-size: 1.1rem;">Driven from your phone</p>
     `
