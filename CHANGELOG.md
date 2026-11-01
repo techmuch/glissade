@@ -8,7 +8,22 @@ Releases are numbered by date: `year.month.day.release`, unpadded, with
 Git tags add a `v` (`v2026.11.1.0`). Releases up to 0.15.0 used `0.x`
 numbers and keep them; every calendar release sorts above them.
 
-## 2026.11.1.0 — 2026-11-01
+## 2026.11.1.1 — 2026-11-01
+
+The first calendar-versioned release on PyPI. `2026.11.1.0` was tagged but not
+published: its new Windows CI jobs failed, so this release carries the fix.
+
+### Fixed (Windows)
+- Status lines from the live server (`↻ reloaded`, skipped-deck notices) go
+  through the console-safe printer. On a Windows console or pipe that can't
+  encode them, a successful reload was being reported as a failed one.
+- Tests read and write files as UTF-8 explicitly, and CI fails any file access
+  that relies on the platform default encoding, so this is caught on every OS.
+
+## 2026.11.1.0 — 2026-11-01 (tagged, not published)
+
+Everything below shipped in 2026.11.1.1.
+
 
 ### Added
 - **Themes inside a deck.** `"theme"` may now be an object with the same

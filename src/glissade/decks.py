@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .project import Project
+from .term import out as say
 
 
 def _title_from(stem: str) -> str:
@@ -109,7 +110,7 @@ def discover(directory: Path | Project) -> list[dict[str, Any]]:
         try:
             deck = read_deck(path)
         except (OSError, ValueError) as exc:
-            print(f"  ! skipping {path.name}: {exc}")
+            say(f"  ! skipping {path.name}: {exc}")
             continue
         out.append(deck)
     out.sort(key=lambda d: (_sort_order(d.get("order")), str(d["title"])))

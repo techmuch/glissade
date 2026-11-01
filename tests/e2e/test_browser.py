@@ -65,6 +65,7 @@ def running_server(tmp_path: Path, sample_deck_data: dict):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        encoding="utf-8",
     )
 
     base_url = f"http://127.0.0.1:{port}"
@@ -340,7 +341,7 @@ async def test_deck_picker_moves_and_returns_focus(tmp_path: Path, sample_deck_d
     decks_dir.mkdir(parents=True, exist_ok=True)
     (decks_dir / "other.json").write_text(json.dumps(
         {"title": "Other", "slides": [{"layout": "title", "heading": "O", "notes": "n"}]}
-    ))
+    ), encoding="utf-8")
     with running_server(tmp_path, sample_deck_data) as server:
         async with open_pages(server["base_url"]) as (projector, _):
             await projector.keyboard.press("d")

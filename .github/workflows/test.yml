@@ -38,6 +38,9 @@ jobs:
 
       - name: Run Pytest Suite
         run: uv run pytest
+        env:
+          # Flags file I/O without encoding=, which breaks only on Windows.
+          PYTHONWARNDEFAULTENCODING: "1"
 
   e2e:
     name: Browser E2E on Ubuntu
@@ -65,3 +68,5 @@ jobs:
 
       - name: Run browser E2E suite
         run: uv run pytest -m e2e tests/e2e -q
+        env:
+          PYTHONWARNDEFAULTENCODING: "1"

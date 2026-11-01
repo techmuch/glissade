@@ -16,7 +16,7 @@ Installed as a CLI:
 # Calendar versioning: year.month.day.release, unpadded (2026.11.1.0), where
 # release counts from 0 within a day. Git tags add a "v". Releases before the
 # switch were numbered 0.x; every calendar release sorts above them.
-__version__ = "2026.11.1.0"
+__version__ = "2026.11.1.1"
 
 from .project import (  # noqa: F401
     DATA_DIR,

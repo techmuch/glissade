@@ -227,7 +227,7 @@ def test_reload_picks_up_an_edited_deck_theme(tmp_path):
     path = _deck(tmp_path, theme={"palette": PALETTE})
     app = create_app(find_project(tmp_path))
     client = TestClient(app)
-    data = json.loads(path.read_text())
+    data = json.loads(path.read_text(encoding="utf-8"))
     data["theme"]["vars"] = {"--paper": "#000000", "--ink": "#ffffff"}
     path.write_text(json.dumps(data), encoding="utf-8")
     app.state.reload_project()

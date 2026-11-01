@@ -51,7 +51,7 @@ def test_explicit_vars_override_the_palette(tmp_path):
         "id": "mine", "name": "Mine",
         "palette": {"dark": "#111111", "light": "#eeeeee", "accent": "#335577"},
         "vars": {"--accent": "#123456"},
-    }]))
+    }]), encoding="utf-8")
     [theme] = T.load(tmp_path / "themes.json")
     assert theme["vars"]["--accent"] == "#123456"
     assert theme["vars"]["--paper"] == "#eeeeee"
@@ -64,7 +64,7 @@ def test_theme_font_files_are_embedded_but_paths_never_leave(tmp_path):
     (tmp_path / "themes.json").write_text(json.dumps([{
         "id": "branded", "name": "Branded", "vars": {"--display-font": "'Face', serif"},
         "fonts": [{"family": "Face", "src": "fonts/Face.woff2", "weight": "400 700"}],
-    }]))
+    }]), encoding="utf-8")
     themes = T.load(tmp_path / "themes.json")
     html = render_deck([{"layout": "title", "heading": "Hi"}], live=False, themes=themes)
     assert '@font-face{font-family:"Face";src:url(data:font/woff2;base64,' in html
@@ -81,23 +81,24 @@ def test_low_contrast_project_theme_is_reported():
 
 
 def test_deck_theme_reaches_the_page(sample_deck_file):
-    data = json.loads(sample_deck_file.read_text())
+    data = json.loads(sample_deck_file.read_text(encoding="utf-8"))
     data["theme"] = "parchment"
-    sample_deck_file.write_text(json.dumps(data))
+    sample_deck_file.write_text(json.dumps(data), encoding="utf-8")
     from glissade.decks import read_deck
 
     deck = read_deck(sample_deck_file)
     assert deck["theme"] == "parchment"
-    html = build_deck(deck, sample_deck_file.parent.parent / "build").path.read_text()
+    built = build_deck(deck, sample_deck_file.parent.parent / "build")
+    html = built.path.read_text(encoding="utf-8")
     assert 'const DECK_THEME = "parchment";' in html
 
 
 def test_unknown_deck_theme_is_a_warning(sample_deck_file):
     from glissade.decks import read_deck
 
-    data = json.loads(sample_deck_file.read_text())
+    data = json.loads(sample_deck_file.read_text(encoding="utf-8"))
     data["theme"] = "parchmnet"
-    sample_deck_file.write_text(json.dumps(data))
+    sample_deck_file.write_text(json.dumps(data), encoding="utf-8")
     issues = check_deck(read_deck(sample_deck_file), ["paper", "parchment"])
     assert any("unknown theme 'parchmnet'" in w and "parchment" in w
                for w in levels(issues, "warning"))
@@ -138,7 +139,7 @@ def test_card_images_are_inlined_and_checked(tmp_path):
     issues = check_slides([slide], tmp_path)
     assert any("no alt text" in w for w in levels(issues, "warning"))
     deck = {"id": "d", "title": "D", "path": str(tmp_path / "d.json"), "slides": [slide]}
-    html = build_deck(deck, tmp_path / "build").path.read_text()
+    html = build_deck(deck, tmp_path / "build").path.read_text(encoding="utf-8")
     assert "data:image/png;base64," in html
 
 
@@ -222,7 +223,8 @@ def test_schema_and_checker_agree_on_new_layouts():
 
     assert {"cards", "quote"} <= LAYOUTS
     schema = json.loads(
-        (Path(__file__).resolve().parents[1] / "src/glissade/data/schema.json").read_text()
+        (Path(__file__).resolve().parents[1] / "src/glissade/data/schema.json")
+        .read_text(encoding="utf-8")
     )
     assert "card" in schema["$defs"]
     for field in ("callout", "source", "cards", "numbered", "scrim"):

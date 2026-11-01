@@ -77,10 +77,10 @@ def test_apply_changes_exactly_what_plan_reports(tmp_path):
     ]}
     path = tmp_path / "deck.json"
     path.write_text(json.dumps(deck), encoding="utf-8")
-    planned = [str(f) for f in plan(json.loads(path.read_text()))]
+    planned = [str(f) for f in plan(json.loads(path.read_text(encoding="utf-8")))]
     applied = [str(f) for f in apply(path)]
     assert planned == applied
-    after = json.loads(path.read_text())
+    after = json.loads(path.read_text(encoding="utf-8"))
     assert plan(after) == []
     assert after["slides"][0]["cls"] == "ask"
     assert after["slides"][1]["quads"][0]["media"]["src"].endswith("/embed/zyxwvuts")
@@ -91,7 +91,7 @@ def test_second_fix_keeps_the_original_backup(tmp_path):
     original = json.dumps({"slides": [{"layout": "media-rite"}]})
     path.write_text(original, encoding="utf-8")
     apply(path)
-    data = json.loads(path.read_text())
+    data = json.loads(path.read_text(encoding="utf-8"))
     data["slides"][0]["layout"] = "titel"
     path.write_text(json.dumps(data), encoding="utf-8")
     apply(path)

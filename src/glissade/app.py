@@ -20,6 +20,10 @@ from . import decks as deck_lib
 from .assets import prepare_slides
 from .project import TEMPLATE_DIR, Project, state_path_for
 
+# Not print(): a Windows console or pipe may not encode "↻", and a failed
+# print inside the watcher would be reported as a failed reload.
+from .term import out as say
+
 # Text-scale limits. Below ~70% the deck stops being readable from the back of
 # a room; above ~160% the denser slides need scrolling to read.
 MIN_SCALE = 0.7
@@ -517,7 +521,7 @@ def create_app(
         if deck["id"] not in cache:
             prepared, warnings = prepared_slides(deck)
             for w in warnings:
-                print(f"  ! [{deck['id']}] {w}")
+                say(f"  ! [{deck['id']}] {w}")
             cache[deck["id"]] = prepared
         return cache[deck["id"]]
 
@@ -598,11 +602,11 @@ def create_app(
             try:
                 state = reload_project_state()
                 deck = deck_by_id(show.deck)
-                print(f"  ↻ reloaded {deck['id']} ({len(deck['slides'])} slides)")
+                say(f"  ↻ reloaded {deck['id']} ({len(deck['slides'])} slides)")
             except Exception as exc:
                 show.reload_error = str(exc)
                 state = show.publish()
-                print(f"  ! reload failed: {exc}")
+                say(f"  ! reload failed: {exc}")
             app.state.last_reload_state = state
 
     app.state.reload_project = reload_project_state
