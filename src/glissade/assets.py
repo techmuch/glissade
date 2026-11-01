@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import base64
 import mimetypes
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -27,7 +28,12 @@ JPEG_QUALITY = 82
 # deck; the build prints a warning instead.
 LARGE_ASSET_WARN = 1_500_000
 
+# QR codes keyed by their text; tiny and few.
 _cache: dict[tuple, str] = {}
+# Inlined files keyed by path, holding the (mtime, size) they were read at.
+# One entry per path, so a long `start --watch` session that keeps swapping
+# an image replaces its entry rather than piling up every version.
+_files: dict[str, tuple[tuple, str]] = {}
 
 # Types the platform's mimetypes table may not know, which matter here: an
 # SVG or a web font served as octet-stream is silently ignored by browsers.
@@ -52,12 +58,12 @@ def is_data_uri(src: str) -> bool:
     return isinstance(src, str) and src.startswith("data:")
 
 
-def _cache_key(path: Path, *extra: Any) -> tuple:
+def _stamp(path: Path) -> tuple:
     try:
         st = path.stat()
-        return (str(path), st.st_mtime_ns, st.st_size, *extra)
+        return (st.st_mtime_ns, st.st_size)
     except OSError:
-        return (str(path), None, None, *extra)
+        return (None, None)
 
 
 def _shrink(raw: bytes, suffix: str) -> tuple[bytes, str]:
@@ -94,9 +100,10 @@ def _shrink(raw: bytes, suffix: str) -> tuple[bytes, str]:
 
 def data_uri(path: Path, warnings: list[str] | None = None) -> str | None:
     """Read a local file and return it as a data: URI, or None if unreadable."""
-    key = _cache_key(path, "data_uri")
-    if key in _cache:
-        return _cache[key]
+    key, stamp = str(path), _stamp(path)
+    hit = _files.get(key)
+    if hit and hit[0] == stamp:
+        return hit[1]
     try:
         raw = path.read_bytes()
     except OSError:
@@ -121,7 +128,7 @@ def data_uri(path: Path, warnings: list[str] | None = None) -> str | None:
         )
 
     uri = f"data:{mime};base64," + base64.b64encode(raw).decode("ascii")
-    _cache[key] = uri
+    _files[key] = (stamp, uri)
     return uri
 
 
@@ -207,6 +214,38 @@ def _inline_media(node: dict[str, Any], base: Path, warnings: list[str]) -> None
         node.setdefault("fallback_label", host)
 
 
+def media_nodes(slide: Any) -> Iterator[tuple[str, str, dict[str, Any]]]:
+    """Every image and media object a slide holds, wherever it sits.
+
+    Yields `(kind, where, node)`: kind is "image" or "media", `where` is a
+    short location suffix (" left", " quad 2", " card 1" ...; empty for the
+    slide itself). This is the one list of places media can live — inlining,
+    the offline report and `check --fix` all walk it, so a new layout that
+    holds media only has to be taught here.
+    """
+    if not isinstance(slide, dict):
+        return
+
+    def pair(owner: Any, where: str):
+        if not isinstance(owner, dict):
+            return
+        if isinstance(owner.get("image"), dict):
+            yield "image", where, owner["image"]
+        if isinstance(owner.get("media"), dict):
+            yield "media", where, owner["media"]
+
+    yield from pair(slide, "")
+    for i, img in enumerate(slide.get("images") or [], start=1):
+        if isinstance(img, dict):
+            yield "image", f" image {i}", img
+    for i, card in enumerate(slide.get("cards") or [], start=1):
+        yield from pair(card, f" card {i}")
+    for side in ("left", "right"):
+        yield from pair(slide.get(side), f" {side}")
+    for i, quad in enumerate(slide.get("quads") or [], start=1):
+        yield from pair(quad, f" quad {i}")
+
+
 def prepare_slides(
     slides: list[dict[str, Any]], base: Path
 ) -> tuple[list[dict[str, Any]], list[str]]:
@@ -221,37 +260,16 @@ def prepare_slides(
     warnings: list[str] = []
 
     for index, slide in enumerate(out, start=1):
+        if not isinstance(slide, dict):
+            continue
         n = slide.get("n", index)
         before = len(warnings)
 
-        if isinstance(slide.get("image"), dict):
-            _inline_image(slide["image"], base, warnings)
-
-        for img in slide.get("images") or []:
-            if isinstance(img, dict):
-                _inline_image(img, base, warnings)
-
-        for card in slide.get("cards") or []:
-            if isinstance(card, dict) and isinstance(card.get("image"), dict):
-                _inline_image(card["image"], base, warnings)
-
-        for region in ("left", "right"):
-            block = slide.get(region)
-            if isinstance(block, dict):
-                if isinstance(block.get("image"), dict):
-                    _inline_image(block["image"], base, warnings)
-                if isinstance(block.get("media"), dict):
-                    _inline_media(block["media"], base, warnings)
-
-        for quad in slide.get("quads") or []:
-            if isinstance(quad, dict):
-                if isinstance(quad.get("image"), dict):
-                    _inline_image(quad["image"], base, warnings)
-                if isinstance(quad.get("media"), dict):
-                    _inline_media(quad["media"], base, warnings)
-
-        if isinstance(slide.get("media"), dict):
-            _inline_media(slide["media"], base, warnings)
+        for kind, _, node in media_nodes(slide):
+            if kind == "image":
+                _inline_image(node, base, warnings)
+            else:
+                _inline_media(node, base, warnings)
 
         # Attribute any warning this slide produced, so the message is useful.
         for i in range(before, len(warnings)):
@@ -264,25 +282,12 @@ def external_media(slides: list[dict[str, Any]]) -> list[tuple[Any, str]]:
     """Every slide that will need live internet, for the build-time report."""
     found = []
     for position, slide in enumerate(slides, start=1):
-        slide.setdefault("n", position)
-        left = slide.get("left") if isinstance(slide.get("left"), dict) else {}
-        right = slide.get("right") if isinstance(slide.get("right"), dict) else {}
-        nodes = [
-            slide.get("media"),
-            left.get("media"),
-            right.get("media"),
-        ]
-        for quad in slide.get("quads") or []:
-            if isinstance(quad, dict):
-                nodes.append(quad.get("media"))
-        for node in nodes:
-            if isinstance(node, dict) and node.get("external") and node.get("src"):
-                found.append((slide.get("n", "?"), node["src"]))
-        images = [slide.get("image")]
-        for quad in slide.get("quads") or []:
-            if isinstance(quad, dict):
-                images.append(quad.get("image"))
-        for img in images:
-            if isinstance(img, dict) and img.get("remote"):
-                found.append((slide.get("n", "?"), img.get("src", "")))
+        if not isinstance(slide, dict):
+            continue
+        n = slide.get("n", position)
+        for kind, _, node in media_nodes(slide):
+            if kind == "media" and node.get("external") and node.get("src"):
+                found.append((n, node["src"]))
+            elif kind == "image" and node.get("remote"):
+                found.append((n, node.get("src", "")))
     return found

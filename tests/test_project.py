@@ -55,3 +55,20 @@ def test_project_config_parsing(tmp_path):
     assert cfg.get("port") == 8080
     assert cfg.get("host") == "127.0.0.1"
     assert cfg.get("open") is True
+
+
+def test_decks_sort_by_order_then_title_and_tolerate_bad_order(tmp_path):
+    import json
+
+    from glissade.decks import discover
+
+    decks = tmp_path / "decks"
+    decks.mkdir()
+    for name, body in {
+        "b.json": {"title": "Bravo", "slides": []},
+        "a.json": {"title": "Alpha", "slides": []},
+        "first.json": {"title": "Zulu", "order": 1, "slides": []},
+        "odd.json": {"title": "Charlie", "order": "soon", "slides": []},
+    }.items():
+        (decks / name).write_text(json.dumps(body), encoding="utf-8")
+    assert [d["title"] for d in discover(decks)] == ["Zulu", "Alpha", "Bravo", "Charlie"]

@@ -96,8 +96,8 @@ def test_check_requirement_satisfied():
     assert len(issues) == 0
 
 def test_check_requirement_unmet():
-    deck = {"requires": ">=99.0.0"}
+    deck = {"requires": ">=9999.1.1"}
     issues = check_requirement(deck)
     assert len(issues) == 1
     assert issues[0].level == "error"
-    assert "needs Glissade >=99.0.0" in issues[0].message
+    assert "needs Glissade >=9999.1.1" in issues[0].message

@@ -4,7 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glissade"
-version = "0.15.0"
+# Read from src/glissade/__init__.py, the one place a release number is written.
+dynamic = ["version"]
 description = "Presentation decks written as JSON, driven from your phone, built into a single self-contained HTML file"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,6 +27,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Multimedia :: Graphics :: Presentation",
 ]
 
@@ -59,6 +61,10 @@ pythonpath = ["src"]
 markers = [
   "e2e: browser end-to-end tests that require Playwright",
 ]
+filterwarnings = [
+  # Raised inside FastAPI's own TestClient import; nothing here can change it.
+  "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 
 [project.urls]
 Homepage = "https://github.com/techmuch/glissade"
@@ -70,12 +76,15 @@ glissade = "glissade.cli:main"
 # Templates, themes, the schema, the init scaffold and the demo decks all live
 # inside the package directory, so they ship in the wheel automatically — the
 # tool has to work from any directory, with nothing alongside it.
+[tool.hatch.version]
+path = "src/glissade/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/glissade"]
 artifacts = ["src/glissade/data/**", "src/glissade/templates/**"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/glissade", "README.md", "LICENSE", "pyproject.toml"]
+include = ["src/glissade", "README.md", "CHANGELOG.md", "LICENSE", "pyproject.toml"]
 
 [tool.ruff]
 line-length = 96

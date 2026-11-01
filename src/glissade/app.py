@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hmac
+import ipaddress
 import json
+import re
+import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 from . import decks as deck_lib
@@ -31,6 +35,26 @@ HEARTBEAT_SECONDS = 15
 # the deck open. Stdlib polling keeps the install compiler-free everywhere.
 WATCH_INTERVAL_SECONDS = 0.25
 WATCH_DEBOUNCE_SECONDS = 0.15
+
+
+def new_control_key() -> str:
+    """A short random key for the remote's URL. Short, because it rides in a
+    QR code and may be typed by hand; random enough that nobody else on the
+    venue's Wi-Fi can guess it during a talk."""
+    return secrets.token_urlsafe(8)
+
+
+def is_loopback(host: str | None) -> bool:
+    """True for a request from this machine. The projector usually runs
+    here, and keyboard control on it must keep working with no key."""
+    if not host:
+        return False
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 def clamp_scale(value: Any, fallback: float = DEFAULT_SCALE) -> float:
@@ -66,7 +90,7 @@ def load_themes(project: Project | None = None) -> list[dict[str, Any]]:
 
     source = project.themes_file if project else DEFAULT_THEMES
     try:
-        valid = theme_lib.load(source)
+        valid = theme_lib.load(source, builtin=DEFAULT_THEMES)
         if valid:
             return valid
     except (OSError, ValueError):
@@ -212,7 +236,7 @@ def render_deck(
     rendering path to keep correct. Every theme is embedded either way, so the
     offline file can switch themes with no server.
     """
-    template = (TEMPLATE_DIR / "deck.html").read_text(encoding="utf-8")
+    template = deck_template()
 
     def embed(data: Any) -> str:
         # </script> inside slide markup would close the tag early.
@@ -223,16 +247,40 @@ def render_deck(
     themes = themes if themes is not None else []
     # Font files can be large, so they are inlined once as CSS rather than
     # riding along inside the theme JSON.
-    faces = theme_lib.font_face_css(themes).replace("</", "<\\/")
+    values = {
+        "/*__FONT_FACES__*/": theme_lib.font_face_css(themes).replace("</", "<\\/"),
+        "__SLIDES_JSON__": embed(slides),
+        "__THEMES_JSON__": embed(theme_lib.public(themes)),
+        "__DECK_THEME__": embed(deck_theme or ""),
+        "__DECKS_JSON__": embed(decks if decks is not None else []),
+        "__CURRENT_DECK__": embed(current_deck_id or ""),
+        "__TITLE__": embed(title),
+        "__LIVE__": "true" if live else "false",
+    }
+    # One pass, so text that was just inserted is never searched again: a slide
+    # that happens to say "__TITLE__" must come out saying exactly that.
+    return _PLACEHOLDER.sub(lambda m: values[m.group(0)], template)
+
+
+_PLACEHOLDER = re.compile(
+    r"/\*__FONT_FACES__\*/|__(?:SLIDES_JSON|THEMES_JSON|DECK_THEME|DECKS_JSON"
+    r"|CURRENT_DECK|TITLE|LIVE)__"
+)
+
+
+def deck_template() -> str:
+    """deck.html with its stylesheet and script inlined.
+
+    They are kept as separate files so each can be read, edited and checked
+    on its own; the page that ships is still one self-contained file.
+    """
+    def part(name: str) -> str:
+        return (TEMPLATE_DIR / name).read_text(encoding="utf-8")
+
     return (
-        template.replace("/*__FONT_FACES__*/", faces)
-        .replace("__SLIDES_JSON__", embed(slides))
-        .replace("__THEMES_JSON__", embed(theme_lib.public(themes)))
-        .replace("__DECK_THEME__", embed(deck_theme or ""))
-        .replace("__DECKS_JSON__", embed(decks if decks is not None else []))
-        .replace("__CURRENT_DECK__", embed(current_deck_id or ""))
-        .replace("__TITLE__", embed(title))
-        .replace("__LIVE__", "true" if live else "false")
+        part("deck.html")
+        .replace("/*__DECK_CSS__*/", part("deck.css"), 1)
+        .replace("/*__DECK_JS__*/", part("deck.js"), 1)
     )
 
 
@@ -382,7 +430,15 @@ def create_app(
     watch: bool = False,
     watch_interval: float = WATCH_INTERVAL_SECONDS,
     watch_debounce: float = WATCH_DEBOUNCE_SECONDS,
+    control_key: str | None = None,
 ) -> FastAPI:
+    """Build the server.
+
+    With a `control_key`, commands (every POST under /api/) from another
+    machine must carry it, as an `X-Glissade-Key` header or `?k=` query.
+    Reading — the slides, the state, the event stream — stays open, so a
+    second screen can follow along without the key.
+    """
     all_decks = deck_lib.discover(project)
     if not all_decks:
         raise SystemExit(
@@ -390,15 +446,43 @@ def create_app(
             f"Add a .json file there, or run `glissade init` to scaffold one."
         )
 
+    from . import themes as theme_lib
+    from .project import DEFAULT_THEMES
+
+    # Shared themes: the project's themes.json, or the built-in set.
     themes = load_themes(project)
     state_file = state_path_for(project)
-    theme_ids = [t["id"] for t in themes]
     deck_ids = [d["id"] for d in all_decks]
-    settings = load_settings(state_file, theme_ids, deck_ids)
+
+    def themes_open(deck: dict[str, Any] | None) -> list[dict[str, Any]]:
+        """What the picker offers while `deck` is open: its own inline theme,
+        if it defines one, then the shared themes."""
+        return theme_lib.for_deck(themes, deck, DEFAULT_THEMES)
+
+    def ids(ts: list[dict[str, Any]]) -> list[str]:
+        return [t["id"] for t in ts]
+
+    # The saved theme may belong to any deck, so accept every deck's own id
+    # here; it's narrowed to the open deck's below.
+    known_theme_ids = ids(themes) + [
+        theme_lib.deck_theme_id(d["id"]) for d in all_decks if d.get("theme_spec")
+    ]
+    settings = load_settings(state_file, known_theme_ids, deck_ids)
     notes_file = state_file.with_name("live-notes.json")
     live_notes = load_live_notes(notes_file)
 
     current = deck_lib.resolve(deck_name or settings["deck"], all_decks)
+    theme_ids = ids(themes_open(current))
+
+    def opening_theme(deck: dict[str, Any], fallback: str) -> str:
+        """A deck that names its theme opens in it; otherwise keep `fallback`
+        if this deck offers it. The presenter can still change it with T or
+        from the remote."""
+        if deck.get("theme") in theme_ids:
+            return deck["theme"]
+        if fallback in theme_ids:
+            return fallback
+        return theme_ids[0] if theme_ids else "paper"
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -414,6 +498,16 @@ def create_app(
                     await task
 
     app = FastAPI(title="Glissade", docs_url=None, redoc_url=None, lifespan=lifespan)
+    app.state.control_key = control_key
+
+    def require_key(request: Request) -> None:
+        if not control_key or is_loopback(request.client.host if request.client else None):
+            return
+        given = request.headers.get("x-glissade-key") or request.query_params.get("k") or ""
+        if not hmac.compare_digest(given.encode(), control_key.encode()):
+            raise HTTPException(status_code=403, detail="missing or wrong control key")
+
+    guarded = [Depends(require_key)]
 
     # Slides are prepared (media inlined) once per deck and cached, since
     # base64-encoding images on every request would be wasteful.
@@ -440,11 +534,7 @@ def create_app(
         theme_ids=theme_ids,
         deck_ids=deck_ids,
         scale=settings["scale"],
-        # A deck that names its theme opens in it; the presenter can still
-        # change it for the session from the remote or with T.
-        theme=(
-            current.get("theme") if current.get("theme") in theme_ids else settings["theme"]
-        ),
+        theme=opening_theme(current, settings["theme"]),
         deck=current["id"],
         live_notes=live_notes,
     )
@@ -466,7 +556,6 @@ def create_app(
         if not new_decks:
             raise ValueError(f"no readable decks found in {project.decks_dir}")
         new_themes = load_themes(project)
-        new_theme_ids = [t["id"] for t in new_themes]
         new_deck_ids = [d["id"] for d in new_decks]
         selected = show.deck if show.deck in new_deck_ids else None
         new_current = deck_lib.resolve(selected, new_decks)
@@ -476,15 +565,15 @@ def create_app(
         all_decks = new_decks
         current = new_current
         themes = new_themes
-        theme_ids = new_theme_ids
+        theme_ids = ids(themes_open(new_current))
         deck_ids = new_deck_ids
         cache.clear()
 
         show.deck_ids = new_deck_ids
-        show.theme_ids = new_theme_ids
+        show.theme_ids = theme_ids
         show.deck = new_current["id"]
-        if show.theme not in new_theme_ids:
-            show.theme = new_theme_ids[0] if new_theme_ids else "paper"
+        if show.theme not in theme_ids:
+            show.theme = opening_theme(new_current, show.theme)
         show.total = len(slides_for(new_current))
         show.n = max(1, min(show.total, show.n))
         show.reload_error = ""
@@ -521,12 +610,14 @@ def create_app(
     def switch(deck_id: str) -> dict[str, Any]:
         """Change the running deck. Bumps `rev` so open displays reload —
         their slides were baked into the page they were served."""
+        nonlocal theme_ids
         if deck_id not in deck_ids or deck_id == show.deck:
             return show.state
         deck = deck_by_id(deck_id)
         show.deck = deck["id"]
-        if deck.get("theme") in show.theme_ids:
-            show.theme = deck["theme"]
+        theme_ids = ids(themes_open(deck))
+        show.theme_ids = theme_ids
+        show.theme = opening_theme(deck, show.theme)
         show.total = len(slides_for(deck))
         show.n = 1
         show.blank = False
@@ -555,7 +646,7 @@ def create_app(
             render_deck(
                 slides_for(deck),
                 live=True,
-                themes=app.state.themes,
+                themes=themes_open(deck),
                 title=deck["title"],
                 decks=deck_summaries,
                 current_deck_id=deck["id"],
@@ -576,10 +667,9 @@ def create_app(
 
     @app.get("/api/themes")
     async def api_themes() -> JSONResponse:
-        from . import themes as theme_lib
-
         return JSONResponse(
-            theme_lib.public(app.state.themes), headers={"Cache-Control": "no-store"}
+            theme_lib.public(themes_open(deck_by_id(show.deck))),
+            headers={"Cache-Control": "no-store"},
         )
 
     @app.get("/api/decks")
@@ -592,24 +682,24 @@ def create_app(
     async def api_state() -> dict[str, Any]:
         return show.state
 
-    @app.post("/api/goto")
+    @app.post("/api/goto", dependencies=guarded)
     async def api_goto(body: dict[str, Any]) -> dict[str, Any]:
         return show.goto(body.get("n", 1))
 
-    @app.post("/api/next")
+    @app.post("/api/next", dependencies=guarded)
     async def api_next() -> dict[str, Any]:
         return show.step(1)
 
-    @app.post("/api/prev")
+    @app.post("/api/prev", dependencies=guarded)
     async def api_prev() -> dict[str, Any]:
         return show.step(-1)
 
-    @app.post("/api/blank")
+    @app.post("/api/blank", dependencies=guarded)
     async def api_blank(body: dict[str, Any] | None = None) -> dict[str, Any]:
         body = body or {}
         return show.set_blank(body.get("blank", not show.blank))
 
-    @app.post("/api/scale")
+    @app.post("/api/scale", dependencies=guarded)
     async def api_scale(body: dict[str, Any] | None = None) -> dict[str, Any]:
         """Set the deck's text size.
 
@@ -627,7 +717,7 @@ def create_app(
             steps = 0
         return show.bump_scale(steps)
 
-    @app.post("/api/theme")
+    @app.post("/api/theme", dependencies=guarded)
     async def api_theme(body: dict[str, Any] | None = None) -> dict[str, Any]:
         """Switch the deck's theme.
 
@@ -644,7 +734,7 @@ def create_app(
             steps = 1
         return show.cycle_theme(steps)
 
-    @app.post("/api/deck")
+    @app.post("/api/deck", dependencies=guarded)
     async def api_deck(body: dict[str, Any] | None = None) -> dict[str, Any]:
         """Switch to a different deck. Displays reload themselves."""
         body = body or {}
@@ -660,7 +750,7 @@ def create_app(
             "all": show.live_notes_for_current_deck(),
         }
 
-    @app.post("/api/live-notes")
+    @app.post("/api/live-notes", dependencies=guarded)
     async def api_live_notes_set(body: dict[str, Any] | None = None) -> dict[str, Any]:
         body = body or {}
         state = show.set_live_note(body.get("text", ""), n=body.get("n"))
@@ -668,7 +758,7 @@ def create_app(
         state["all_live_notes"] = show.live_notes_for_current_deck()
         return state
 
-    @app.post("/api/live-notes-visible")
+    @app.post("/api/live-notes-visible", dependencies=guarded)
     async def api_live_notes_visible(body: dict[str, Any] | None = None) -> dict[str, Any]:
         body = body or {}
         state = show.set_live_notes_visible(body.get("visible", not show.live_notes_visible))

@@ -171,11 +171,9 @@ def _check_image(node: Any, where: str, base: Path, out: list[Issue]) -> None:
             "warning", where, f"remote image needs the network: {src}",
             "Download it beside the deck so it embeds into the build.",
         ))
-        return
-    if str(src).startswith("data:"):
-        return
-    if not (base / str(src)).is_file():
+    elif not str(src).startswith("data:") and not (base / str(src)).is_file():
         out.append(Issue("error", where, f"image not found: {src}"))
+    # Alt text and fit matter wherever the pixels come from.
     _check_image_details(node, where, out)
 
 
@@ -484,7 +482,7 @@ def check_requirement(deck: dict[str, Any], label: str = "") -> list[Issue]:
         ok = satisfies(__version__, str(requirement))
     except BadRequirement as exc:
         return [Issue("error", where, f"can't read the `glissade` requirement: {exc}",
-                      'Use something like ">=0.6".')]
+                      'Use something like ">=2026.11.1".')]
     if ok:
         return []
     return [Issue(
@@ -495,24 +493,41 @@ def check_requirement(deck: dict[str, Any], label: str = "") -> list[Issue]:
     )]
 
 
-def check_deck(deck: dict[str, Any], theme_ids: list[str] | None = None) -> list[Issue]:
-    """Validate one loaded deck. Media paths resolve beside the deck file."""
+def check_deck(
+    deck: dict[str, Any],
+    theme_ids: list[str] | None = None,
+    themes: list[dict[str, Any]] | None = None,
+) -> list[Issue]:
+    """Validate one loaded deck. Media paths resolve beside the deck file.
+
+    `themes` (the project's shared themes, expanded) lets a theme defined
+    inside the deck be checked as it will actually be drawn.
+    """
     base = Path(deck["path"]).resolve().parent
     label = f"[{deck['id']}] "
     issues = check_requirement(deck, label)
-    issues += _deck_level(deck, label, theme_ids)
+    issues += _deck_level(deck, label, theme_ids, themes)
     return issues + check_slides(deck.get("slides", []), base, label=f"[{deck['id']}]")
 
 
 def _deck_level(
-    deck: dict[str, Any], label: str, theme_ids: list[str] | None = None
+    deck: dict[str, Any],
+    label: str,
+    theme_ids: list[str] | None = None,
+    themes: list[dict[str, Any]] | None = None,
 ) -> list[Issue]:
     out: list[Issue] = []
     raw = deck.get("raw")
     if isinstance(raw, dict):
         _unknown_fields(raw, "deckObject", f"{label}deck", out)
         theme = raw.get("theme")
-        if theme is not None and theme_ids is not None and theme not in theme_ids:
+        if isinstance(theme, dict):
+            _check_deck_theme(deck, theme, f"{label}deck theme", theme_ids, themes, out)
+        elif theme is not None and not isinstance(theme, str):
+            out.append(Issue(
+                "error", f"{label}deck", "theme must be a theme id or a theme object",
+            ))
+        elif theme is not None and theme_ids is not None and theme not in theme_ids:
             out.append(Issue(
                 "warning", f"{label}deck", f"unknown theme {theme!r}",
                 _did_you_mean(str(theme), theme_ids)
@@ -521,15 +536,101 @@ def _deck_level(
     return out
 
 
-def check_themes(themes: list[dict[str, Any]]) -> list[Issue]:
-    """Contrast problems in the themes a project will present with."""
+_HEX_COLOUR = re.compile(r"^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+
+
+def _check_deck_theme(
+    deck: dict[str, Any],
+    spec: dict[str, Any],
+    where: str,
+    theme_ids: list[str] | None,
+    themes: list[dict[str, Any]] | None,
+    out: list[Issue],
+) -> None:
+    """A theme written inside the deck: everything a themes.json entry gets
+    checked for, plus what only shows up here."""
+    from .project import DEFAULT_THEMES
+    from .themes import deck_theme
+
+    _unknown_fields(spec, "deckTheme", where, out)
+
+    parent = spec.get("extends")
+    if parent is not None and not isinstance(parent, str):
+        out.append(Issue("error", where, "extends must be a theme id"))
+    if not any(isinstance(spec.get(k), (dict, str)) for k in ("palette", "vars", "extends")):
+        out.append(Issue(
+            "warning", where, "theme sets no palette, vars or extends, so it changes nothing",
+            'Add "palette": {"dark": ..., "light": ..., "accent": ...}, or "extends".',
+        ))
+
+    palette = spec.get("palette")
+    if palette is not None and not isinstance(palette, dict):
+        out.append(Issue("error", where, "palette must be an object"))
+    elif isinstance(palette, dict):
+        for key in ("dark", "light", "accent", "accent2"):
+            value = palette.get(key)
+            if value is not None and not (isinstance(value, str) and _HEX_COLOUR.match(value)):
+                out.append(Issue(
+                    "warning", where, f"palette {key} {value!r} isn't a hex colour",
+                    "Use #rrggbb or #rgb; other colour forms can't be checked for contrast.",
+                ))
+
+    variables = spec.get("vars")
+    if variables is not None and not isinstance(variables, dict):
+        out.append(Issue("error", where, "vars must be an object"))
+    elif isinstance(variables, dict):
+        for key in variables:
+            if not str(key).startswith("--"):
+                out.append(Issue(
+                    "warning", where, f"vars key {key!r} isn't a CSS custom property",
+                    f"Write it as {'--' + str(key).lstrip('-')!r}.",
+                ))
+
+    base = Path(deck["path"]).resolve().parent
+    fonts = spec.get("fonts")
+    if fonts is not None and not isinstance(fonts, list):
+        out.append(Issue("error", where, "fonts must be a list"))
+    for i, font in enumerate(fonts if isinstance(fonts, list) else [], start=1):
+        f_where = f"{where} font {i}"
+        if not isinstance(font, dict) or not font.get("family") or not font.get("src"):
+            out.append(Issue("error", f_where, "a font needs `family` and `src`"))
+            continue
+        path = Path(str(font["src"]))
+        path = path if path.is_absolute() else base / path
+        if not path.is_file():
+            out.append(Issue("error", f_where, f"font file not found: {font['src']}"))
+        elif path.suffix.lower() not in (".woff2", ".woff", ".ttf", ".otf"):
+            out.append(Issue("warning", f_where, f"not a web font file: {font['src']}"))
+
+    built = deck_theme(deck, themes or [], DEFAULT_THEMES)
+    if built is None:
+        return
+    if built.get("_extends_error"):
+        hint = ""
+        if isinstance(parent, str) and theme_ids:
+            available = "Available: " + ", ".join(theme_ids) + "."
+            hint = _did_you_mean(parent, theme_ids) or available
+        out.append(Issue("error", where, built["_extends_error"], hint))
+    out.extend(_contrast(built, where))
+
+
+def _contrast(theme: dict[str, Any], where: str) -> list[Issue]:
     from .themes import contrast_issues
 
+    return [
+        Issue("warning", where, f"low contrast — {problem}",
+              "Darken the text colour or lighten the background (WCAG AA is 4.5:1).")
+        for problem in contrast_issues(theme)
+    ]
+
+
+def check_themes(themes: list[dict[str, Any]]) -> list[Issue]:
+    """Problems in the themes a project will present with."""
     out = []
     for t in themes:
-        for problem in contrast_issues(t):
-            out.append(Issue(
-                "warning", f"theme {t['id']!r}", f"low contrast — {problem}",
-                "Darken the text colour or lighten the background (WCAG AA is 4.5:1).",
-            ))
+        where = f"theme {t['id']!r}"
+        if t.get("_extends_error"):
+            out.append(Issue("warning", where, t["_extends_error"],
+                             "Its own palette and vars still apply."))
+        out.extend(_contrast(t, where))
     return out

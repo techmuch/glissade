@@ -186,7 +186,7 @@
       "eyebrow": "Press T to cycle",
       "heading": "Themes",
       "left": {
-        "body": "<p>Every colour and typeface comes from a token. One value restyles the whole deck.</p><p>Four ship: <b>Paper</b>, <b>Parchment</b>, <b>Georgia Tech</b> and <b>Texas A&amp;M</b>. Add your own in <b>themes.json</b> — a palette of a dark, a light and an accent is enough.</p>"
+        "body": "<p>Every colour and typeface comes from a token. One value restyles the whole deck.</p><p>Four ship: <b>Paper</b>, <b>Parchment</b>, <b>Georgia Tech</b> and <b>Texas A&amp;M</b>. Add your own in <b>themes.json</b>, or put one inside a deck so it travels with the file — a palette of a dark, a light and an accent is enough.</p>"
       },
       "right": {
         "image": {
@@ -196,7 +196,7 @@
         },
         "aspect": "4:3"
       },
-      "notes": "<b>Try it now:</b> press <b>T</b>, or tap a swatch on the remote. Watch this slide change under you.<br><br>The Georgia Tech theme follows GT's published accessibility guidance, not just its palette — Tech Gold is used for rules and bullets but never for text, since GT flags it as inaccessible on light backgrounds.<br><br>A deck can name the theme it opens in with a top-level <code>\"theme\"</code>. <code>glissade check</code> reports any theme whose text falls below WCAG AA contrast."
+      "notes": "<b>Try it now:</b> press <b>T</b>, or tap a swatch on the remote. Watch this slide change under you.<br><br>The Georgia Tech theme follows GT's published accessibility guidance, not just its palette — Tech Gold is used for rules and bullets but never for text, since GT flags it as inaccessible on light backgrounds.<br><br>A deck can name the theme it opens in with a top-level <code>\"theme\"</code>, or define one there: the Layout Gallery deck carries its own teal theme, shown as <i>Gallery (this deck)</i> on the remote. <code>glissade check</code> reports any theme whose text falls below WCAG AA contrast."
     },
     {
       "n": 14,

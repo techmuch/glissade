@@ -373,3 +373,117 @@ async def test_remote_exposes_state_to_assistive_tech(tmp_path: Path, sample_dec
             await expect(remote.locator("#drawer")).not_to_have_class("on")
             await expect(jump).to_be_focused()
             await expect(jump).to_have_attribute("aria-expanded", "false")
+
+
+async def test_pages_send_the_control_key_from_their_url(
+    tmp_path: Path, sample_deck_data: dict
+):
+    with running_server(tmp_path, sample_deck_data) as server:
+        base = server["base_url"]
+        async with open_pages(base) as (projector, remote):
+            await _goto_remote(remote, base + "/control?k=abc123")
+            async with remote.expect_request(
+                lambda r: r.url.endswith("/api/next") and r.method == "POST"
+            ) as sent:
+                await remote.locator("#next").click()
+            assert (await (await sent.value).all_headers()).get("x-glissade-key") == "abc123"
+
+            await _goto_projector(projector, base + "/?k=abc123")
+            async with projector.expect_request(
+                lambda r: r.url.endswith("/api/goto") and r.method == "POST"
+            ) as sent:
+                await projector.keyboard.press("Home")
+            assert (await (await sent.value).all_headers()).get("x-glissade-key") == "abc123"
+
+
+async def test_remote_says_so_when_its_key_is_refused(
+    tmp_path: Path, sample_deck_data: dict
+):
+    with running_server(tmp_path, sample_deck_data) as server:
+        async with open_pages(server["base_url"]) as (_, remote):
+            async def refuse(route):
+                if route.request.method == "POST":
+                    await route.fulfill(status=403, json={"detail": "missing key"})
+                else:
+                    await route.continue_()
+
+            await remote.route("**/api/**", refuse)
+            warn = remote.locator("#keywarn")
+            await expect(warn).not_to_be_visible()
+            await remote.locator("#next").click()
+            await expect(warn).to_be_visible()
+
+
+DECK_THEME = {
+    "name": "Q3",
+    "palette": {"dark": "#1b2a41", "light": "#f7f4ee", "accent": "#c8553d"},
+    "vars": {"--card-bg": "#010203"},
+}
+
+
+async def _root_var(page: Page, name: str, value: str, equal: bool = True) -> None:
+    """Wait until a theme token on :root is (or stops being) `value`."""
+    await page.wait_for_function(
+        """([n, v, eq]) => {
+             const got = getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+             return eq ? got === v : got !== v;
+           }""",
+        arg=[name, value, equal],
+        timeout=5000,
+    )
+
+
+async def test_deck_theme_styles_the_projector_and_follows_the_deck(
+    tmp_path: Path, sample_deck_data: dict
+):
+    (tmp_path / "decks").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "decks" / "appendix.json").write_text(json.dumps({
+        "title": "Appendix", "order": 200,
+        "slides": [{"layout": "title", "heading": "Appendix", "notes": "n"}],
+    }), encoding="utf-8")
+    data = {**sample_deck_data, "theme": DECK_THEME}
+
+    with running_server(tmp_path, data) as server:
+        base = server["base_url"]
+        async with open_pages(base) as (projector, remote):
+            await _root_var(projector, "--paper", "#f7f4ee")
+            await _root_var(projector, "--card-bg", "#010203")
+
+            # The remote offers it, labelled as this deck's.
+            swatch = remote.locator('.sw[data-id="deck:talk"]')
+            await expect(swatch).to_have_count(1)
+            await expect(swatch).to_contain_text("Q3 (this deck)")
+            await expect(swatch).to_have_attribute("aria-pressed", "true")
+
+            # Switching to a shared theme clears the deck-only token.
+            await remote.request.post(base + "/api/theme", data={"id": "paper"})
+            await _root_var(projector, "--card-bg", "#010203", equal=False)
+            await _root_var(projector, "--paper", "#f7f4ee", equal=False)
+
+            # Another deck doesn't offer it; the remote's list follows.
+            await remote.request.post(base + "/api/deck", data={"id": "appendix"})
+            await expect(remote.locator('.sw[data-id="deck:talk"]')).to_have_count(0)
+            await expect(remote.locator('.sw[data-id="paper"]')).to_have_count(1)
+
+
+async def test_offline_build_opens_in_the_deck_theme(tmp_path: Path, sample_deck_data: dict):
+    decks = tmp_path / "decks"
+    decks.mkdir(parents=True, exist_ok=True)
+    (decks / "talk.json").write_text(
+        json.dumps({**sample_deck_data, "theme": DECK_THEME}), encoding="utf-8")
+    out = tmp_path / "build"
+    env = dict(os.environ, PYTHONPATH=str(Path("src").resolve()))
+    subprocess.run(
+        [sys.executable, "-m", "glissade", "build", "-C", str(tmp_path), "-o", str(out)],
+        check=True, env=env, capture_output=True,
+    )
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch()
+    try:
+        page = await browser.new_page()
+        await _goto_projector(page, (out / "talk.html").as_uri())
+        await _root_var(page, "--paper", "#f7f4ee")
+        await _root_var(page, "--card-bg", "#010203")
+    finally:
+        await browser.close()
+        await playwright.stop()

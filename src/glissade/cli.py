@@ -219,23 +219,39 @@ def cmd_init(args) -> int:
 def cmd_start(args) -> int:
     import uvicorn
 
-    from .app import create_app
+    from .app import create_app, is_loopback, new_control_key
 
     project = demo_project() if args._demo else _project(args)
     defaults = project.config()
-    requested_port = args.port or int(defaults.get("port", 8000))
+    try:
+        requested_port = args.port or int(defaults.get("port", 8000))
+    except (TypeError, ValueError):
+        out(f"\n  glissade.toml: port must be a number, got {defaults.get('port')!r}\n")
+        return 2
     host = args.host or str(defaults.get("host", "0.0.0.0"))
     deck = args.deck or defaults.get("deck")
     port = find_available_port(host, requested_port)
 
-    app = create_app(project, deck, watch=not args.no_watch and not args._demo)
+    # Anyone on the venue's Wi-Fi can reach a server bound to every interface,
+    # so commands from other machines need a key that only the printed links
+    # and the QR code carry. A fixed `key` in glissade.toml keeps a bookmarked
+    # remote working across restarts; --no-key turns the check off.
+    reachable = not is_loopback(host)
+    key = None
+    if reachable and not args.no_key:
+        key = str(defaults.get("key") or "") or new_control_key()
+
+    app = create_app(
+        project, deck, watch=not args.no_watch and not args._demo, control_key=key
+    )
     _warn_if_deck_needs_newer(app.state.decks)
     show = app.state.show
     current = next((d for d in app.state.decks if d["id"] == show.deck), None)
 
     ip = lan_ip() if host == "0.0.0.0" else host
-    display = f"http://{ip}:{port}/"
-    control = f"http://{ip}:{port}/control"
+    suffix = f"?k={key}" if key else ""
+    display = f"http://{ip}:{port}/{suffix}"
+    control = f"http://{ip}:{port}/control{suffix}"
 
     out()
     out(f"  {bold('Glissade')} {dim('v' + __version__)}")
@@ -252,9 +268,13 @@ def cmd_start(args) -> int:
         out(f"  Also at  http://localhost:{port}/")
     out()
 
-    for line in qr_lines(control):
+    qr = qr_lines(control)
+    for line in qr:
         out("   " + line)
-    if qr_lines(control):
+    if qr:
+        out()
+    if reachable and not key:
+        out(dim("  --no-key: anyone on this network can drive the slides."))
         out()
 
     out("  Open the deck on the projecting machine and press F for fullscreen.")
@@ -371,7 +391,7 @@ def cmd_check(args) -> int:
             for i in theme_issues:
                 out(f"    warn    {i}")
     for deck in chosen:
-        issues = check_deck(deck, theme_ids)
+        issues = check_deck(deck, theme_ids, themes)
         errs = [i for i in issues if i.level == "error"]
         warns = [i for i in issues if i.level == "warning"]
         hints = [i for i in issues if i.level == "tip"]
@@ -412,10 +432,16 @@ def cmd_shoot(args) -> int:
 
     project = demo_project() if args._demo else _project(args)
     chosen = _decks_or_die(project, args.deck)
+    from .project import DEFAULT_THEMES
+    from .themes import for_deck
+
     themes = load_themes(project)
-    if args.theme and args.theme not in [t["id"] for t in themes]:
-        out(f"\n  Unknown theme {args.theme!r}. Run `glissade themes`.\n")
-        return 2
+    if args.theme:
+        # A deck's own theme counts too ("deck:<id>").
+        offered = {t["id"] for d in chosen for t in for_deck(themes, d, DEFAULT_THEMES)}
+        if args.theme not in offered:
+            out(f"\n  Unknown theme {args.theme!r}. Run `glissade themes`.\n")
+            return 2
 
     base = Path(args.out).resolve() if args.out else (
         (Path.cwd() / "build" / "shots") if args._demo else project.build_dir / "shots"
@@ -654,7 +680,7 @@ def cmd_themes(args) -> int:
     from .app import load_themes
 
     try:
-        project = _project(args)
+        project = demo_project() if args._demo else _project(args)
     except (ProjectNotFound, SystemExit):
         project = None
     themes = load_themes(project)
@@ -665,6 +691,15 @@ def cmd_themes(args) -> int:
         out(f"  {bold(t['id']):<24} {t.get('name', t['id'])}")
         if t.get("description"):
             out(f"  {'':<22} {dim(t['description'])}")
+    own = [d for d in (deck_lib.discover(project) if project else []) if d.get("theme_spec")]
+    if own:
+        out()
+        out(f"  {dim('Defined inside decks (offered only while that deck is open)')}")
+        for d in own:
+            spec = d["theme_spec"]
+            parent = spec.get("extends")
+            based = f"  extends {parent}" if isinstance(parent, str) else ""
+            out(f"  {bold(d['theme']):<24} {spec.get('name') or d['title']}{dim(based)}")
     out()
     return 0
 
@@ -703,6 +738,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="open the deck in your browser once the server is up")
     sp.add_argument("--no-watch", action="store_true",
                     help="do not auto-reload when deck files change")
+    sp.add_argument("--no-key", action="store_true",
+                    help="let any device on the network control the deck without a key")
     sp.set_defaults(func=cmd_start)
 
     sp = common(sub.add_parser("build", help="write standalone HTML"))
@@ -760,6 +797,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--port", type=int, default=None)
     sp.add_argument("--open", action="store_true")
     sp.add_argument("--no-watch", action="store_true")
+    sp.add_argument("--no-key", action="store_true")
     sp.set_defaults(func=cmd_start, _demo=True, dir=None)
 
     return p

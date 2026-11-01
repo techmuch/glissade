@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://glissade.dev/schema/v1.json",
   "x-glissade-schema": 1,
-  "x-glissade-version": "0.15.0",
+  "x-glissade-version": "2026.11.1.0",
   "title": "Glissade deck",
   "description": "A presentation deck. Either an object with metadata and a slides array, or a bare array of slides.",
   "oneOf": [
@@ -25,10 +25,10 @@
         },
         "glissade": {
           "type": "string",
-          "description": "Minimum Glissade version this deck needs, e.g. \">=0.6\". Older versions warn rather than rendering it incompletely.",
+          "description": "Minimum Glissade version this deck needs, e.g. \">=2026.11.1\". Older versions warn rather than rendering it incompletely.",
           "examples": [
-            ">=0.6",
-            ">=0.6,<1.0"
+            ">=2026.11.1",
+            ">=2026.11.1,<2027"
           ]
         },
         "format": {
@@ -57,11 +57,18 @@
           }
         },
         "theme": {
-          "type": "string",
-          "description": "Theme this deck opens in (an id from `glissade themes`). The presenter can still switch with T or from the remote.",
-          "examples": [
-            "paper",
-            "parchment"
+          "description": "The theme this deck opens in: an id from `glissade themes`, or a theme defined right here so the deck carries its own look. The presenter can still switch with T or from the remote.",
+          "oneOf": [
+            {
+              "type": "string",
+              "examples": [
+                "paper",
+                "parchment"
+              ]
+            },
+            {
+              "$ref": "#/$defs/deckTheme"
+            }
           ]
         }
       },
@@ -382,6 +389,115 @@
         }
       },
       "additionalProperties": false
+    },
+    "deckTheme": {
+      "type": "object",
+      "description": "A theme defined inside the deck. Layers, each winning over the last: the theme it extends, then palette, then vars.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Shown in the theme picker as \"<name> (this deck)\". Defaults to the deck title."
+        },
+        "description": {
+          "type": "string"
+        },
+        "extends": {
+          "type": "string",
+          "description": "Start from this theme id (a built-in or one from the project's themes.json).",
+          "examples": [
+            "paper",
+            "slate"
+          ]
+        },
+        "palette": {
+          "type": "object",
+          "description": "Shorthand: every colour token is derived from these, with text pushed to WCAG AA contrast.",
+          "properties": {
+            "dark": {
+              "type": "string",
+              "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+            },
+            "light": {
+              "type": "string",
+              "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+            },
+            "accent": {
+              "type": "string",
+              "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+            },
+            "accent2": {
+              "type": "string",
+              "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+            },
+            "display_font": {
+              "type": "string",
+              "description": "CSS font stack for headings."
+            },
+            "body_font": {
+              "type": "string",
+              "description": "CSS font stack for body text."
+            }
+          },
+          "additionalProperties": false
+        },
+        "vars": {
+          "type": "object",
+          "description": "Individual CSS custom properties, e.g. {\"--card-bg\": \"#ffffff\"}. Win over the palette.",
+          "propertyNames": {
+            "pattern": "^--"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "fonts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "family",
+              "src"
+            ],
+            "properties": {
+              "family": {
+                "type": "string",
+                "description": "The name to use in --display-font / --body-font or palette fonts."
+              },
+              "src": {
+                "type": "string",
+                "description": "Font file (.woff2, .woff, .ttf, .otf), relative to the deck file. Embedded, so it works offline."
+              },
+              "weight": {
+                "type": [
+                  "string",
+                  "number"
+                ],
+                "description": "CSS font-weight this file provides, e.g. 400 or \"700\"."
+              },
+              "style": {
+                "type": "string",
+                "enum": [
+                  "normal",
+                  "italic"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "extends": "paper",
+          "name": "Q3 Review",
+          "palette": {
+            "dark": "#1b2a41",
+            "light": "#f7f4ee",
+            "accent": "#c8553d"
+          }
+        }
+      ]
     }
   }
 }

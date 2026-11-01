@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .assets import media_nodes
 from .check import LAYOUTS, MODIFIERS
 
 CURRENT_FORMAT = 1
@@ -68,13 +69,41 @@ def embed_url(src: str) -> str | None:
 
 def plan(data: Any) -> list[Fix]:
     """Everything that can be corrected in this deck, without doing it."""
+    return _fixes(data, write=False)[0]
+
+
+def _with_format(data: dict) -> dict:
+    """The deck with a format stamp, placed with the other metadata in the
+    order the schema declares it: after $schema and glissade, before the
+    human-facing title."""
+    rebuilt: dict = {}
+    placed = False
+    for key, value in data.items():
+        if not placed and key not in ("$schema", "glissade"):
+            rebuilt["format"] = CURRENT_FORMAT
+            placed = True
+        rebuilt[key] = value
+    if not placed:
+        rebuilt["format"] = CURRENT_FORMAT
+    return rebuilt
+
+
+def _fixes(data: Any, write: bool) -> tuple[list[Fix], Any]:
+    """Find every fix and, when `write` is set, make it in place.
+
+    Planning and applying are one walk, so what `check --fix` reports and
+    what it changes can never disagree. Returns the fixes and the (possibly
+    rebuilt) deck.
+    """
     fixes: list[Fix] = []
     slides = data.get("slides", []) if isinstance(data, dict) else data
     if not isinstance(slides, list):
-        return fixes
+        return fixes, data
 
     if isinstance(data, dict) and "format" not in data:
         fixes.append(Fix("deck", "absent", str(CURRENT_FORMAT), "record the deck format"))
+        if write:
+            data = _with_format(data)
 
     for index, slide in enumerate(slides, start=1):
         if not isinstance(slide, dict):
@@ -86,90 +115,48 @@ def plan(data: Any) -> list[Fix]:
             better = _confident(layout, LAYOUTS)
             if better:
                 fixes.append(Fix(where, layout, better, "correct the layout name"))
+                if write:
+                    slide["layout"] = better
 
         cls = slide.get("cls")
         if isinstance(cls, str):
             words = cls.split()
-            fixed = [
-                _confident(w, MODIFIERS) or w if w not in MODIFIERS else w for w in words
-            ]
+            fixed = [w if w in MODIFIERS else (_confident(w, MODIFIERS) or w) for w in words]
             if fixed != words:
                 fixes.append(Fix(where, cls, " ".join(fixed), "correct a cls modifier"))
+                if write:
+                    slide["cls"] = " ".join(fixed)
 
-        for node, label in _media_nodes(slide):
+        for kind, label, node in media_nodes(slide):
             src = node.get("src")
-            if isinstance(src, str):
-                better = embed_url(src)
-                if better:
-                    fixes.append(Fix(f"{where}{label}", src, better,
-                                     "use the YouTube embed URL"))
-    return fixes
-
-
-def _media_nodes(slide: dict):
-    if isinstance(slide.get("media"), dict):
-        yield slide["media"], ""
-    for side in ("left", "right"):
-        block = slide.get(side)
-        if isinstance(block, dict) and isinstance(block.get("media"), dict):
-            yield block["media"], f" {side}"
+            if kind != "media" or not isinstance(src, str):
+                continue
+            better = embed_url(src)
+            if better:
+                fixes.append(Fix(f"{where}{label}", src, better, "use the YouTube embed URL"))
+                if write:
+                    node["src"] = better
+    return fixes, data
 
 
 def apply(path: Path, backup: bool = True) -> list[Fix]:
     """Apply every available fix to a deck file. Returns what was changed.
 
     The original is copied to `<name>.bak` first: this rewrites a file the
-    user wrote, and reformatting alone is reason enough to keep a copy.
+    user wrote, and reformatting alone is reason enough to keep a copy. An
+    existing backup is left alone, so running --fix twice still leaves the
+    file as it was before Glissade first touched it.
     """
     with path.open(encoding="utf-8") as fh:
         data = json.load(fh)
 
-    fixes = plan(data)
+    fixes, data = _fixes(data, write=True)
     if not fixes:
         return []
 
-    slides = data.get("slides", []) if isinstance(data, dict) else data
-
-    if isinstance(data, dict) and "format" not in data:
-        # Placed with the other metadata, in the order the schema declares it:
-        # after $schema and glissade, before the human-facing title.
-        rebuilt = {}
-        placed = False
-        for key, value in data.items():
-            if not placed and key not in ("$schema", "glissade"):
-                rebuilt["format"] = CURRENT_FORMAT
-                placed = True
-            rebuilt[key] = value
-        if not placed:
-            rebuilt["format"] = CURRENT_FORMAT
-        data = rebuilt
-        slides = data.get("slides", [])
-
-    for slide in slides:
-        if not isinstance(slide, dict):
-            continue
-        layout = slide.get("layout")
-        if isinstance(layout, str) and layout not in LAYOUTS:
-            better = _confident(layout, LAYOUTS)
-            if better:
-                slide["layout"] = better
-        cls = slide.get("cls")
-        if isinstance(cls, str):
-            words = cls.split()
-            fixed = [
-                _confident(w, MODIFIERS) or w if w not in MODIFIERS else w for w in words
-            ]
-            if fixed != words:
-                slide["cls"] = " ".join(fixed)
-        for node, _ in _media_nodes(slide):
-            src = node.get("src")
-            if isinstance(src, str):
-                better = embed_url(src)
-                if better:
-                    node["src"] = better
-
-    if backup:
-        shutil.copyfile(path, path.with_suffix(path.suffix + ".bak"))
+    bak = path.with_suffix(path.suffix + ".bak")
+    if backup and not bak.exists():
+        shutil.copyfile(path, bak)
     path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )

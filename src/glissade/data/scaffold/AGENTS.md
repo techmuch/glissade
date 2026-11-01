@@ -40,14 +40,39 @@ still look wrong. (`shoot` needs Playwright: `pip install playwright` and
 presenter can still switch with **T** or from the remote. Pick one that suits
 the material rather than leaving the default.
 
+When the deck needs its own look (brand colours, a specific typeface), give
+`theme` an object instead, so the look travels with this one file:
+
+```jsonc
+"theme": {
+  "extends": "paper",
+  "name": "Q3 Review",
+  "palette": { "dark": "#1b2a41", "light": "#f7f4ee", "accent": "#c8553d" }
+}
+```
+
+- `palette` is the quickest route: one dark, one light, one or two accents
+  (`accent2`), all `#rrggbb`. Every other colour is derived, and text colours
+  are pushed to readable contrast.
+- `extends` starts from an existing theme id; `vars` overrides single tokens
+  (`"--card-bg": "#ffffff"`); `fonts` embeds font files that sit beside the
+  deck (`{"family": "Inter", "src": "fonts/Inter.woff2"}`).
+- Use only those keys. Prefer `extends` plus `palette` over setting many
+  `vars` by hand.
+- Run `glissade check`: it reports low contrast, missing font files and an
+  unknown `extends`. Then `glissade shoot` to see the result.
+
 `glissade.schema.json` sits beside this file. Keep the `$schema` line — it
 gives editors autocomplete and inline validation.
 
 Optionally declare the release the deck needs:
 
 ```jsonc
-"glissade": ">=0.6"
+"glissade": ">=2026.11.1"
 ```
+
+Releases are numbered by date (`year.month.day.release`). Older decks may say
+`">=0.15"` or similar; those are earlier releases and still work.
 
 Keep the `"format": 1` line. It records the deck format, so a later release
 can migrate the file rather than guess at its age.

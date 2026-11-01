@@ -162,3 +162,36 @@ def test_display_renders_deck_switcher_modal_and_multi_deck(tmp_path, sample_dec
     assert resp2.status_code == 200
     assert target_title in resp2.text
 
+
+
+def test_control_key_guards_commands_from_other_machines(tmp_path, sample_deck_file):
+    from glissade.project import find_project
+
+    app = create_app(find_project(tmp_path), control_key="s3cret")
+    client = TestClient(app)  # reports its host as "testclient": not loopback
+
+    assert client.post("/api/next").status_code == 403
+    assert client.post("/api/next", headers={"X-Glissade-Key": "nope"}).status_code == 403
+    assert client.post("/api/next", headers={"X-Glissade-Key": "s3cret"}).json()["n"] == 2
+    assert client.post("/api/prev?k=s3cret").json()["n"] == 1
+    # Viewing is never guarded.
+    assert client.get("/").status_code == 200
+    assert client.get("/api/state").status_code == 200
+    assert client.get("/control").status_code == 200
+
+
+def test_control_key_trusts_this_machine(tmp_path, sample_deck_file):
+    from glissade.project import find_project
+
+    app = create_app(find_project(tmp_path), control_key="s3cret")
+    local = TestClient(app, client=("127.0.0.1", 50000))
+    assert local.post("/api/next").status_code == 200
+
+
+def test_is_loopback():
+    from glissade.app import is_loopback
+
+    assert is_loopback("127.0.0.1") and is_loopback("::1") and is_loopback("localhost")
+    assert not is_loopback("192.168.1.20")
+    assert not is_loopback("testclient")
+    assert not is_loopback(None)

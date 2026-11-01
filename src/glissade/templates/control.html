@@ -277,6 +277,7 @@
     color:#e8c48a; font-size:13px; line-height:1.45;
   }
   .warn.on{display:block}
+  .keywarn{margin:10px 14px 0}
 
   /* ---------- live notes ---------- */
   .lnbox{
@@ -391,6 +392,12 @@
   <button class="listbtn icon" id="setbtn" aria-label="Settings" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.46.66.79 1.18.91H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
 </header>
 
+<div class="warn keywarn" id="keywarn" role="alert">
+  This remote's link is missing its key, so the presentation won't follow it.
+  Scan the QR code from <code>glissade start</code> again, or open the Remote
+  link it printed.
+</div>
+
 <main>
   <section class="now" id="now" aria-labelledby="nowtitle">
     <div class="label" id="nowlabel">Now showing</div>
@@ -471,13 +478,19 @@ const $ = id => document.getElementById(id);
 /* fetch() resolves normally on a 404, so `ok` must be checked explicitly --
    otherwise a server started before a feature existed looks identical to a
    button that simply doesn't work. */
+/* The control key from the link `glissade start` printed. Without it the
+   server refuses commands from anyone else on the network. */
+const CONTROL_KEY = new URLSearchParams(location.search).get('k') || '';
 function post(path, body){
+  const headers = {'Content-Type':'application/json'};
+  if(CONTROL_KEY) headers['X-Glissade-Key'] = CONTROL_KEY;
   return fetch(path, {
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method:'POST', headers: headers,
     body: JSON.stringify(body || {})
   }).then(async r => {
     let data = {};
     try { data = await r.json(); } catch(e) {}
+    $('keywarn').classList.toggle('on', r.status === 403);
     return Object.assign({ok: r.ok, status: r.status}, data);
   }).catch(() => ({ok:false, status:0}));
 }
@@ -598,22 +611,27 @@ function previewTextFromHTML(html){
 
 function previewHTML(s){
   const layout = s.layout || 'blank';
-  const esc = t => String(t == null ? '' : t);
+  /* Deck fields are author-written HTML by design (a heading may hold <em>),
+     so they pass through as markup. Plain text -- decoded lines from a
+     blank slide, URLs -- must be escaped before it goes back into HTML. */
+  const markup = t => String(t == null ? '' : t);
+  const text = t => String(t == null ? '' : t).replace(/[&<>"']/g,
+    ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   if(layout === 'blank'){
     const lines = previewTextFromHTML(s.html);
     if(!lines.length) return '';
     let h = '<div class="pv-lay">blank</div>';
-    if(lines[0]) h += '<div class="eyebrow">' + esc(lines[0]) + '</div>';
-    if(lines[1]) h += '<h2>' + esc(lines[1]) + '</h2>';
+    if(lines[0]) h += '<div class="eyebrow">' + text(lines[0]) + '</div>';
+    if(lines[1]) h += '<h2>' + text(lines[1]) + '</h2>';
     const rest = lines.slice(2, 8);
-    if(rest.length) h += '<ul>' + rest.map(line => '<li>' + esc(line) + '</li>').join('') + '</ul>';
+    if(rest.length) h += '<ul>' + rest.map(line => '<li>' + text(line) + '</li>').join('') + '</ul>';
     return h;
   }
 
-  let h = '<div class="pv-lay">' + layout + '</div>';
-  if(s.eyebrow) h += '<div class="eyebrow">' + esc(s.eyebrow) + '</div>';
-  if(s.heading) h += '<h2>' + esc(s.heading) + '</h2>';
-  if(s.subheading) h += '<p>' + esc(s.subheading) + '</p>';
+  let h = '<div class="pv-lay">' + text(layout) + '</div>';
+  if(s.eyebrow) h += '<div class="eyebrow">' + markup(s.eyebrow) + '</div>';
+  if(s.heading) h += '<h2>' + markup(s.heading) + '</h2>';
+  if(s.subheading) h += '<p>' + markup(s.subheading) + '</p>';
 
   const firstQuad = Array.isArray(s.quads) ? s.quads.find(q => q && typeof q === 'object') : null;
   const media = s.media || (s.left && s.left.media) || (s.right && s.right.media) || (firstQuad && firstQuad.media);
@@ -630,7 +648,7 @@ function previewHTML(s){
   if(media){
     if(media.external){
       h += '<div class="pv-embed"><b>Embed · needs internet</b>' +
-           '<span class="u">' + esc(media.src || '') + '</span></div>';
+           '<span class="u">' + text(media.src || '') + '</span></div>';
     } else {
       h += '<div class="pv-embed"><b>Embedded activity · offline</b>' +
            'Runs inside the deck.</div>';
@@ -641,20 +659,20 @@ function previewHTML(s){
   if(s.body) h += '<p>' + s.body + '</p>';
   if(s.bullets && s.bullets.length){
     h += '<ul>' + s.bullets.map(b =>
-      '<li>' + (b && typeof b === 'object' ? esc(b.text) : esc(b)) + '</li>').join('') + '</ul>';
+      '<li>' + (b && typeof b === 'object' ? markup(b.text) : markup(b)) + '</li>').join('') + '</ul>';
   }
   if(Array.isArray(s.cards) && s.cards.length){
     h += '<div class="pv-cards">' + s.cards.slice(0, 4).map((c, k) => {
       c = c && typeof c === 'object' ? c : {};
       return '<div class="pv-card">' + (s.numbered ? '<b>' + (k + 1) + '</b>' : '') +
-             esc(c.title || '') + '</div>';
+             markup(c.title || '') + '</div>';
     }).join('') + '</div>';
   }
   if(s.callout) h += '<div class="pv-callout">' + s.callout + '</div>';
   if(Array.isArray(s.quads) && s.quads.length){
     h += '<ul>' + s.quads.slice(0, 4).map(q => {
       const label = q && typeof q === 'object' ? (q.subheading || q.body || (q.image ? 'Image' : '') || (q.media ? 'Embed' : '')) : '';
-      return '<li>' + esc(label) + '</li>';
+      return '<li>' + markup(label) + '</li>';
     }).join('') + '</ul>';
   }
   if(s.caption) h += '<p>' + s.caption + '</p>';
@@ -713,12 +731,18 @@ function buildDecks(){
 }
 
 /* Switching decks changes the slide payload entirely, so the remote refetches
-   rather than trying to reconcile. */
+   rather than trying to reconcile. The theme list goes with it: a deck may
+   bring its own theme, offered only while that deck is open. */
 function reloadDeck(){
-  fetch('/api/slides').then(r => r.json()).then(s => {
+  Promise.all([
+    fetch('/api/slides').then(r => r.json()),
+    fetch('/api/themes').then(r => r.ok ? r.json() : THEMES).catch(() => THEMES)
+  ]).then(([s, t]) => {
     SLIDES = s;
+    THEMES = t;
     painted = null;
     buildList();
+    buildThemes();
     paint();
   }).catch(() => {});
 }
@@ -750,7 +774,8 @@ function applyPreviewTheme(){
     '--pv-ask-callout-bg':  v['--ask-callout-bg'],
     '--pv-ask-callout-ink': v['--ask-callout-ink']
   };
-  for(const k in map) if(map[k]) r.setProperty(k, map[k]);
+  // Clear what this theme doesn't set, so the last theme's colours don't linger.
+  for(const k in map) map[k] ? r.setProperty(k, map[k]) : r.removeProperty(k);
 }
 
 function renderLiveNotesReview(){

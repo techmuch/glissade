@@ -4,3 +4,4 @@
 # port = 8000
 # host = "0.0.0.0"   # 0.0.0.0 lets a phone on the same Wi-Fi reach the remote
 # open = true        # open the deck in your browser when the server is ready
+# key = "pick-one"  # fixed remote key, so a bookmarked remote survives restarts

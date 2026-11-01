@@ -40,16 +40,32 @@ def read_deck(path: Path) -> dict[str, Any]:
         "id": path.stem,
         "title": meta.get("title") or _title_from(path.stem),
         "subtitle": meta.get("subtitle", ""),
-        # The theme this deck was designed for. Presenter choice still wins.
-        "theme": meta.get("theme", "") if isinstance(meta.get("theme"), str) else "",
+        # The theme this deck was designed for: an id, or — when the deck
+        # defines its own theme inline — the id that theme is given. The
+        # presenter's choice still wins.
+        "theme": _theme_id(meta.get("theme"), path.stem),
+        # An inline theme definition, expanded once the shared themes are known.
+        "theme_spec": meta["theme"] if isinstance(meta.get("theme"), dict) else None,
         # The version this deck says it needs, if it says.
         "requires": meta.get("glissade", ""),
+        # Where the deck sits in the picker; ties break on title.
+        "order": meta.get("order", 100),
         # The deck object as written, so `check` can see fields this release
         # doesn't know about instead of silently dropping them.
         "raw": meta if isinstance(data, dict) else {},
         "path": path,
         "slides": [_normalise(slide, i) for i, slide in enumerate(slides, start=1)],
     }
+
+
+def _theme_id(theme: Any, deck_id: str) -> str:
+    if isinstance(theme, str):
+        return theme
+    if isinstance(theme, dict):
+        from .themes import deck_theme_id
+
+        return deck_theme_id(deck_id)
+    return ""
 
 
 def _normalise(slide: Any, index: int) -> Any:
@@ -95,15 +111,17 @@ def discover(directory: Path | Project) -> list[dict[str, Any]]:
         except (OSError, ValueError) as exc:
             print(f"  ! skipping {path.name}: {exc}")
             continue
-        try:
-            with path.open(encoding="utf-8") as fh:
-                raw = json.load(fh)
-            deck["order"] = raw.get("order", 100) if isinstance(raw, dict) else 100
-        except (OSError, ValueError):
-            deck["order"] = 100
         out.append(deck)
-    out.sort(key=lambda d: (d.get("order", 100), d["title"]))
+    out.sort(key=lambda d: (_sort_order(d.get("order")), str(d["title"])))
     return out
+
+
+def _sort_order(value: Any) -> float:
+    """A hand-written `order` that isn't a number sorts with the unordered
+    decks rather than crashing the comparison."""
+    if isinstance(value, bool):
+        return 100
+    return value if isinstance(value, (int, float)) else 100
 
 
 def resolve(name: str | None, decks: list[dict[str, Any]]) -> dict[str, Any] | None:

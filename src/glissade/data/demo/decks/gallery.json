@@ -2,6 +2,12 @@
   "title": "Layout Gallery",
   "subtitle": "Every layout, one per slide",
   "order": 2,
+  "theme": {
+    "extends": "paper",
+    "name": "Gallery",
+    "description": "Defined inside this deck file: Paper with a teal accent.",
+    "palette": {"dark": "#1f2a37", "light": "#f5f2ec", "accent": "#2f6f6a", "accent2": "#8fc1b5"}
+  },
   "slides": [
     {
       "n": 1,

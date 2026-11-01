@@ -1,0 +1,691 @@
+/* The deck's stylesheet. render_deck() inlines it into deck.html, so the
+   served page and the built offline file stay a single self-contained file. */
+  /* Theme tokens. These are the built-in "Paper" defaults; the deck
+     overwrites them on :root at runtime from themes.json, so every colour and
+     face below has to come from a variable -- anything hardcoded would ignore
+     the selected theme. */
+  :root{
+    --ink:#1e2430;
+    --ink-soft:#4a5568;
+    --paper:#f6f3ee;
+    --accent:#7a5c2e;
+    --accent-light:#b8955a;
+    --rule:#ddd5c8;
+    --surround:#2a2723;
+    --story-bg:#efe9df;
+    --ask-bg:#2f3a3f;
+    --ask-ink:#e8e2d6;
+    --ask-ink-soft:#c3cbcd;
+    --ask-heading:#ffffff;
+    --ask-accent:#c4a265;
+    --overlay-bg:rgba(20,18,16,.95);
+    --overlay-ink:#e6e0d4;
+    --chrome-ink:#9a9186;
+    --blank-bg:#14120f;
+    --deck-font:Georgia,'Iowan Old Style','Times New Roman',serif;
+    --ui-font:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    /* Two faces, two jobs: headings and quotes in the display face, reading
+       text in the body face. A theme that sets only --deck-font gets it for
+       both, which is how themes written before the split still render. */
+    --display-font:var(--deck-font);
+    --body-font:var(--deck-font);
+    --heading-weight:400;
+    --heading-tracking:-0.01em;
+    /* Surfaces for cards, callouts and side panels. Callouts are filled with
+       the accent, so their text takes the page colour. */
+    --card-bg:rgba(255,255,255,.55);
+    --callout-bg:var(--accent);
+    --callout-ink:var(--paper);
+    --ask-callout-bg:var(--ask-accent);
+    --ask-callout-ink:var(--ask-bg);
+    /* One type scale for the whole deck. Every size on a slide comes from
+       these five steps (times --scale), so slides share one hierarchy. */
+    --fs-display:7.6vh;
+    --fs-h2:5.2vh;
+    --fs-h3:3.3vh;
+    --fs-body:3vh;
+    --fs-small:2.3vh;
+    --fs-label:1.7vh;
+    /* Global text scale. Everything on a slide is sized in vh and
+       multiplied by this, so one number resizes the whole deck. */
+    --scale:1;
+  }
+  /*__FONT_FACES__*/
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--surround);
+    font-family:var(--body-font);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  :focus-visible{outline:3px solid var(--accent-light); outline-offset:3px}
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*:before,*:after{animation:none !important; transition:none !important}
+  }
+  #stage{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:bottom .15s ease;
+  }
+  /* With notes open the slide gets the remaining height rather than being
+     covered by them -- and media refits into the smaller area. */
+  body.notes-on #stage{bottom:var(--notes-h, 0px)}
+  .slide{
+    display:none;
+    width:100%; height:100%;
+    background:var(--paper);
+    padding:5vh 7vw;
+    flex-direction:column;
+    /* `safe center` keeps the top of the slide reachable if a large text
+       scale makes the content taller than the screen; plain `center` would
+       clip it out of view. The first declaration is the fallback. */
+    justify-content:center;
+    justify-content:safe center;
+    overflow-y:auto;
+    position:relative;
+    animation:fade .25s ease;
+  }
+  .slide > *{flex-shrink:0}
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  .eyebrow{
+    font-family:var(--ui-font);
+    font-size:calc(var(--fs-label) * var(--scale)); letter-spacing:.2em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin-bottom:2vh;
+  }
+  h1,h2,h3{font-family:var(--display-font); font-weight:var(--heading-weight); letter-spacing:var(--heading-tracking)}
+  h1{font-size:calc(var(--fs-display) * var(--scale)); line-height:1.08}
+  h2{font-size:calc(var(--fs-h2) * var(--scale)); line-height:1.15; margin-bottom:3.5vh}
+  h3{font-size:calc(var(--fs-h3) * var(--scale)); line-height:1.25; color:var(--accent); margin-bottom:2.5vh}
+  p{font-size:calc(var(--fs-body) * var(--scale)); line-height:1.5; color:var(--ink-soft); max-width:46ch}
+  .lead{font-size:calc(3.4vh * var(--scale)); color:var(--ink)}
+  /* `body` is authored HTML that may or may not wrap itself in <p>. */
+  .body{font-size:calc(var(--fs-body) * var(--scale)); line-height:1.5; color:var(--ink-soft)}
+  .body > * + *{margin-top:1.4vh}
+
+  .byline{
+    margin-top:4vh; font-size:calc(2.6vh * var(--scale)); color:var(--ink-soft);
+    border-top:1px solid var(--rule); padding-top:3vh; max-width:40ch;
+  }
+  .byline strong{color:var(--ink); font-weight:600; display:block; font-size:calc(2.9vh * var(--scale))}
+  .byline span{font-size:calc(var(--fs-small) * var(--scale)); display:block; margin-top:.6vh}
+
+  /* A pull quote is a figure: the quotation, then who said it. */
+  .pull{
+    border-left:.6vh solid var(--accent-light); padding-left:calc(3.5vh * var(--scale));
+    max-width:34ch;
+  }
+  blockquote{
+    font-family:var(--display-font);
+    font-size:calc(3.6vh * var(--scale)); line-height:1.4; color:var(--ink);
+  }
+  .pull.big{max-width:28ch}
+  .pull.big blockquote{font-size:calc(4.6vh * var(--scale)); font-style:italic; line-height:1.3}
+  blockquote em{font-style:italic; color:var(--accent); font-weight:600}
+  .pull figcaption{margin-top:2.6vh}
+  cite{
+    display:block; font-style:normal;
+    font-family:var(--ui-font); font-weight:600;
+    font-size:calc(1.9vh * var(--scale)); letter-spacing:.06em; color:var(--accent); text-transform:uppercase;
+  }
+
+  ul,ol{list-style:none; max-width:44ch}
+  li{
+    font-size:calc(3.1vh * var(--scale)); line-height:1.4; margin-bottom:2.8vh;
+    padding-left:calc(4.5vh * var(--scale)); position:relative; color:var(--ink);
+  }
+  li:before{
+    content:''; position:absolute; left:0; top:calc(1.5vh * var(--scale));
+    width:calc(1.6vh * var(--scale)); height:calc(1.6vh * var(--scale)); border:.3vh solid var(--accent); border-radius:50%;
+  }
+  /* A bullet with a second line reads as a title and its explanation. */
+  li .li-t{display:block; font-weight:650}
+  li small{display:block; font-size:calc(var(--fs-small) * var(--scale)); color:var(--ink-soft); margin-top:.8vh; line-height:1.45}
+
+  /* ---- callout: the one thing to take away, always last ---- */
+  .callout{
+    background:var(--callout-bg); color:var(--callout-ink);
+    border-radius:1.2vh; padding:2.6vh 2.4vw;
+    font-size:calc(var(--fs-body) * var(--scale)); line-height:1.45;
+    max-width:none;
+  }
+  .callout p{color:inherit; font-size:inherit; max-width:none}
+  .callout b,.callout strong{font-weight:700}
+
+  .slide.ask{background:var(--ask-bg); color:var(--ask-ink)}
+  .slide.ask .eyebrow{color:var(--ask-accent)}
+  .slide.ask h1,.slide.ask h2{color:var(--ask-heading)}
+  .slide.ask h2{max-width:24ch}
+  .slide.ask p,.slide.ask .body{color:var(--ask-ink-soft)}
+  .slide.ask li,.slide.ask blockquote{color:var(--ask-ink)}
+  .slide.ask li:before{border-color:var(--ask-accent)}
+  .slide.ask li small{color:var(--ask-ink-soft)}
+  .slide.ask h3,.slide.ask cite{color:var(--ask-accent)}
+  .slide.ask .callout{background:var(--ask-callout-bg); color:var(--ask-callout-ink)}
+
+  .slide.story{background:var(--story-bg)}
+  .dialogue{max-width:44ch}
+  .dialogue p{font-size:calc(3vh * var(--scale)); margin-bottom:2.2vh}
+  .dialogue p.q{color:var(--ink); font-style:italic}
+  .dialogue p.a{padding-left:calc(4vh * var(--scale))}
+
+  .center{align-items:center; text-align:center}
+  .center p,.center .pull,.center ul{max-width:38ch}
+  .center .pull{border-left:none; padding-left:0; border-top:1px solid var(--rule); padding-top:3.5vh}
+
+  /* Slide chrome. Kept quiet, but at a contrast that still reads. */
+  .num{
+    position:absolute; bottom:3.5vh; right:5vw;
+    font-family:var(--ui-font); font-variant-numeric:tabular-nums;
+    font-size:calc(var(--fs-label) * var(--scale)); color:var(--ink-soft); letter-spacing:.1em;
+  }
+  .slide.ask .num{color:var(--ask-ink-soft)}
+  .tag{
+    position:absolute; top:4vh; left:6vw;
+    font-family:var(--ui-font); font-weight:600;
+    font-size:calc(1.5vh * var(--scale)); letter-spacing:.2em; text-transform:uppercase; color:var(--accent);
+  }
+  .slide.ask .tag{color:var(--ask-accent)}
+  /* Source line: where a quote or figure came from, pinned to the foot. */
+  .source{
+    position:absolute; left:6vw; right:16vw; bottom:3.5vh;
+    font-family:var(--ui-font);
+    font-size:calc(var(--fs-label) * var(--scale)); line-height:1.4; color:var(--ink-soft);
+  }
+  .slide.ask .source{color:var(--ask-ink-soft)}
+
+  #notes{
+    position:fixed; left:0; right:0; bottom:0;
+    background:var(--overlay-bg); color:var(--overlay-ink);
+    font-family:var(--ui-font);
+    font-size:15px; line-height:1.5; padding:16px 24px;
+    max-height:34vh; overflow:auto; display:none; border-top:2px solid var(--accent-light);
+  }
+  #notes.on{display:block}
+  #notes b{color:var(--ask-accent)}
+  /* Keyboard help. Shown for a few seconds on load and whenever ? is pressed,
+     then gets out of the way -- it must never sit on top of the slide. */
+  #help{
+    position:fixed; top:12px; right:16px; z-index:26;
+    font-family:var(--ui-font); font-size:13px; line-height:1.4; letter-spacing:.02em;
+    background:var(--overlay-bg); color:var(--overlay-ink);
+    padding:8px 14px; border-radius:8px; max-width:calc(100vw - 32px);
+    opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s;
+  }
+  #help.on{opacity:1; visibility:visible}
+  #help kbd{font-family:inherit; font-weight:700}
+
+  /* ==================== layouts ====================
+     A slide is either legacy freeform markup (layout "blank") or a set of
+     regions the renderer fills. Regions are sized in vh/vw so they track the
+     text scale, and every colour comes from the theme tokens above. */
+
+  /* Laid-out slides anchor their heading to the same top margin, so it never
+     hops between slides; content flows down from it. Statement slides (title,
+     title-only, section) and anything marked `center` stay vertically centred
+     -- for those, the middle of the screen *is* the consistent place. */
+  .slide.lay{padding:8vh 6vw 9vh; justify-content:flex-start; gap:3vh}
+  .slide.lay[data-layout="title"],
+  .slide.lay[data-layout="title-only"],
+  .slide.lay[data-layout="section"],
+  .slide.lay.center{justify-content:center; justify-content:safe center}
+  /* The corner tag is absolutely positioned, so slides that have one need the
+     top of the content area pushed clear of it. Full-bleed slides are exempt —
+     there the tag deliberately floats over the image. */
+  .slide.has-tag:not(.bleed){padding-top:10vh}
+  .slide.has-source:not(.bleed){padding-bottom:11vh}
+  .region{min-width:0; min-height:0}          /* let flex children shrink */
+  .stack{display:flex; flex-direction:column; justify-content:flex-start; min-width:0; min-height:0}
+  /* A stack containing media grows to fill the slide so the media has a
+     definite height to be measured against. */
+  .stack.has-media{flex:1 1 auto}
+  .stack > * + *{margin-top:1.6vh}
+  /* Prose and lists, quotes and callouts are different kinds of thing; give
+     the boundary between them more air than the space inside each. */
+  .stack > .body + ul, .stack > .body + .pull, .stack > ul + .pull,
+  .stack > * + .callout{margin-top:3vh}
+
+  /* two-column frame shared by split/two-content/comparison */
+  .cols{
+    display:flex; gap:5vw; width:100%;
+    /* Columns stretch so a media column has a definite height to fit against;
+       text columns centre their own content, so this reads the same. */
+    align-items:stretch;
+    flex:1 1 auto; min-height:0;
+  }
+  .cols > *{min-height:0}
+  .cols.top{align-items:flex-start}
+  /* Text-only columns take their content's height, so whatever follows
+     (a callout) sits right under them instead of at the foot of the slide.
+     Columns holding media still stretch: the media needs a height to fit. */
+  .cols:not(:has(.figure)){flex:0 1 auto}
+  /* Top-aligned columns still need media to stretch, or there is no height. */
+  .cols.top > .figure, .cols.top > .region.stack:has(.figure){align-self:stretch}
+  .cols > .region{flex:1 1 0}
+  .cols.wide-media > .media-region{flex:1.25 1 0}
+  .cols.wide-text  > .text-region{flex:1.25 1 0}
+
+  /* headings inside laid-out slides sit tighter than the freeform ones */
+  .slide.lay h2{margin-bottom:2.2vh}
+  .slide.lay h3{margin-bottom:1.4vh}
+  .slide.lay p{margin-bottom:0}
+  .slide.lay .stack ul{margin-top:.6vh}
+  .slide.lay li{margin-bottom:1.8vh}
+  /* Title-content slides should use the full readable width of the slide
+     rather than the narrower default prose measure. Leave a right margin that
+     matches the slide's left gutter so the text block still feels framed. */
+  .slide.lay[data-layout="title-content"] .text-region{width:100%}
+  .slide.lay[data-layout="title-content"] .text-region .subhead,
+  .slide.lay[data-layout="title-content"] .text-region p,
+  .slide.lay[data-layout="title-content"] .text-region ul,
+  .slide.lay[data-layout="title-content"] .text-region .pull,
+  .slide.lay[data-layout="title-content"] .text-region .body{
+    max-width:calc(100% - 6vw);
+  }
+  /* Inside a column the column *is* the measure. A character cap on top of
+     it is what squeezed text into half a column with the rest left empty. */
+  .cols p,.cols ul,.cols ol,.cols .pull,.cols .subhead,.cols .body,
+  .cols h2,.slide.ask .cols h2{max-width:none}
+  /* A heading block before the content keeps its natural height. */
+  .slide.lay > .text-region:first-child:not(:only-child){flex:0 0 auto}
+  .slide.lay > .text-region h2:last-child{margin-bottom:0}
+
+  .subhead{
+    font-size:calc(2.6vh * var(--scale)); line-height:1.35;
+    color:var(--ink-soft); max-width:40ch;
+  }
+  .slide.ask .subhead{color:var(--ask-ink-soft)}
+  /* A column that opens with a subheading is labelled by it: give it the
+     weight of a label, not the grey of a footnote. */
+  .cols > .text-region > .subhead:first-child,
+  .cols > .region > h3:first-child{
+    font-family:var(--ui-font); font-weight:700; letter-spacing:.02em;
+    font-size:calc(2.5vh * var(--scale)); color:var(--accent);
+    padding-bottom:1.2vh; border-bottom:1px solid var(--rule); margin-bottom:.6vh;
+  }
+  .slide.ask .cols > .text-region > .subhead:first-child,
+  .slide.ask .cols > .region > h3:first-child{color:var(--ask-accent); border-color:rgba(255,255,255,.16)}
+
+  /* ---- media boxes (image or iframe) ---- */
+  .media-box{
+    position:relative; width:100%;
+    background:rgba(0,0,0,.05); border-radius:.6vh; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .slide.ask .media-box{background:rgba(255,255,255,.06)}
+  /* A ratio-locked box is measured against the space actually available and
+     sized in JS (see fitMedia). Sizing from width alone -- the padding-bottom
+     trick -- makes a 16:9 box taller than the slide on a wide screen, which is
+     what produced scrollbars. */
+  .media-box.fill{width:100%; height:100%}
+  .media-box > img, .media-box > iframe{width:100%; height:100%; display:block}
+  .media-box img{object-fit:contain}
+  .media-box img.cover{object-fit:cover}
+  .media-box iframe{border:0; background:#000}
+
+  /* The slot is the measurable area a ratio-locked box gets to fill. */
+  .fitslot{
+    flex:1 1 auto; min-height:0; min-width:0; width:100%;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .figure{display:flex; flex-direction:column; min-width:0; min-height:0; flex:1 1 auto}
+  .caption{
+    font-family:var(--ui-font);
+    font-size:calc(1.9vh * var(--scale)); line-height:1.4;
+    color:var(--ink-soft); margin-top:1.4vh; max-width:60ch;
+  }
+  .slide.ask .caption{color:var(--ask-ink-soft)}
+  .caption b{color:var(--ink); font-weight:600}
+  .slide.ask .caption b{color:var(--ask-ink)}
+
+  /* ---- full-bleed ---- */
+  .slide.bleed{padding:0}
+  .slide.bleed .media-box{
+    position:absolute; inset:0; width:100%; height:100%;
+    border-radius:0; background:#000;
+  }
+  .slide.bleed .media-box img{object-fit:cover}
+  /* The scrim is what makes text over a photograph readable; it is darkest
+     exactly where the text sits. `bottom` suits wide shots, `left` suits a
+     subject on the right, `none` is for images already dark enough. */
+  .slide.bleed .overlay{
+    position:absolute; left:0; right:0; bottom:0; z-index:2;
+    padding:8vh 7vw 7vh;
+    background:linear-gradient(to top, rgba(0,0,0,.85), rgba(0,0,0,.55) 55%, rgba(0,0,0,0));
+    color:#fff;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  .slide.bleed .overlay.scrim-left{
+    top:0; right:auto; width:64%;
+    padding:8vh 6vw 9vh 7vw;
+    background:linear-gradient(to right, rgba(0,0,0,.85) 0%, rgba(0,0,0,.7) 55%, rgba(0,0,0,0) 100%);
+  }
+  .slide.bleed .overlay.scrim-none{background:none; text-shadow:0 .2vh 1.6vh rgba(0,0,0,.85)}
+  .slide.bleed .overlay h1{color:#fff; max-width:20ch}
+  .slide.bleed .overlay h2{color:#fff; max-width:22ch}
+  .slide.bleed .overlay p,.slide.bleed .overlay .body{color:rgba(255,255,255,.92); max-width:46ch; margin-top:2vh}
+  .slide.bleed .overlay .eyebrow{color:#fff}
+  .slide.bleed .num,.slide.bleed .tag,.slide.bleed .source{
+    color:#fff; z-index:3; text-shadow:0 .1vh .8vh rgba(0,0,0,.9);
+  }
+
+  /* ---- cards: two to four parallel ideas, side by side ---- */
+  /* Cards share one height (the tallest), grow to use the slide, but stop
+     well short of the foot so a short card isn't mostly empty box. */
+  .cards{
+    display:grid; grid-template-columns:repeat(var(--n, 3), minmax(0, 1fr));
+    gap:2.4vw; width:100%; max-width:none; flex:1 1 auto; min-height:0;
+    max-height:52vh; grid-auto-rows:1fr;
+  }
+  .cards > li.card{
+    display:flex; flex-direction:column; gap:1.4vh; min-height:0; min-width:0;
+    margin:0; padding:3.4vh 2vw 3vh; position:static;
+    background:var(--card-bg); color:var(--ink);
+    border:1px solid var(--rule); border-top:.7vh solid var(--accent);
+    border-radius:1.4vh; font-size:inherit;
+  }
+  .cards > li.card:before{display:none}
+  .card-n{
+    font-family:var(--display-font); color:var(--accent);
+    font-size:calc(5.4vh * var(--scale)); line-height:1;
+  }
+  .card h3{
+    font-family:var(--display-font); color:var(--ink); font-weight:600;
+    font-size:calc(3.6vh * var(--scale)); line-height:1.2; margin:0;
+  }
+  .card .body{font-size:calc(var(--fs-body) * var(--scale)); line-height:1.45}
+  .card-src{
+    margin-top:auto; padding-top:1.4vh;
+    font-family:var(--ui-font); font-weight:700; letter-spacing:.03em;
+    font-size:calc(var(--fs-label) * var(--scale)); line-height:1.4; color:var(--accent);
+  }
+  .card-img{
+    display:block; width:100%; aspect-ratio:16/9; object-fit:cover;
+    border-radius:.8vh; margin-bottom:.6vh;
+  }
+  .slide.ask .cards > li.card{
+    background:rgba(255,255,255,.05); color:var(--ask-ink);
+    border-color:rgba(255,255,255,.16); border-top-color:var(--ask-accent);
+  }
+  .slide.ask .card h3{color:var(--ask-heading)}
+  .slide.ask .card-n,.slide.ask .card-src{color:var(--ask-accent)}
+  .cards.n4 .card h3{font-size:calc(3vh * var(--scale))}
+  .cards.n4 .card .body{font-size:calc(2.5vh * var(--scale))}
+
+  /* ---- quote layout: the quote, and what to do with it ---- */
+  .quote-cols{gap:4vw}
+  .quote-cols > .pull{flex:3 1 0; max-width:none; align-self:flex-start}
+  .quote-cols > .side-panel{
+    flex:2 1 0; align-self:flex-start;
+    display:flex; flex-direction:column; gap:1.8vh;
+    background:var(--story-bg); border-radius:1.4vh; padding:4vh 2.6vw;
+  }
+  .slide.story .quote-cols > .side-panel{background:var(--card-bg)}
+  .slide.ask .quote-cols > .side-panel{background:rgba(255,255,255,.06)}
+  .side-panel h3{margin:0; font-family:var(--ui-font); font-weight:700; font-size:calc(2.4vh * var(--scale)); letter-spacing:.02em}
+  .side-panel ul{margin:0}
+  .side-panel li{font-size:calc(2.6vh * var(--scale)); margin-bottom:1.4vh}
+  .side-panel li:before{top:calc(1.2vh * var(--scale))}
+
+  /* ---- grid ---- */
+  .grid{
+    display:grid; gap:2.4vh 2.2vw; width:100%; flex:1 1 auto; min-height:0;
+    align-content:stretch; grid-auto-rows:1fr;
+  }
+  .grid.n2{grid-template-columns:repeat(2,1fr)}
+  .grid.n3{grid-template-columns:repeat(3,1fr)}
+  .grid.n4{grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(2,1fr)}
+  .grid .figure{min-height:0}
+  .grid .caption{
+    font-size:calc(1.6vh * var(--scale)); margin-top:.9vh; text-align:center;
+  }
+  .grid .media-box{background:rgba(0,0,0,.06)}
+
+  /* ---- quad chart ---- */
+  .quad-chart{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    grid-template-rows:repeat(2, minmax(0, 1fr));
+    gap:2.6vh 2.2vw;
+    width:100%;
+    flex:1 1 auto;
+    min-height:0;
+  }
+  .quad-card{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+    padding:2.6vh 2.1vw;
+    border:1px solid var(--rule);
+    border-radius:1.1vh;
+    background:rgba(255,255,255,.4);
+  }
+  .slide.ask .quad-card{
+    background:rgba(255,255,255,.04);
+    border-color:rgba(255,255,255,.12);
+  }
+  .quad-card .caption{max-width:none}
+  .quad-card > .figure{margin-top:1.6vh}
+  .quad-card > .text-region{flex:1 1 auto; justify-content:flex-start}
+  .quad-card > .text-region h2{font-size:calc(3vh * var(--scale)); margin-bottom:0}
+  .quad-card > .text-region .subhead{font-size:calc(2.2vh * var(--scale)); max-width:none}
+  .quad-card > .text-region p{font-size:calc(2.2vh * var(--scale)); max-width:none}
+  .quad-card > .text-region ul{max-width:none}
+  .quad-card > .text-region li{
+    font-size:calc(2.25vh * var(--scale));
+    margin-bottom:1.25vh;
+    padding-left:calc(3.2vh * var(--scale));
+  }
+  .quad-card > .text-region li:before{
+    top:calc(1.05vh * var(--scale));
+    width:calc(1.2vh * var(--scale));
+    height:calc(1.2vh * var(--scale));
+  }
+
+  /* ---- section header ---- */
+  .slide.section-head{justify-content:center}
+  .slide.section-head .rule{
+    width:12vw; height:.5vh; background:var(--accent-light);
+    margin:2.6vh 0 3vh; border-radius:1px;
+  }
+  .slide.section-head.center .rule{margin-left:auto; margin-right:auto}
+
+  /* ---- external-embed fallback ---- */
+  .embed-fallback{
+    position:absolute; inset:0; z-index:2;
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:1.8vh; padding:4vh 4vw; text-align:center;
+    background:var(--paper); color:var(--ink);
+  }
+  .embed-fallback.on{display:flex}
+  .embed-fallback .ef-title{
+    font-family:var(--ui-font); font-weight:600;
+    font-size:calc(2.2vh * var(--scale)); color:var(--ink);
+  }
+  .embed-fallback .ef-url{
+    font-family:var(--ui-font); font-size:calc(1.7vh * var(--scale));
+    color:var(--accent); word-break:break-all; max-width:52ch; line-height:1.4;
+  }
+  .embed-fallback img{width:auto; height:22vh; max-width:40%; object-fit:contain; background:#fff; padding:1vh; border-radius:.5vh}
+  .embed-fallback .ef-hint{
+    font-family:var(--ui-font); font-size:calc(1.5vh * var(--scale));
+    color:var(--ink-soft); letter-spacing:.04em;
+  }
+
+  /* Blank-screen overlay, toggled from the remote or with B */
+  #blank{
+    position:fixed; inset:0; background:var(--blank-bg); z-index:20; display:none;
+  }
+  #blank.on{display:block}
+
+  /* Presenter-written live notes, optional on the projector. */
+  #livenotes{
+    position:fixed;
+    right:2.4vw;
+    bottom:5.5vh;
+    width:min(31vw, 520px);
+    min-width:360px;
+    max-height:36vh;
+    z-index:24;
+    display:none;
+    flex-direction:column;
+    background:rgba(20,18,16,.90);
+    color:#efe7db;
+    border:1px solid rgba(192,168,120,.35);
+    border-radius:14px;
+    box-shadow:0 14px 40px rgba(0,0,0,.28);
+    backdrop-filter:blur(10px);
+    overflow:hidden;
+  }
+  #livenotes.on{display:flex}
+  #livenotes .ln-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 16px 10px; border-bottom:1px solid rgba(192,168,120,.22);
+    font-family:var(--ui-font);
+  }
+  #livenotes .ln-title{
+    font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:#d0b07c; font-weight:700;
+  }
+  #livenotes .ln-state{font-size:11px; color:#bfb5a6}
+  #livenotes .ln-tag{
+    display:inline-block; padding:2px 8px; border-radius:999px;
+    background:rgba(111,163,184,.18); color:#cfe0e7;
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    font-family:var(--ui-font);
+  }
+  #livenotes .ln-body{
+    padding:14px 16px 16px; overflow:auto; font-family:var(--ui-font);
+  }
+  #livenotes .ln-body p{
+    font-size:18px; line-height:1.45; color:#efe7db; max-width:none; margin:0 0 10px;
+  }
+  #livenotes .ln-text{
+    font-size:18px; line-height:1.45; color:#efe7db;
+    white-space:pre-wrap; word-break:break-word;
+  }
+  #livenotes .ln-empty{color:#bfb5a6; font-style:italic}
+
+  /* Live-connection dot, only shown when served by the lesson server */
+  #live{
+    position:fixed; top:12px; left:16px; z-index:6;
+    font-family:var(--ui-font);
+    font-size:11px; letter-spacing:.08em; color:var(--chrome-ink); display:none; align-items:center; gap:6px;
+  }
+  #live.show{display:flex}
+  #live i{width:7px; height:7px; border-radius:50%; background:#c0642f; display:block}
+  #live.ok i{background:#5f8a4e}
+
+  /* Brief confirmation of the new text size, so you can tell it registered
+     from across the room. Fades itself out. */
+  #scaletoast{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:var(--overlay-bg); color:var(--overlay-ink); z-index:25;
+    font-family:var(--ui-font);
+    padding:18px 30px; border-radius:10px; text-align:center;
+    opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  #scaletoast.on{opacity:1}
+  #scaletoast b{display:block; font-size:34px; font-weight:600; letter-spacing:.01em}
+  #scaletoast span{
+    display:block; font-size:10.5px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--ask-accent); margin-top:5px;
+  }
+
+  /* Deck switcher overlay, toggled with D */
+  #deckpicker{
+    position:fixed; inset:0; z-index:35;
+    display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.68);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+  }
+  #deckpicker.on{display:flex}
+  .dp-card{
+    background:rgba(20,18,16,.96);
+    color:var(--overlay-ink,#e6e0d4);
+    border:1px solid rgba(192,168,120,.35);
+    border-radius:14px;
+    box-shadow:0 18px 50px rgba(0,0,0,.5);
+    width:min(90vw, 560px);
+    max-height:80vh;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    font-family:var(--ui-font);
+    animation:dp-fade .15s ease-out;
+  }
+  @keyframes dp-fade{
+    from{opacity:0; transform:scale(.97)}
+    to{opacity:1; transform:scale(1)}
+  }
+  .dp-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    padding:16px 20px 14px;
+    border-bottom:1px solid rgba(192,168,120,.2);
+  }
+  .dp-title{
+    font-family:var(--ui-font); margin:0; line-height:1.3;
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent-light,#b8955a); font-weight:700;
+  }
+  .dp-hint{
+    font-size:11.5px; color:var(--chrome-ink,#9a9186); letter-spacing:.02em;
+  }
+  .dp-list{
+    padding:10px 12px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .dp-item{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 14px; border-radius:8px;
+    background:transparent; border:1px solid transparent;
+    cursor:pointer; text-align:left; color:inherit;
+    transition:background .1s ease, border-color .1s ease;
+  }
+  .dp-item:hover, .dp-item.focused{
+    background:rgba(255,255,255,.07);
+    border-color:rgba(192,168,120,.4);
+  }
+  .dp-item.active{
+    border-color:var(--accent,#7a5c2e);
+    background:rgba(192,168,120,.12);
+  }
+  .dp-key{
+    font-size:11px; font-weight:700; color:var(--accent-light,#b8955a);
+    background:rgba(0,0,0,.3); border:1px solid rgba(192,168,120,.3);
+    border-radius:4px; padding:2px 7px; min-width:22px; text-align:center;
+    flex:none; font-variant-numeric:tabular-nums;
+  }
+  .dp-info{flex:1; min-width:0}
+  .dp-name{
+    font-size:15px; font-weight:600; line-height:1.3;
+    color:#f4eee3; display:flex; align-items:center; gap:8px;
+  }
+  .dp-badge{
+    font-size:9.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    padding:2px 6px; border-radius:3px;
+    background:var(--ask-bg,#2f3a3f); color:var(--ask-accent,#b8955a);
+  }
+  .dp-desc{
+    font-size:12px; color:var(--chrome-ink,#9a9186); margin-top:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .dp-count{
+    font-size:12px; color:var(--chrome-ink,#9a9186);
+    letter-spacing:.04em; flex:none; font-variant-numeric:tabular-nums;
+  }
+
+  @media print{
+    body{background:#fff; overflow:visible}
+    #stage{position:static}
+    .slide{display:flex !important; page-break-after:always; height:100vh; animation:none}
+    #notes,#help,#live,#blank,#scaletoast,#livenotes,#deckpicker{display:none}
+  }

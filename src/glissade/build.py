@@ -44,11 +44,17 @@ def build_deck(
     out_dir: Path,
     themes: list[dict[str, Any]] | None = None,
 ) -> BuildResult:
+    from .project import DEFAULT_THEMES
+    from .themes import for_deck
+
     slides, warnings = prepared_slides(deck)
+    shared = themes if themes is not None else load_themes()
     html = render_deck(
         slides,
         live=False,
-        themes=themes if themes is not None else load_themes(),
+        # A deck's own inline theme rides along with the shared ones, so the
+        # offline file opens in it and can still switch.
+        themes=for_deck(shared, deck, DEFAULT_THEMES),
         title=deck["title"],
         deck_theme=deck.get("theme", ""),
     )

@@ -64,13 +64,19 @@ A deck can declare the release it needs:
 
 ```jsonc
 {
-  "glissade": ">=0.6",
+  "glissade": ">=2026.11.1",
   "title": "My talk",
   "slides": [ ... ]
 }
 ```
 
-Ranges work too (`">=0.6,<1.0"`), and a bare `"0.6"` means *at least* 0.6.
+Ranges work too (`">=2026.11.1,<2027"`), and a bare `"2026.11.1"` means *at
+least* that release.
+
+Releases are numbered by date: `year.month.day.release`, so `2026.11.1.0` is
+the first release on 1 November 2026 and `2026.11.1.1` the second that day.
+Releases before the switch were numbered `0.x` (the last was `0.15.0`); every
+calendar release counts as newer, so a deck that says `">=0.15"` keeps working.
 
 Older releases don't fail silently on it. `glissade check` treats an unmet
 requirement as an error, and `start` and `build` print a warning but still run
@@ -122,7 +128,7 @@ A deck records the format it was written against:
 Absent means 1. It exists so a future release can migrate a file rather than
 guess at its age. `init` writes it, and `check --fix` adds it to older decks.
 
-Distinct from `"glissade": ">=0.6"`, which is a *requirement* — what the deck
+Distinct from `"glissade": ">=2026.11.1"`, which is a *requirement* — what the deck
 needs from the tool, rather than what the tool should assume about the deck.
 
 ### Upgrading a project
@@ -240,11 +246,19 @@ playwright install chromium
 | Address | Open it on |
 | --- | --- |
 | `http://<your-ip>:8000/` | the machine driving the projector — press **F** for fullscreen |
-| `http://<your-ip>:8000/control` | your phone (scan the QR) |
+| `http://<your-ip>:8000/control?k=<key>` | your phone (scan the QR) |
 
 Both devices need to be on the same Wi-Fi. The server holds the slide
 position, so whoever advances — phone or laptop — everyone follows, and a
 device that reconnects lands on the right slide.
+
+The `k=` part is a random **control key**, new each time you start. Venue Wi-Fi
+is shared, so without it anyone in the room who found the port could change
+your slides. Only devices opened from the printed links or the QR code can
+send commands; the laptop running Glissade never needs the key. Anyone can
+still *view* the deck. Put `key = "something"` in `glissade.toml` to keep the
+same key across restarts (useful for a bookmarked remote), or pass `--no-key`
+to turn the check off.
 
 The remote also has a **Live notes** editor for capturing feedback or action
 items during the meeting. Those notes autosave per slide and can optionally be
@@ -430,8 +444,43 @@ can also set every token by hand in `vars` (`--paper`, `--ink`, `--ink-soft`,
 `--accent`, `--accent-light`, `--ask-bg`, `--callout-bg`, `--display-font`,
 `--body-font`, …); missing ones fall back to the Paper defaults.
 
+A theme can also build on another with `"extends": "<id>"`, starting from
+that theme's tokens and changing only what it says. In a project's
+`themes.json` it may extend another entry in the file or any built-in theme.
+
 `glissade check` reports any text/background pair in your themes that falls
-below WCAG AA (4.5:1). Every built-in theme passes.
+below WCAG AA (4.5:1), and any `extends` it can't resolve. Every built-in
+theme passes.
+
+### A theme inside the deck
+
+A deck can carry its own look instead of naming one. Give `theme` an object
+rather than an id. It takes the same `palette`, `vars`, `fonts` and `extends`
+as a `themes.json` entry:
+
+```jsonc
+{
+  "title": "Q3 Review",
+  "theme": {
+    "extends": "paper",                  // optional: start from any theme
+    "name": "Q3 Review",                 // picker label; defaults to the deck title
+    "palette": { "dark": "#1b2a41", "light": "#f7f4ee", "accent": "#c8553d" },
+    "vars": { "--card-bg": "#ffffff" },  // fine-tuning; wins over the palette
+    "fonts": [{ "family": "Inter", "src": "fonts/Inter.woff2" }]
+  },
+  "slides": [ ... ]
+}
+```
+
+Layers apply in order: the theme it extends, then `palette`, then `vars`.
+Font paths resolve beside the deck file, like images. The deck opens in this
+theme, and both the build and the server embed it, so the look travels with
+the single JSON file. On the remote and with <kbd>T</kbd> it appears as
+"Q3 Review (this deck)" next to the shared themes, and only while that deck is
+open. The presenter can still switch away, for example when a projector
+washes out dark text. `glissade themes` lists deck themes as `deck:<deck id>`,
+and `glissade shoot --theme deck:<deck id>` uses one explicitly. `check` gives
+deck themes the same contrast, font and `extends` checks as `themes.json`.
 
 ## If the network is down
 
@@ -481,7 +530,9 @@ uv run --python .venv/bin/python python -m playwright install chromium
 uv run --python .venv/bin/python pytest -m e2e tests/e2e -q
 ```
 
-`src/glissade/` is the package; `templates/` holds the deck and remote HTML;
+`src/glissade/` is the package; `templates/` holds the deck (`deck.html`, with
+its `deck.css` and `deck.js` inlined at render time so output stays one file)
+and the remote (`control.html`);
 `data/` holds the themes, JSON schema, `init` scaffold and demo decks — all
 shipped inside the wheel so the tool works from any directory.
 
@@ -492,3 +543,18 @@ and verify live navigation, live notes, and watch-mode reloads.
 ```bash
 uv build                   # sdist + universal wheel into dist/
 ```
+
+### Releasing
+
+Versions are `year.month.day.release`, unpadded, with `release` counting from
+0 within a day: the first release on 3 January 2027 is `2027.1.3.0`, a second
+that day `2027.1.3.1`. To cut one:
+
+1. Set `__version__` in `src/glissade/__init__.py` (the only place the package
+   version is written; `pyproject.toml` reads it from there).
+2. Set `x-glissade-version` in `src/glissade/data/schema.json` to match.
+3. Update the version shown on the website (`website/index.html`, `website/app.js`).
+4. Move the changelog's notes under a heading for the new version.
+5. Run `pytest`. `tests/test_version.py` fails on a padded or malformed
+   version, or a schema stamp that doesn't match.
+6. Tag the release `v<version>` (e.g. `v2027.1.3.0`), then `uv build` and publish.

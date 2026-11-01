@@ -169,17 +169,26 @@ def expand_palette(palette: dict[str, Any]) -> dict[str, str]:
     return out
 
 
-def expand_theme(theme: dict[str, Any], base: Path | None = None) -> dict[str, Any]:
-    """Return a copy of a theme with its palette expanded and fonts resolved."""
+def expand_theme(
+    theme: dict[str, Any],
+    base: Path | None = None,
+    parent: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return a copy of a theme with its palette expanded and fonts resolved.
+
+    Layers, each winning over the one before: the `parent` theme it extends
+    (already expanded), then its own `palette`, then its own `vars`. Font
+    files resolve against `base`, and a parent's fonts are kept.
+    """
     t = dict(theme)
-    variables: dict[str, str] = {}
+    variables: dict[str, str] = dict((parent or {}).get("vars") or {})
     if isinstance(t.get("palette"), dict):
         variables.update(expand_palette(t["palette"]))
     if isinstance(t.get("vars"), dict):
         variables.update(t["vars"])
     t["vars"] = variables
 
-    fonts = []
+    fonts = [dict(f) for f in (parent or {}).get("fonts") or []]
     for spec in t.get("fonts") or []:
         if not isinstance(spec, dict) or not spec.get("family") or not spec.get("src"):
             continue
@@ -220,25 +229,127 @@ def contrast_issues(theme: dict[str, Any]) -> list[str]:
 # ------------------------------------------------------------------- load
 
 
-def load(source: Path) -> list[dict[str, Any]]:
-    """Read and expand every valid theme in a themes.json file."""
+def _usable(t: Any) -> bool:
+    """A theme entry worth expanding: it has an id and says something."""
+    return isinstance(t, dict) and bool(t.get("id")) and (
+        isinstance(t.get("vars"), dict)
+        or isinstance(t.get("palette"), dict)
+        or isinstance(t.get("extends"), str)
+    )
+
+
+def load(source: Path, builtin: Path | None = None) -> list[dict[str, Any]]:
+    """Read and expand every valid theme in a themes.json file.
+
+    A theme may `extends` another by id: one earlier or later in the same
+    file, or — for a project's own themes.json — one of the built-in themes
+    in `builtin`. An extends that can't be resolved (unknown, or a loop) is
+    dropped and recorded under `_extends_error` for `check` to report.
+    """
     with source.open(encoding="utf-8") as fh:
         themes = json.load(fh)
-    out = []
-    for t in themes if isinstance(themes, list) else []:
-        if not isinstance(t, dict) or not t.get("id"):
-            continue
-        if not isinstance(t.get("vars"), dict) and not isinstance(t.get("palette"), dict):
-            continue
-        out.append(expand_theme(t, source.parent))
+    raw = [t for t in (themes if isinstance(themes, list) else []) if _usable(t)]
+    by_id = {t["id"]: t for t in raw}
+    done: dict[str, dict[str, Any]] = {}
+    shipped: list[dict[str, Any]] | None = None
+
+    def outside(name: str) -> dict[str, Any] | None:
+        nonlocal shipped
+        if builtin is None or builtin.resolve() == source.resolve():
+            return None
+        if shipped is None:
+            try:
+                shipped = load(builtin)
+            except (OSError, ValueError):
+                shipped = []
+        return next((t for t in shipped if t["id"] == name), None)
+
+    def expand(t: dict[str, Any], chain: tuple[str, ...]) -> dict[str, Any]:
+        if t["id"] in done:
+            return done[t["id"]]
+        parent, error = None, ""
+        name = t.get("extends")
+        if isinstance(name, str) and name:
+            if name in chain or name == t["id"]:
+                error = f"extends {name!r}, which leads back to itself"
+            elif name in by_id:
+                parent = expand(by_id[name], (*chain, t["id"]))
+            else:
+                parent = outside(name)
+                if parent is None:
+                    error = f"extends {name!r}, which isn't a theme"
+        out = expand_theme(t, source.parent, parent)
+        if error:
+            out["_extends_error"] = error
+        done[t["id"]] = out
+        return out
+
+    return [expand(t, ()) for t in raw]
+
+
+# ------------------------------------------------------------- deck themes
+
+DECK_THEME_PREFIX = "deck:"
+DECK_THEME_KEYS = ("name", "description", "extends", "palette", "vars", "fonts")
+
+
+def deck_theme_id(deck_id: str) -> str:
+    return f"{DECK_THEME_PREFIX}{deck_id}"
+
+
+def deck_theme(
+    deck: dict[str, Any],
+    available: list[dict[str, Any]],
+    builtin: Path | None = None,
+) -> dict[str, Any] | None:
+    """The theme a deck defines inline (`"theme": {...}`), expanded.
+
+    It extends a theme from `available` (the project's), falling back to the
+    built-in themes, so `"extends": "paper"` works even in a project whose
+    own themes.json doesn't have it. Font paths resolve beside the deck file.
+    """
+    spec = deck.get("theme_spec")
+    if not isinstance(spec, dict):
+        return None
+    t = {k: spec[k] for k in DECK_THEME_KEYS if k in spec}
+    t["id"] = deck_theme_id(deck["id"])
+    parent, error = None, ""
+    name = spec.get("extends")
+    if isinstance(name, str) and name:
+        parent = next((x for x in available if x["id"] == name), None)
+        if parent is None and builtin is not None:
+            try:
+                parent = next((x for x in load(builtin) if x["id"] == name), None)
+            except (OSError, ValueError):
+                parent = None
+        if parent is None:
+            error = f"extends {name!r}, which isn't a theme"
+    elif name is not None:
+        error = "extends must be a theme id"
+    base = Path(deck["path"]).resolve().parent if deck.get("path") else None
+    out = expand_theme(t, base, parent)
+    # The picker shows it beside the shared themes, so say whose it is.
+    out["name"] = f"{spec.get('name') or deck.get('title') or deck['id']} (this deck)"
+    if error:
+        out["_extends_error"] = error
     return out
+
+
+def for_deck(
+    themes: list[dict[str, Any]],
+    deck: dict[str, Any] | None,
+    builtin: Path | None = None,
+) -> list[dict[str, Any]]:
+    """The themes on offer while `deck` is open: its own first, if it has one."""
+    own = deck_theme(deck, themes, builtin) if deck else None
+    return [own, *themes] if own else list(themes)
 
 
 def public(themes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Themes as sent to browsers: no local file paths."""
     clean = []
     for t in themes:
-        c = {k: v for k, v in t.items() if k not in ("fonts", "_palette")}
+        c = {k: v for k, v in t.items() if k != "fonts" and not k.startswith("_")}
         if t.get("fonts"):
             c["fonts"] = [f.get("family") for f in t["fonts"]]
         clean.append(c)

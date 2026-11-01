@@ -119,11 +119,16 @@ def latest_version(timeout: float = 10.0) -> tuple[str | None, str]:
 def parse_version(text: str) -> tuple:
     """Compare releases without pulling in a dependency.
 
-    Only the numeric release segment is compared; a pre-release suffix sorts
-    below the same numbers, which is enough to answer "is there something
-    newer" for a tool versioned like this one.
+    Every numeric part counts, however many there are: releases are numbered
+    year.month.day.release (2026.11.1.0), and two releases on one day differ
+    only in the fourth. Trailing zeros are dropped, as PEP 440 does, so
+    "0.15" equals "0.15.0" and "2026.11.1" equals "2026.11.1.0". A leading
+    "v" (as on git tags) is ignored. A pre-release suffix sorts below the same
+    numbers, which is enough to answer "is there something newer".
     """
     head = text.strip()
+    if head[:1] in ("v", "V"):
+        head = head[1:]
     for sep in ("+", "-"):
         head = head.split(sep, 1)[0]
     numbers: list[int] = []
@@ -139,16 +144,16 @@ def parse_version(text: str) -> tuple:
         numbers.append(int(digits) if digits else 0)
         if tail:
             break
-    while len(numbers) < 3:
-        numbers.append(0)
-    return (tuple(numbers[:3]), 0 if tail else 1)
+    while len(numbers) > 1 and numbers[-1] == 0:
+        numbers.pop()
+    return (tuple(numbers), 0 if tail else 1)
 
 
 def is_newer(candidate: str, current: str) -> bool:
     return parse_version(candidate) > parse_version(current)
 
 
-# A deck may declare the version it needs, e.g. ">=0.6" or ">=0.6,<1.0".
+# A deck may declare the version it needs, e.g. ">=2026.11.1" or ">=0.6,<1.0".
 # Parsed here rather than pulling in packaging(), because the whole point of
 # the dependency list is that installing Glissade can never fail.
 _OPERATORS = ("<=", ">=", "==", "!=", "<", ">")
