@@ -16,12 +16,14 @@
       "--ask-ink": "#e8e2d6",
       "--ask-ink-soft": "#c3cbcd",
       "--ask-heading": "#ffffff",
-      "--ask-accent": "#b8955a",
+      "--ask-accent": "#c4a265",
       "--overlay-bg": "rgba(20,18,16,.95)",
       "--overlay-ink": "#e6e0d4",
       "--chrome-ink": "#9a9186",
       "--blank-bg": "#14120f",
       "--deck-font": "Georgia, 'Iowan Old Style', 'Times New Roman', serif",
+      "--display-font": "Georgia, 'Iowan Old Style', 'Times New Roman', serif",
+      "--body-font": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
       "--ui-font": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
       "--heading-weight": "400",
       "--heading-tracking": "-0.01em"
@@ -58,6 +60,8 @@
       "--chrome-ink": "#8c9aa6",
       "--blank-bg": "#001a2f",
       "--deck-font": "Roboto Slab, Georgia, 'Times New Roman', serif",
+      "--display-font": "'Roboto Slab', Georgia, 'Times New Roman', serif",
+      "--body-font": "Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
       "--ui-font": "Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
       "--heading-weight": "500",
       "--heading-tracking": "-0.005em"
@@ -96,9 +100,28 @@
       "--chrome-ink": "#a7a7a7",
       "--blank-bg": "#000000",
       "--deck-font": "Work Sans, Open Sans, Georgia, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+      "--display-font": "'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+      "--body-font": "'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
       "--ui-font": "Oswald, Work Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
       "--heading-weight": "600",
       "--heading-tracking": "-0.015em"
+    }
+  },
+  {
+    "id": "parchment",
+    "name": "Parchment",
+    "description": "Warm parchment, deep umber and burnt orange, with a serif heading over a clean sans body. Built from a palette shorthand.",
+    "palette": {
+      "dark": "#2b2118",
+      "light": "#f7f1e6",
+      "accent": "#9a4e1f",
+      "accent2": "#e9b27d",
+      "display_font": "'EB Garamond', 'Iowan Old Style', Georgia, 'Times New Roman', serif",
+      "body_font": "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+    },
+    "vars": {
+      "--heading-weight": "500",
+      "--heading-tracking": "-0.01em"
     }
   }
 ]

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://glissade.dev/schema/v1.json",
   "x-glissade-schema": 1,
-  "x-glissade-version": "0.14.4",
+  "x-glissade-version": "0.15.0",
   "title": "Glissade deck",
   "description": "A presentation deck. Either an object with metadata and a slides array, or a bare array of slides.",
   "oneOf": [
@@ -55,6 +55,14 @@
           "items": {
             "$ref": "#/$defs/slide"
           }
+        },
+        "theme": {
+          "type": "string",
+          "description": "Theme this deck opens in (an id from `glissade themes`). The presenter can still switch with T or from the remote.",
+          "examples": [
+            "paper",
+            "parchment"
+          ]
         }
       },
       "required": [
@@ -89,10 +97,12 @@
             "media-caption",
             "grid",
             "quad-chart",
+            "cards",
+            "quote",
             "blank"
           ],
           "default": "blank",
-          "description": "Omit or use 'blank' to render raw `html`."
+          "description": "Omit or use 'blank' to render raw `html`. 'cards' shows two to four `cards` side by side; 'quote' shows a large `quote` beside an optional panel or image."
         },
         "cls": {
           "type": "string",
@@ -172,6 +182,36 @@
           "type": "string",
           "description": "blank layout only: raw markup, used verbatim."
         },
+        "callout": {
+          "type": "string",
+          "description": "HTML allowed. The takeaway: a filled box that always renders last on the slide. Keep it to one or two sentences."
+        },
+        "source": {
+          "type": "string",
+          "description": "HTML allowed. A small citation line pinned to the foot of the slide."
+        },
+        "cards": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/card"
+          },
+          "description": "cards layout only. Two to four parallel ideas, shown side by side."
+        },
+        "numbered": {
+          "type": "boolean",
+          "description": "cards layout: number the cards (renders an ordered list)."
+        },
+        "scrim": {
+          "enum": [
+            "bottom",
+            "left",
+            "none"
+          ],
+          "default": "bottom",
+          "description": "media-full layout: where the darkening behind the text sits. 'left' suits a subject on the right of the image."
+        },
         "notes": {
           "type": "string",
           "description": "Speaker notes. HTML allowed. Shown on the phone and with N on screen."
@@ -213,7 +253,8 @@
           "description": "Path relative to the deck file, e.g. media/images/chart.png"
         },
         "alt": {
-          "type": "string"
+          "type": "string",
+          "description": "What the image shows, for people who can't see it. Use \"\" only for pure decoration."
         },
         "fit": {
           "enum": [
@@ -225,6 +266,15 @@
         "caption": {
           "type": "string",
           "description": "HTML allowed"
+        },
+        "focus": {
+          "type": "string",
+          "description": "Where a cropped (cover) image anchors: CSS object-position, e.g. 'center top', 'right', '70% 30%'.",
+          "examples": [
+            "center top",
+            "right center",
+            "70% 30%"
+          ]
         }
       },
       "required": [
@@ -307,6 +357,28 @@
         },
         "aspect": {
           "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "card": {
+      "type": "object",
+      "description": "One card on a cards slide: a short title, a line or two of body, an optional source and image.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "A few words. HTML allowed."
+        },
+        "body": {
+          "type": "string",
+          "description": "HTML allowed. One or two sentences."
+        },
+        "source": {
+          "type": "string",
+          "description": "HTML allowed. A scripture reference, author or citation, shown at the foot of the card."
+        },
+        "image": {
+          "$ref": "#/$defs/image"
         }
       },
       "additionalProperties": false

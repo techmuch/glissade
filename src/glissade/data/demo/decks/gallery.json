@@ -9,7 +9,7 @@
       "title": "Title — Layout Gallery",
       "eyebrow": "Reference deck",
       "heading": "Layout Gallery",
-      "subheading": "Fourteen layouts, one per slide",
+      "subheading": "Seventeen layouts, one per slide",
       "byline": "Every slide names its layout — copy the ones you want",
       "notes": "<b>layout: \"title\"</b><br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>byline</code>.<br><br>Read this deck beside <code>decks/gallery.json</code> — each slide is a working example of its own JSON."
     },
@@ -28,7 +28,9 @@
           "sub": "Useful for a source, a caveat, or a short aside"
         }
       ],
-      "notes": "<b>layout: \"title-content\"</b><br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>.<br><br>Bullets take either a string or <code>{text, sub}</code>."
+      "notes": "<b>layout: \"title-content\"</b><br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>.<br><br>Bullets take either a string or <code>{text, sub}</code>.<br><br><code>callout</code> is a filled box that always comes last on the slide, whatever order you write fields in. <code>source</code> pins a small citation line to the foot. Both work on most layouts; <code>glissade check</code> says where they don't.",
+      "callout": "<b>callout</b> — the one-line takeaway. It always renders last.",
+      "source": "<code>source</code> — a citation line pinned to the foot of the slide"
     },
     {
       "n": 3,
@@ -170,12 +172,14 @@
       "tag": "Media layouts",
       "image": {
         "src": "media/images/gradient-blue.jpg",
-        "alt": "Abstract gradient"
+        "alt": "Abstract gradient",
+        "focus": "right center"
       },
       "eyebrow": "Edge to edge",
       "heading": "media-full",
-      "body": "Text sits in a gradient panel along the bottom, so it stays readable over any image. Leave the text out for a picture with nothing on it.",
-      "notes": "<b>layout: \"media-full\"</b><br><br>Image or embed fills the slide. <code>eyebrow</code>, <code>heading</code> and <code>body</code> are all optional."
+      "body": "The heading is the slide's main title. A <code>scrim</code> darkens the image behind the text — along the bottom, or down the left for a subject on the right.",
+      "notes": "<b>layout: \"media-full\"</b><br><br>Image or embed fills the slide. <code>eyebrow</code>, <code>heading</code> and <code>body</code> are all optional.<br><br><code>scrim</code>: <code>bottom</code> (default), <code>left</code> or <code>none</code>. On the image, <code>focus</code> sets where the crop anchors, e.g. <code>\"right center\"</code> or <code>\"70% 30%\"</code>.",
+      "scrim": "left"
     },
     {
       "n": 13,
@@ -292,7 +296,51 @@
       "notes": "<b>layout: \"quad-chart\"</b><br><br>Use <code>quads</code> with exactly four entries. Each quadrant takes a <code>subheading</code>, plus <code>body</code>, <code>bullets</code>, an <code>image</code>, or <code>media</code>."
     },
     {
-      "n": 18,
+      "layout": "cards",
+      "title": "cards",
+      "tag": "Design blocks",
+      "numbered": true,
+      "eyebrow": "Two to four parallel ideas",
+      "heading": "cards",
+      "cards": [
+        {
+          "title": "Short title",
+          "body": "A sentence or two. Cards sit side by side, so keep them parallel.",
+          "source": "source line"
+        },
+        {
+          "title": "Numbered",
+          "body": "<code>\"numbered\": true</code> renders an ordered list with big numerals.",
+          "source": "optional"
+        },
+        {
+          "title": "Images too",
+          "body": "A card may carry an <code>image</code> above its title.",
+          "image": {
+            "src": "media/images/gradient-teal.jpg",
+            "alt": "",
+            "fit": "cover"
+          }
+        }
+      ],
+      "callout": "Three keys, four steps, two options: if the bullets each have a title and a line, they want to be cards.",
+      "notes": "<b>layout: \"cards\"</b><br><br><code>cards</code>: two to four of <code>{title, body, source, image}</code>. <code>numbered</code> turns them into an ordered list. Takes <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code> above the cards and a <code>callout</code> below."
+    },
+    {
+      "layout": "quote",
+      "title": "quote",
+      "tag": "Design blocks",
+      "eyebrow": "A quotation and what to do with it",
+      "heading": "quote",
+      "quote": "“The slide is for the room. The notes are for you.”",
+      "cite": "Glissade’s first principle",
+      "subheading": "Beside it",
+      "body": "<p>An optional panel: a <code>subheading</code>, <code>body</code> and <code>bullets</code> — or an <code>image</code> instead.</p>",
+      "source": "Quotes take <code>cite</code>; a missing one is a design tip in <code>glissade check</code>",
+      "notes": "<b>layout: \"quote\"</b><br><br>A large <code>quote</code> with its <code>cite</code>, beside an optional side panel (<code>subheading</code>, <code>body</code>, <code>bullets</code>) or an <code>image</code>. Takes a <code>callout</code> below."
+    },
+    {
+      "n": 20,
       "layout": "blank",
       "title": "blank (freeform)",
       "tag": "Escape hatch",
@@ -300,11 +348,11 @@
       "notes": "<b>layout: \"blank\"</b> (or omit <code>layout</code> entirely)<br><br>Your markup goes in <code>html</code> and is used verbatim. The deck's own classes are available: <code>eyebrow</code>, <code>lead</code>, <code>byline</code>, <code>dialogue</code>, plus <code>h1</code>–<code>h3</code>, <code>blockquote</code>, <code>cite</code>, <code>ul</code>."
     },
     {
-      "n": 19,
+      "n": 21,
       "layout": "title-content",
       "cls": "center",
       "title": "End",
-      "eyebrow": "That's all fifteen",
+      "eyebrow": "That's all seventeen",
       "heading": "Copy what you need",
       "body": "<p>Every slide here is a working example in <b>decks/gallery.json</b>.</p>",
       "notes": "<b>Close.</b> Switch back to <b>Glissade — A Tour</b> from the remote for the how-and-why."

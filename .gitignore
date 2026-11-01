@@ -6,6 +6,7 @@ dist/
 # Environments
 .venv/
 .pixi/
+uv.lock
 
 # Presenter state
 .glissade/

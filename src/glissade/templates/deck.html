@@ -22,26 +22,55 @@
     --ask-ink:#e8e2d6;
     --ask-ink-soft:#c3cbcd;
     --ask-heading:#ffffff;
-    --ask-accent:#b8955a;
+    --ask-accent:#c4a265;
     --overlay-bg:rgba(20,18,16,.95);
     --overlay-ink:#e6e0d4;
     --chrome-ink:#9a9186;
     --blank-bg:#14120f;
     --deck-font:Georgia,'Iowan Old Style','Times New Roman',serif;
     --ui-font:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+    /* Two faces, two jobs: headings and quotes in the display face, reading
+       text in the body face. A theme that sets only --deck-font gets it for
+       both, which is how themes written before the split still render. */
+    --display-font:var(--deck-font);
+    --body-font:var(--deck-font);
     --heading-weight:400;
     --heading-tracking:-0.01em;
+    /* Surfaces for cards, callouts and side panels. Callouts are filled with
+       the accent, so their text takes the page colour. */
+    --card-bg:rgba(255,255,255,.55);
+    --callout-bg:var(--accent);
+    --callout-ink:var(--paper);
+    --ask-callout-bg:var(--ask-accent);
+    --ask-callout-ink:var(--ask-bg);
+    /* One type scale for the whole deck. Every size on a slide comes from
+       these five steps (times --scale), so slides share one hierarchy. */
+    --fs-display:7.6vh;
+    --fs-h2:5.2vh;
+    --fs-h3:3.3vh;
+    --fs-body:3vh;
+    --fs-small:2.3vh;
+    --fs-label:1.7vh;
     /* Global text scale. Everything on a slide is sized in vh and
        multiplied by this, so one number resizes the whole deck. */
     --scale:1;
   }
+  /*__FONT_FACES__*/
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{
     background:var(--surround);
-    font-family:var(--deck-font);
+    font-family:var(--body-font);
     color:var(--ink);
     overflow:hidden;
+  }
+  :focus-visible{outline:3px solid var(--accent-light); outline-offset:3px}
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*:before,*:after{animation:none !important; transition:none !important}
   }
   #stage{
     position:fixed; top:0; left:0; right:0; bottom:0;
@@ -72,52 +101,78 @@
 
   .eyebrow{
     font-family:var(--ui-font);
-    font-size:calc(1.5vh * var(--scale)); letter-spacing:.22em; text-transform:uppercase;
-    color:var(--accent); font-weight:600; margin-bottom:2.4vh;
+    font-size:calc(var(--fs-label) * var(--scale)); letter-spacing:.2em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin-bottom:2vh;
   }
-  h1{font-size:calc(7.6vh * var(--scale)); line-height:1.08; font-weight:var(--heading-weight); letter-spacing:var(--heading-tracking)}
-  h2{font-size:calc(5.2vh * var(--scale)); line-height:1.15; font-weight:var(--heading-weight); margin-bottom:3.5vh; letter-spacing:var(--heading-tracking)}
-  h3{font-size:calc(3.4vh * var(--scale)); line-height:1.25; font-weight:var(--heading-weight); color:var(--accent); margin-bottom:2.5vh}
-  p{font-size:calc(3vh * var(--scale)); line-height:1.5; color:var(--ink-soft); max-width:46ch}
+  h1,h2,h3{font-family:var(--display-font); font-weight:var(--heading-weight); letter-spacing:var(--heading-tracking)}
+  h1{font-size:calc(var(--fs-display) * var(--scale)); line-height:1.08}
+  h2{font-size:calc(var(--fs-h2) * var(--scale)); line-height:1.15; margin-bottom:3.5vh}
+  h3{font-size:calc(var(--fs-h3) * var(--scale)); line-height:1.25; color:var(--accent); margin-bottom:2.5vh}
+  p{font-size:calc(var(--fs-body) * var(--scale)); line-height:1.5; color:var(--ink-soft); max-width:46ch}
   .lead{font-size:calc(3.4vh * var(--scale)); color:var(--ink)}
+  /* `body` is authored HTML that may or may not wrap itself in <p>. */
+  .body{font-size:calc(var(--fs-body) * var(--scale)); line-height:1.5; color:var(--ink-soft)}
+  .body > * + *{margin-top:1.4vh}
 
   .byline{
     margin-top:4vh; font-size:calc(2.6vh * var(--scale)); color:var(--ink-soft);
     border-top:1px solid var(--rule); padding-top:3vh; max-width:40ch;
   }
   .byline strong{color:var(--ink); font-weight:600; display:block; font-size:calc(2.9vh * var(--scale))}
-  .byline span{font-size:calc(2.2vh * var(--scale)); display:block; margin-top:.6vh}
+  .byline span{font-size:calc(var(--fs-small) * var(--scale)); display:block; margin-top:.6vh}
 
-  blockquote{
-    font-size:calc(3.6vh * var(--scale)); line-height:1.45; max-width:34ch;
-    border-left:4px solid var(--accent-light); padding-left:calc(3.5vh * var(--scale));
+  /* A pull quote is a figure: the quotation, then who said it. */
+  .pull{
+    border-left:.6vh solid var(--accent-light); padding-left:calc(3.5vh * var(--scale));
+    max-width:34ch;
   }
-  blockquote.big{font-size:calc(4.6vh * var(--scale)); max-width:26ch}
+  blockquote{
+    font-family:var(--display-font);
+    font-size:calc(3.6vh * var(--scale)); line-height:1.4; color:var(--ink);
+  }
+  .pull.big{max-width:28ch}
+  .pull.big blockquote{font-size:calc(4.6vh * var(--scale)); font-style:italic; line-height:1.3}
   blockquote em{font-style:italic; color:var(--accent); font-weight:600}
+  .pull figcaption{margin-top:2.6vh}
   cite{
-    display:block; margin-top:3vh; font-style:normal;
-    font-family:var(--ui-font);
+    display:block; font-style:normal;
+    font-family:var(--ui-font); font-weight:600;
     font-size:calc(1.9vh * var(--scale)); letter-spacing:.06em; color:var(--accent); text-transform:uppercase;
   }
 
-  ul{list-style:none; max-width:44ch}
+  ul,ol{list-style:none; max-width:44ch}
   li{
     font-size:calc(3.1vh * var(--scale)); line-height:1.4; margin-bottom:2.8vh;
     padding-left:calc(4.5vh * var(--scale)); position:relative; color:var(--ink);
   }
   li:before{
     content:''; position:absolute; left:0; top:calc(1.5vh * var(--scale));
-    width:calc(1.6vh * var(--scale)); height:calc(1.6vh * var(--scale)); border:2px solid var(--accent-light); border-radius:50%;
+    width:calc(1.6vh * var(--scale)); height:calc(1.6vh * var(--scale)); border:.3vh solid var(--accent); border-radius:50%;
   }
-  li small{display:block; font-size:calc(2.2vh * var(--scale)); color:var(--ink-soft); margin-top:.8vh; line-height:1.4}
+  /* A bullet with a second line reads as a title and its explanation. */
+  li .li-t{display:block; font-weight:650}
+  li small{display:block; font-size:calc(var(--fs-small) * var(--scale)); color:var(--ink-soft); margin-top:.8vh; line-height:1.45}
+
+  /* ---- callout: the one thing to take away, always last ---- */
+  .callout{
+    background:var(--callout-bg); color:var(--callout-ink);
+    border-radius:1.2vh; padding:2.6vh 2.4vw;
+    font-size:calc(var(--fs-body) * var(--scale)); line-height:1.45;
+    max-width:none;
+  }
+  .callout p{color:inherit; font-size:inherit; max-width:none}
+  .callout b,.callout strong{font-weight:700}
 
   .slide.ask{background:var(--ask-bg); color:var(--ask-ink)}
   .slide.ask .eyebrow{color:var(--ask-accent)}
-  .slide.ask h2{color:var(--ask-heading); max-width:24ch}
-  .slide.ask p{color:var(--ask-ink-soft)}
-  .slide.ask li{color:var(--ask-ink)}
+  .slide.ask h1,.slide.ask h2{color:var(--ask-heading)}
+  .slide.ask h2{max-width:24ch}
+  .slide.ask p,.slide.ask .body{color:var(--ask-ink-soft)}
+  .slide.ask li,.slide.ask blockquote{color:var(--ask-ink)}
   .slide.ask li:before{border-color:var(--ask-accent)}
   .slide.ask li small{color:var(--ask-ink-soft)}
+  .slide.ask h3,.slide.ask cite{color:var(--ask-accent)}
+  .slide.ask .callout{background:var(--ask-callout-bg); color:var(--ask-callout-ink)}
 
   .slide.story{background:var(--story-bg)}
   .dialogue{max-width:44ch}
@@ -126,21 +181,29 @@
   .dialogue p.a{padding-left:calc(4vh * var(--scale))}
 
   .center{align-items:center; text-align:center}
-  .center p,.center blockquote,.center ul{max-width:38ch}
-  .center blockquote{border-left:none; padding-left:0; border-top:1px solid var(--rule); padding-top:3.5vh}
+  .center p,.center .pull,.center ul{max-width:38ch}
+  .center .pull{border-left:none; padding-left:0; border-top:1px solid var(--rule); padding-top:3.5vh}
 
+  /* Slide chrome. Kept quiet, but at a contrast that still reads. */
   .num{
     position:absolute; bottom:3.5vh; right:5vw;
-    font-family:var(--ui-font);
-    font-size:calc(1.7vh * var(--scale)); color:var(--accent); opacity:.5; letter-spacing:.1em;
+    font-family:var(--ui-font); font-variant-numeric:tabular-nums;
+    font-size:calc(var(--fs-label) * var(--scale)); color:var(--ink-soft); letter-spacing:.1em;
   }
-  .slide.ask .num{color:var(--ask-accent); opacity:.7}
+  .slide.ask .num{color:var(--ask-ink-soft)}
   .tag{
-    position:absolute; top:4vh; left:7vw;
-    font-family:var(--ui-font);
-    font-size:calc(1.5vh * var(--scale)); letter-spacing:.2em; text-transform:uppercase; color:var(--accent); opacity:.65;
+    position:absolute; top:4vh; left:6vw;
+    font-family:var(--ui-font); font-weight:600;
+    font-size:calc(1.5vh * var(--scale)); letter-spacing:.2em; text-transform:uppercase; color:var(--accent);
   }
-  .slide.ask .tag{color:var(--ask-accent); opacity:.9}
+  .slide.ask .tag{color:var(--ask-accent)}
+  /* Source line: where a quote or figure came from, pinned to the foot. */
+  .source{
+    position:absolute; left:6vw; right:16vw; bottom:3.5vh;
+    font-family:var(--ui-font);
+    font-size:calc(var(--fs-label) * var(--scale)); line-height:1.4; color:var(--ink-soft);
+  }
+  .slide.ask .source{color:var(--ask-ink-soft)}
 
   #notes{
     position:fixed; left:0; right:0; bottom:0;
@@ -151,28 +214,47 @@
   }
   #notes.on{display:block}
   #notes b{color:var(--ask-accent)}
+  /* Keyboard help. Shown for a few seconds on load and whenever ? is pressed,
+     then gets out of the way -- it must never sit on top of the slide. */
   #help{
-    position:fixed; top:12px; right:16px;
-    font-family:var(--ui-font);
-    font-size:11px; color:var(--chrome-ink); letter-spacing:.08em; z-index:5;
+    position:fixed; top:12px; right:16px; z-index:26;
+    font-family:var(--ui-font); font-size:13px; line-height:1.4; letter-spacing:.02em;
+    background:var(--overlay-bg); color:var(--overlay-ink);
+    padding:8px 14px; border-radius:8px; max-width:calc(100vw - 32px);
+    opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s;
   }
+  #help.on{opacity:1; visibility:visible}
+  #help kbd{font-family:inherit; font-weight:700}
 
   /* ==================== layouts ====================
      A slide is either legacy freeform markup (layout "blank") or a set of
      regions the renderer fills. Regions are sized in vh/vw so they track the
      text scale, and every colour comes from the theme tokens above. */
 
-  .slide.lay{padding:5vh 6vw}
+  /* Laid-out slides anchor their heading to the same top margin, so it never
+     hops between slides; content flows down from it. Statement slides (title,
+     title-only, section) and anything marked `center` stay vertically centred
+     -- for those, the middle of the screen *is* the consistent place. */
+  .slide.lay{padding:8vh 6vw 9vh; justify-content:flex-start; gap:3vh}
+  .slide.lay[data-layout="title"],
+  .slide.lay[data-layout="title-only"],
+  .slide.lay[data-layout="section"],
+  .slide.lay.center{justify-content:center; justify-content:safe center}
   /* The corner tag is absolutely positioned, so slides that have one need the
      top of the content area pushed clear of it. Full-bleed slides are exempt —
      there the tag deliberately floats over the image. */
-  .slide.has-tag:not(.bleed){padding-top:9.5vh}
+  .slide.has-tag:not(.bleed){padding-top:10vh}
+  .slide.has-source:not(.bleed){padding-bottom:11vh}
   .region{min-width:0; min-height:0}          /* let flex children shrink */
-  .stack{display:flex; flex-direction:column; justify-content:center; min-width:0; min-height:0}
+  .stack{display:flex; flex-direction:column; justify-content:flex-start; min-width:0; min-height:0}
   /* A stack containing media grows to fill the slide so the media has a
      definite height to be measured against. */
   .stack.has-media{flex:1 1 auto}
   .stack > * + *{margin-top:1.6vh}
+  /* Prose and lists, quotes and callouts are different kinds of thing; give
+     the boundary between them more air than the space inside each. */
+  .stack > .body + ul, .stack > .body + .pull, .stack > ul + .pull,
+  .stack > * + .callout{margin-top:3vh}
 
   /* two-column frame shared by split/two-content/comparison */
   .cols{
@@ -184,6 +266,10 @@
   }
   .cols > *{min-height:0}
   .cols.top{align-items:flex-start}
+  /* Text-only columns take their content's height, so whatever follows
+     (a callout) sits right under them instead of at the foot of the slide.
+     Columns holding media still stretch: the media needs a height to fit. */
+  .cols:not(:has(.figure)){flex:0 1 auto}
   /* Top-aligned columns still need media to stretch, or there is no height. */
   .cols.top > .figure, .cols.top > .region.stack:has(.figure){align-self:stretch}
   .cols > .region{flex:1 1 0}
@@ -203,15 +289,33 @@
   .slide.lay[data-layout="title-content"] .text-region .subhead,
   .slide.lay[data-layout="title-content"] .text-region p,
   .slide.lay[data-layout="title-content"] .text-region ul,
-  .slide.lay[data-layout="title-content"] .text-region blockquote{
+  .slide.lay[data-layout="title-content"] .text-region .pull,
+  .slide.lay[data-layout="title-content"] .text-region .body{
     max-width:calc(100% - 6vw);
   }
+  /* Inside a column the column *is* the measure. A character cap on top of
+     it is what squeezed text into half a column with the rest left empty. */
+  .cols p,.cols ul,.cols ol,.cols .pull,.cols .subhead,.cols .body,
+  .cols h2,.slide.ask .cols h2{max-width:none}
+  /* A heading block before the content keeps its natural height. */
+  .slide.lay > .text-region:first-child:not(:only-child){flex:0 0 auto}
+  .slide.lay > .text-region h2:last-child{margin-bottom:0}
 
   .subhead{
     font-size:calc(2.6vh * var(--scale)); line-height:1.35;
     color:var(--ink-soft); max-width:40ch;
   }
   .slide.ask .subhead{color:var(--ask-ink-soft)}
+  /* A column that opens with a subheading is labelled by it: give it the
+     weight of a label, not the grey of a footnote. */
+  .cols > .text-region > .subhead:first-child,
+  .cols > .region > h3:first-child{
+    font-family:var(--ui-font); font-weight:700; letter-spacing:.02em;
+    font-size:calc(2.5vh * var(--scale)); color:var(--accent);
+    padding-bottom:1.2vh; border-bottom:1px solid var(--rule); margin-bottom:.6vh;
+  }
+  .slide.ask .cols > .text-region > .subhead:first-child,
+  .slide.ask .cols > .region > h3:first-child{color:var(--ask-accent); border-color:rgba(255,255,255,.16)}
 
   /* ---- media boxes (image or iframe) ---- */
   .media-box{
@@ -253,17 +357,87 @@
     border-radius:0; background:#000;
   }
   .slide.bleed .media-box img{object-fit:cover}
+  /* The scrim is what makes text over a photograph readable; it is darkest
+     exactly where the text sits. `bottom` suits wide shots, `left` suits a
+     subject on the right, `none` is for images already dark enough. */
   .slide.bleed .overlay{
     position:absolute; left:0; right:0; bottom:0; z-index:2;
-    padding:6vh 7vw 5vh;
-    background:linear-gradient(to top, rgba(0,0,0,.82), rgba(0,0,0,.45) 55%, rgba(0,0,0,0));
+    padding:8vh 7vw 7vh;
+    background:linear-gradient(to top, rgba(0,0,0,.85), rgba(0,0,0,.55) 55%, rgba(0,0,0,0));
     color:#fff;
+    display:flex; flex-direction:column; justify-content:flex-end;
   }
-  .slide.bleed .overlay h1,
+  .slide.bleed .overlay.scrim-left{
+    top:0; right:auto; width:64%;
+    padding:8vh 6vw 9vh 7vw;
+    background:linear-gradient(to right, rgba(0,0,0,.85) 0%, rgba(0,0,0,.7) 55%, rgba(0,0,0,0) 100%);
+  }
+  .slide.bleed .overlay.scrim-none{background:none; text-shadow:0 .2vh 1.6vh rgba(0,0,0,.85)}
+  .slide.bleed .overlay h1{color:#fff; max-width:20ch}
   .slide.bleed .overlay h2{color:#fff; max-width:22ch}
-  .slide.bleed .overlay p{color:rgba(255,255,255,.88); max-width:46ch}
-  .slide.bleed .overlay .eyebrow{color:#fff; opacity:.85}
-  .slide.bleed .num,.slide.bleed .tag{color:#fff; opacity:.75; z-index:3}
+  .slide.bleed .overlay p,.slide.bleed .overlay .body{color:rgba(255,255,255,.92); max-width:46ch; margin-top:2vh}
+  .slide.bleed .overlay .eyebrow{color:#fff}
+  .slide.bleed .num,.slide.bleed .tag,.slide.bleed .source{
+    color:#fff; z-index:3; text-shadow:0 .1vh .8vh rgba(0,0,0,.9);
+  }
+
+  /* ---- cards: two to four parallel ideas, side by side ---- */
+  /* Cards share one height (the tallest), grow to use the slide, but stop
+     well short of the foot so a short card isn't mostly empty box. */
+  .cards{
+    display:grid; grid-template-columns:repeat(var(--n, 3), minmax(0, 1fr));
+    gap:2.4vw; width:100%; max-width:none; flex:1 1 auto; min-height:0;
+    max-height:52vh; grid-auto-rows:1fr;
+  }
+  .cards > li.card{
+    display:flex; flex-direction:column; gap:1.4vh; min-height:0; min-width:0;
+    margin:0; padding:3.4vh 2vw 3vh; position:static;
+    background:var(--card-bg); color:var(--ink);
+    border:1px solid var(--rule); border-top:.7vh solid var(--accent);
+    border-radius:1.4vh; font-size:inherit;
+  }
+  .cards > li.card:before{display:none}
+  .card-n{
+    font-family:var(--display-font); color:var(--accent);
+    font-size:calc(5.4vh * var(--scale)); line-height:1;
+  }
+  .card h3{
+    font-family:var(--display-font); color:var(--ink); font-weight:600;
+    font-size:calc(3.6vh * var(--scale)); line-height:1.2; margin:0;
+  }
+  .card .body{font-size:calc(var(--fs-body) * var(--scale)); line-height:1.45}
+  .card-src{
+    margin-top:auto; padding-top:1.4vh;
+    font-family:var(--ui-font); font-weight:700; letter-spacing:.03em;
+    font-size:calc(var(--fs-label) * var(--scale)); line-height:1.4; color:var(--accent);
+  }
+  .card-img{
+    display:block; width:100%; aspect-ratio:16/9; object-fit:cover;
+    border-radius:.8vh; margin-bottom:.6vh;
+  }
+  .slide.ask .cards > li.card{
+    background:rgba(255,255,255,.05); color:var(--ask-ink);
+    border-color:rgba(255,255,255,.16); border-top-color:var(--ask-accent);
+  }
+  .slide.ask .card h3{color:var(--ask-heading)}
+  .slide.ask .card-n,.slide.ask .card-src{color:var(--ask-accent)}
+  .cards.n4 .card h3{font-size:calc(3vh * var(--scale))}
+  .cards.n4 .card .body{font-size:calc(2.5vh * var(--scale))}
+
+  /* ---- quote layout: the quote, and what to do with it ---- */
+  .quote-cols{gap:4vw}
+  .quote-cols > .pull{flex:3 1 0; max-width:none; align-self:flex-start}
+  .quote-cols > .side-panel{
+    flex:2 1 0; align-self:flex-start;
+    display:flex; flex-direction:column; gap:1.8vh;
+    background:var(--story-bg); border-radius:1.4vh; padding:4vh 2.6vw;
+  }
+  .slide.story .quote-cols > .side-panel{background:var(--card-bg)}
+  .slide.ask .quote-cols > .side-panel{background:rgba(255,255,255,.06)}
+  .side-panel h3{margin:0; font-family:var(--ui-font); font-weight:700; font-size:calc(2.4vh * var(--scale)); letter-spacing:.02em}
+  .side-panel ul{margin:0}
+  .side-panel li{font-size:calc(2.6vh * var(--scale)); margin-bottom:1.4vh}
+  .side-panel li:before{top:calc(1.2vh * var(--scale))}
 
   /* ---- grid ---- */
   .grid{
@@ -463,6 +637,7 @@
     border-bottom:1px solid rgba(192,168,120,.2);
   }
   .dp-title{
+    font-family:var(--ui-font); margin:0; line-height:1.3;
     font-size:13px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--accent-light,#b8955a); font-weight:700;
   }
@@ -523,12 +698,14 @@
 </head>
 <body>
 
-<div id="live"><i></i><span>connecting…</span></div>
-<div id="help">← → navigate &nbsp;·&nbsp; N notes &nbsp;·&nbsp; B blank &nbsp;·&nbsp; D decks &nbsp;·&nbsp; + − text &nbsp;·&nbsp; T theme &nbsp;·&nbsp; R reload embed &nbsp;·&nbsp; F fullscreen</div>
-<div id="scaletoast"><b id="scaleval">100%</b><span>text size</span></div>
-<div id="stage"></div>
-<div id="notes"></div>
-<div id="blank"></div>
+<div id="live" role="status"><i aria-hidden="true"></i><span>connecting…</span></div>
+<aside id="help" aria-label="Keyboard shortcuts"><kbd>←</kbd> <kbd>→</kbd> navigate &nbsp;·&nbsp; <kbd>N</kbd> notes &nbsp;·&nbsp; <kbd>B</kbd> blank &nbsp;·&nbsp; <kbd>D</kbd> decks &nbsp;·&nbsp; <kbd>+</kbd> <kbd>−</kbd> text &nbsp;·&nbsp; <kbd>T</kbd> theme &nbsp;·&nbsp; <kbd>R</kbd> reload embed &nbsp;·&nbsp; <kbd>F</kbd> fullscreen &nbsp;·&nbsp; <kbd>?</kbd> this help</aside>
+<div id="scaletoast" role="status" aria-live="polite"><b id="scaleval">100%</b><span>text size</span></div>
+<main id="stage"></main>
+<!-- Announces each slide change to screen readers: "Slide 3 of 6: heading". -->
+<div id="announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<div id="notes" role="region" aria-label="Speaker notes"></div>
+<div id="blank" aria-hidden="true"></div>
 <div id="livenotes" aria-label="Live notes overlay">
   <div class="ln-head">
     <div>
@@ -539,25 +716,42 @@
   </div>
   <div class="ln-body" id="lnbody"></div>
 </div>
-<div id="deckpicker" aria-label="Deck switcher" role="dialog" aria-modal="true">
+<div id="deckpicker" role="dialog" aria-modal="true" aria-labelledby="dptitle" aria-describedby="dphint">
   <div class="dp-card">
     <div class="dp-head">
-      <div class="dp-title">Switch Deck</div>
-      <div class="dp-hint">↑↓ navigate · Enter select · Esc close</div>
+      <h2 class="dp-title" id="dptitle">Switch Deck</h2>
+      <div class="dp-hint" id="dphint">↑↓ navigate · Enter select · Esc close</div>
     </div>
-    <div class="dp-list" id="dplist" role="listbox"></div>
+    <div class="dp-list" id="dplist" role="listbox" tabindex="-1" aria-labelledby="dptitle"></div>
   </div>
 </div>
 
 <script>
 const SLIDES = __SLIDES_JSON__;
 const THEMES = __THEMES_JSON__;
+const DECK_THEME = __DECK_THEME__;
 const DECKS = __DECKS_JSON__;
 const DECK_TITLE = __TITLE__;
 const LIVE = __LIVE__;
 let currentDeckId = __CURRENT_DECK__;
 
 document.title = DECK_TITLE;
+document.getElementById('stage').setAttribute('aria-label', DECK_TITLE);
+
+/* Keyboard help: visible for a moment on load so it's discoverable, then
+   hidden so it never sits on a projected slide. ? or H brings it back. */
+const helpEl = document.getElementById('help');
+let helpTimer = null;
+function showHelp(ms){
+  helpEl.classList.add('on');
+  clearTimeout(helpTimer);
+  helpTimer = setTimeout(() => helpEl.classList.remove('on'), ms || 5000);
+}
+function toggleHelp(){
+  if(helpEl.classList.contains('on')){ clearTimeout(helpTimer); helpEl.classList.remove('on'); }
+  else showHelp(8000);
+}
+showHelp(4000);
 
 const MIN_SCALE = 0.7, MAX_SCALE = 1.6, SCALE_STEP = 0.1;
 
@@ -606,23 +800,84 @@ function textRegion(o){
   if(o.eyebrow)  box.appendChild(el('div', 'eyebrow', o.eyebrow));
   if(o.heading)  box.appendChild(el(o.headingLevel === 1 ? 'h1' : 'h2', null, o.heading));
   if(o.subheading) box.appendChild(el('div', 'subhead', o.subheading));
-  if(o.body)     box.appendChild(el('div', null, o.body));
-  if(o.bullets && o.bullets.length){
-    const ul = el('ul');
-    o.bullets.forEach(b => {
-      const item = (b && typeof b === 'object')
-        ? b.text + (b.sub ? '<small>' + b.sub + '</small>' : '')
-        : String(b);
-      ul.appendChild(el('li', null, item));
-    });
-    box.appendChild(ul);
-  }
-  if(o.quote){
-    const q = el('blockquote', o.quoteBig ? 'big' : null, o.quote);
-    if(o.cite) q.appendChild(el('cite', null, o.cite));
-    box.appendChild(q);
-  }
+  if(o.body)     box.appendChild(el('div', 'body', o.body));
+  if(o.bullets && o.bullets.length) box.appendChild(bulletList(o.bullets));
+  if(o.quote)    box.appendChild(pullQuote(o.quote, o.cite, o.quoteBig));
+  /* The callout always comes last, whatever order the fields were written
+     in: it is the takeaway, so it closes the slide. */
+  if(o.callout)  box.appendChild(callout(o.callout));
   return box;
+}
+
+/* A bullet given as {text, sub} is a title and its explanation; the title
+   gets weight so the two read as two levels, not two sizes of the same. */
+function bulletList(items){
+  const ul = el('ul');
+  items.forEach(b => {
+    if(b && typeof b === 'object'){
+      const li = el('li', b.sub ? 'has-sub' : null);
+      li.appendChild(el('span', 'li-t', b.text == null ? '' : String(b.text)));
+      if(b.sub) li.appendChild(el('small', null, b.sub));
+      ul.appendChild(li);
+    } else {
+      ul.appendChild(el('li', null, String(b)));
+    }
+  });
+  return ul;
+}
+
+/* A quotation and its source belong together, so they are a figure. */
+function pullQuote(text, cite, big){
+  const f = el('figure', 'pull' + (big ? ' big' : ''));
+  f.appendChild(el('blockquote', null, text));
+  if(cite){
+    const cap = el('figcaption');
+    cap.appendChild(el('cite', null, cite));
+    f.appendChild(cap);
+  }
+  return f;
+}
+
+function callout(html){
+  const c = el('div', 'callout', html);
+  c.setAttribute('role', 'note');
+  return c;
+}
+
+/* Cards: two to four parallel ideas. A numbered set is an ordered list, so
+   assistive tech hears "list, 3 items" and the position of each -- the big
+   visible numeral is decoration on top of that, and hidden from it. */
+function cardList(cards, numbered){
+  const items = (Array.isArray(cards) ? cards : []).filter(c => c && typeof c === 'object');
+  const n = Math.min(4, Math.max(1, items.length));
+  const list = el(numbered ? 'ol' : 'ul', 'cards n' + n);
+  list.style.setProperty('--n', n);
+  items.forEach((c, k) => {
+    const li = el('li', 'card');
+    if(c.image && c.image.src){
+      const img = el('img', 'card-img');
+      img.src = c.image.src;
+      img.alt = c.image.alt || '';
+      if(c.image.focus) setFocus(img, c.image.focus);
+      li.appendChild(img);
+    }
+    if(numbered){
+      const num = el('div', 'card-n', String(k + 1));
+      num.setAttribute('aria-hidden', 'true');
+      li.appendChild(num);
+    }
+    if(c.title)  li.appendChild(el('h3', null, c.title));
+    if(c.body)   li.appendChild(el('div', 'body', c.body));
+    if(c.source) li.appendChild(el('div', 'card-src', c.source));
+    list.appendChild(li);
+  });
+  return list;
+}
+
+/* Where to anchor a cropped image: keywords or percentages only. */
+function setFocus(img, focus){
+  const f = String(focus || '').trim();
+  if(/^[a-z0-9%.\s-]{1,40}$/i.test(f)) img.style.objectPosition = f;
 }
 
 /* An image or an embed, in a box that can hold an aspect ratio. Embeds are
@@ -649,6 +904,7 @@ function mediaBox(node, opts){
     img.src = node.src;
     img.alt = node.alt || '';
     if((node.fit || opts.fit) === 'cover') img.className = 'cover';
+    if(node.focus) setFocus(img, node.focus);
     if(node.remote) img.addEventListener('error', () => {
       box.appendChild(fallbackPanel(node.src, 'Image could not load'));
       box.querySelector('.embed-fallback').classList.add('on');
@@ -677,11 +933,11 @@ function fallbackPanel(url, label, qr){
 }
 
 function figure(node, opts){
-  const f = el('div', 'figure region');
+  const f = el('figure', 'figure region');
   const slot = el('div', 'fitslot');
   slot.appendChild(mediaBox(node, opts));
   f.appendChild(slot);
-  if(node.caption) f.appendChild(el('div', 'caption', node.caption));
+  if(node.caption) f.appendChild(el('figcaption', 'caption', node.caption));
   return f;
 }
 
@@ -758,7 +1014,7 @@ const LAYOUTS = {
       const m = pickMedia(blk);
       cols.appendChild(m ? figure(m, {aspect: blk.aspect}) : textRegion(blk));
     });
-    return head ? [head, cols] : [cols];
+    return withCallout(head ? [head, cols] : [cols], s);
   },
   'comparison': s => {
     const out = [];
@@ -769,11 +1025,13 @@ const LAYOUTS = {
       const m = pickMedia(blk);
       const region = el('div', 'region stack');
       if(blk.subheading) region.appendChild(el('h3', null, blk.subheading));
-      region.appendChild(m ? figure(m, {aspect: blk.aspect}) : textRegion(blk));
+      /* The subheading is already the column's h3; don't print it twice. */
+      region.appendChild(m ? figure(m, {aspect: blk.aspect})
+                           : textRegion(Object.assign({}, blk, {subheading: null})));
       cols.appendChild(region);
     });
     out.push(cols);
-    return out;
+    return withCallout(out, s);
   },
   'content-caption': s => {
     const cols = el('div', 'cols wide-media');
@@ -785,7 +1043,7 @@ const LAYOUTS = {
     } else {
       cols.appendChild(textRegion({body:s.body, bullets:s.bullets}));
     }
-    cols.appendChild(textRegion({eyebrow:s.eyebrow, heading:s.heading, subheading:s.subheading, body:s.caption}));
+    cols.appendChild(textRegion({eyebrow:s.eyebrow, heading:s.heading, subheading:s.subheading, body:s.caption, callout:s.callout}));
     return [cols];
   },
   'picture-caption': s => {
@@ -815,13 +1073,46 @@ const LAYOUTS = {
        the image crops with object-fit and an embed takes the whole screen. */
     if(m) out.push(mediaBox(m, {fit:'cover', aspect:'auto', force:true}));
     if(s.heading || s.body || s.eyebrow){
-      const ov = el('div', 'overlay');
+      const scrim = ['bottom','left','none'].includes(s.scrim) ? s.scrim : 'bottom';
+      const ov = el('div', 'overlay scrim-' + scrim);
       if(s.eyebrow) ov.appendChild(el('div','eyebrow', s.eyebrow));
-      if(s.heading) ov.appendChild(el('h2', null, s.heading));
-      if(s.body) ov.appendChild(el('p', null, s.body));
+      /* A full-bleed slide is a cover or a chapter opener: its heading is the
+         biggest thing on screen, and the page's top-level heading. */
+      if(s.heading) ov.appendChild(el('h1', null, s.heading));
+      if(s.body) ov.appendChild(el('div', 'body', s.body));
       out.push(ov);
     }
     return out;
+  },
+  'cards': s => {
+    const out = [];
+    if(s.eyebrow || s.heading || s.subheading || s.body){
+      out.push(textRegion({eyebrow:s.eyebrow, heading:s.heading, subheading:s.subheading, body:s.body}));
+    }
+    out.push(cardList(s.cards, !!s.numbered));
+    return withCallout(out, s);
+  },
+  'quote': s => {
+    const out = [];
+    if(s.eyebrow || s.heading) out.push(textRegion({eyebrow:s.eyebrow, heading:s.heading}));
+    const cols = el('div', 'cols quote-cols');
+    if(s.quote) cols.appendChild(pullQuote(s.quote, s.cite, true));
+    const m = pickMedia(s);
+    if(m){
+      const f = figure(m, {aspect: s.aspect});
+      f.classList.add('media-region');
+      cols.appendChild(f);
+    } else if(s.subheading || s.body || (s.bullets && s.bullets.length)){
+      const side = el('div', 'side-panel');
+      if(s.subheading) side.appendChild(el('h3', null, s.subheading));
+      if(s.body) side.appendChild(el('div', 'body', s.body));
+      if(s.bullets && s.bullets.length) side.appendChild(bulletList(s.bullets));
+      cols.appendChild(side);
+    } else {
+      cols.classList.add('top');
+    }
+    out.push(cols);
+    return withCallout(out, s);
   },
   'grid': s => {
     const items = (s.images || []).map(i => Object.assign({kind:'image'}, i));
@@ -844,9 +1135,16 @@ const LAYOUTS = {
       grid.appendChild(card);
     });
     out.push(grid);
-    return out;
+    return withCallout(out, s);
   }
 };
+
+/* Layouts whose text region is not textRegion(s) add the callout here, as
+   the last thing on the slide. */
+function withCallout(nodes, s){
+  if(s.callout) nodes.push(callout(s.callout));
+  return nodes;
+}
 
 function splitMedia(s, side){
   const cols = el('div', 'cols wide-media');
@@ -878,8 +1176,31 @@ function buildSlide(s, n){
     d.classList.add('has-tag');
     d.insertBefore(el('div', 'tag', s.tag), d.firstChild);
   }
-  d.appendChild(el('div', 'num', (n + 1) + ' / ' + SLIDES.length));
+  if(s.source){
+    d.classList.add('has-source');
+    d.appendChild(el('footer', 'source', s.source));
+  }
+  const num = el('div', 'num', (n + 1) + ' / ' + SLIDES.length);
+  num.setAttribute('aria-hidden', 'true');   // the slide's own label says it
+  d.appendChild(num);
+
+  /* Each slide is a labelled group ("slide, 3 of 6: heading"); inactive
+     slides are display:none, so assistive tech only ever meets the current
+     one. */
+  d.setAttribute('role', 'group');
+  d.setAttribute('aria-roledescription', 'slide');
+  d.setAttribute('aria-label', slideLabel(s, n));
   return d;
+}
+
+function plainText(html){
+  const t = document.createElement('div');
+  t.innerHTML = html || '';
+  return (t.textContent || '').replace(/\s+/g, ' ').trim();
+}
+function slideLabel(s, n){
+  const name = plainText(s.heading) || s.title || '';
+  return (n + 1) + ' of ' + SLIDES.length + (name ? ': ' + name : '');
 }
 
 SLIDES.forEach((s, n) => stage.appendChild(buildSlide(s, n)));
@@ -951,8 +1272,13 @@ function render(n){
   if(els[prev] && prev !== i) unmountEmbeds(els[prev]);
   if(els[i]){ mountEmbeds(els[i]); fitMedia(els[i]); }
   notesEl.innerHTML = SLIDES[i].notes || '<i>No notes for this slide.</i>';
+  if(prev !== i || !announced){
+    announced = true;
+    document.getElementById('announce').textContent = 'Slide ' + slideLabel(SLIDES[i], i);
+  }
   if(!LIVE) location.hash = i + 1;
 }
+let announced = false;
 function setNotes(on){
   notesOn = !!on;
   notesEl.classList.toggle('on', notesOn);
@@ -1039,7 +1365,10 @@ function applyTheme(id, announce){
   themeId = t.id;
   const root = document.documentElement.style;
   for(const key in t.vars) root.setProperty(key, t.vars[key]);
-  if(!LIVE) try{ localStorage.setItem('deckTheme', themeId); }catch(e){}
+  if(!LIVE && announce) try{
+    localStorage.setItem('deckTheme', themeId);
+    localStorage.setItem('deckTheme:' + DECK_TITLE, themeId);
+  }catch(e){}
   if(announce) toast(t.name, 'theme');
 }
 function requestTheme(id, announceLocally){
@@ -1068,8 +1397,10 @@ function renderDeckPickerList(){
     const isFocused = idx === dpFocusedIdx;
     const item = document.createElement('div');
     item.className = 'dp-item' + (isCurrent ? ' active' : '') + (isFocused ? ' focused' : '');
+    item.id = 'dp-opt-' + idx;
     item.setAttribute('role', 'option');
     item.setAttribute('aria-selected', isFocused ? 'true' : 'false');
+    if(isCurrent) item.setAttribute('aria-current', 'true');
     item.dataset.id = d.id;
     item.dataset.index = idx;
 
@@ -1092,8 +1423,9 @@ function renderDeckPickerList(){
   });
 
   const focusedItem = dpListEl.querySelector('.dp-item.focused');
-  if(focusedItem && focusedItem.scrollIntoView){
-    focusedItem.scrollIntoView({block: 'nearest'});
+  if(focusedItem){
+    dpListEl.setAttribute('aria-activedescendant', focusedItem.id);
+    if(focusedItem.scrollIntoView) focusedItem.scrollIntoView({block: 'nearest'});
   }
 }
 
@@ -1111,12 +1443,19 @@ function openDeckPicker(){
   const curIdx = DECKS.findIndex(d => d.id === currentDeckId);
   dpFocusedIdx = curIdx >= 0 ? curIdx : 0;
   renderDeckPickerList();
+  /* Move focus into the dialog, and remember where it came from so closing
+     puts the keyboard user back where they were. */
+  dpReturnFocus = document.activeElement;
   deckPickerEl.classList.add('on');
+  dpListEl.focus();
 }
 
+let dpReturnFocus = null;
 function closeDeckPicker(){
   deckPickerOpen = false;
   deckPickerEl.classList.remove('on');
+  if(dpReturnFocus && dpReturnFocus.focus && document.contains(dpReturnFocus)) dpReturnFocus.focus();
+  dpReturnFocus = null;
 }
 
 function selectDeck(deckId){
@@ -1212,6 +1551,8 @@ document.addEventListener('keydown', e => {
   else if(k === 't' || k === 'T'){ cycleTheme(); }
   else if(k === 'l' || k === 'L'){ if(LIVE) post('/api/live-notes-visible', {visible: !liveNotesVisible}); }
   else if(k === 'r' || k === 'R'){ retryEmbeds(); }
+  else if(k === '?' || k === 'h' || k === 'H'){ toggleHelp(); }
+  else if(k === 'Escape' && helpEl.classList.contains('on')){ toggleHelp(); }
   else if(k === 'f' || k === 'F'){
     if(!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
     else document.exitFullscreen && document.exitFullscreen();
@@ -1261,13 +1602,16 @@ if(LIVE){
   render(0);
 } else {
   /* Standalone: no server to remember anything, so the browser does. */
+  /* A deck that names its theme opens in it; a theme the viewer picked with
+     T for this deck is remembered and wins after that. */
   let saved = 1, savedTheme = null;
   try{
     saved = parseFloat(localStorage.getItem('deckScale')) || 1;
-    savedTheme = localStorage.getItem('deckTheme');
+    savedTheme = localStorage.getItem('deckTheme:' + DECK_TITLE)
+      || (DECK_THEME ? null : localStorage.getItem('deckTheme'));
   }catch(e){}
   applyScale(saved, false);
-  applyTheme(savedTheme || themeId, false);
+  applyTheme(savedTheme || DECK_THEME || themeId, false);
   const start = parseInt(location.hash.replace('#',''), 10);
   render(isNaN(start) ? 0 : start - 1);
 }

@@ -50,6 +50,7 @@ def build_deck(
         live=False,
         themes=themes if themes is not None else load_themes(),
         title=deck["title"],
+        deck_theme=deck.get("theme", ""),
     )
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{deck['id']}.html"

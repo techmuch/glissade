@@ -14,6 +14,7 @@ from __future__ import annotations
 import difflib
 import functools
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +46,8 @@ LAYOUTS = set(
     or [
         "title", "title-content", "section", "title-only", "two-content",
         "comparison", "content-caption", "picture-caption", "media-right",
-        "media-left", "media-full", "media-caption", "grid", "quad-chart", "blank",
+        "media-left", "media-full", "media-caption", "grid", "quad-chart",
+        "cards", "quote", "blank",
     ]
 )
 MODIFIERS = {"ask", "story", "center"}
@@ -55,14 +57,40 @@ MODIFIERS = {"ask", "story", "center"}
 MEDIA_LAYOUTS = {
     "two-content", "comparison", "content-caption", "picture-caption",
     "media-right", "media-left", "media-full", "media-caption", "grid",
-    "quad-chart",
+    "quad-chart", "quote",
 }
-TEXT_ONLY = {"title", "title-only", "section", "title-content"}
+TEXT_ONLY = {"title", "title-only", "section", "title-content", "cards"}
+
+# Layouts that draw a `callout`. On the others it would vanish silently.
+CALLOUT_LAYOUTS = {
+    "title-content", "two-content", "comparison", "content-caption",
+    "media-right", "media-left", "quad-chart", "cards", "quote",
+}
+
+# Design guidance. These are judgement calls, so they are tips rather than
+# warnings: a deck can ignore every one of them and still present.
+MAX_BODY_WORDS = 40
+MAX_BULLETS = 6
+MAX_HEADING_CHARS = 70
+MAX_CALLOUT_WORDS = 30
+MAX_CARD_WORDS = 30
+MAX_SLIDE_WORDS = 90
+
+_FOCUS = re.compile(
+    r"^((left|center|right|top|bottom|\d{1,3}(\.\d+)?%)(\s+|$)){1,2}$", re.IGNORECASE
+)
+_TAG = re.compile(r"<[^>]+>")
+
+
+def _words(html: Any) -> int:
+    if not isinstance(html, str):
+        return 0
+    return len(_TAG.sub(" ", html).split())
 
 
 class Issue:
     def __init__(self, level: str, where: str, message: str, hint: str = ""):
-        self.level = level          # "error" | "warning"
+        self.level = level          # "error" | "warning" | "tip"
         self.where = where
         self.message = message
         self.hint = hint
@@ -148,11 +176,27 @@ def _check_image(node: Any, where: str, base: Path, out: list[Issue]) -> None:
         return
     if not (base / str(src)).is_file():
         out.append(Issue("error", where, f"image not found: {src}"))
+    _check_image_details(node, where, out)
+
+
+def _check_image_details(node: dict, where: str, out: list[Issue]) -> None:
     if node.get("fit") and node["fit"] not in ("contain", "cover"):
         out.append(Issue(
             "warning",
             where,
             f"fit should be 'contain' or 'cover', got {node['fit']!r}",
+        ))
+    if "alt" not in node:
+        out.append(Issue(
+            "warning", where, "image has no alt text",
+            'Describe what it shows for people who can\'t see it, or use "alt": "" '
+            "if it is purely decorative.",
+        ))
+    focus = node.get("focus")
+    if focus is not None and not (isinstance(focus, str) and _FOCUS.match(focus.strip())):
+        out.append(Issue(
+            "warning", where, f"focus {focus!r} isn't a position Glissade understands",
+            "Use keywords or percentages: 'center top', 'right', '70% 30%'.",
         ))
 
 
@@ -204,6 +248,7 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
         visible = any(slide.get(k) for k in (
             "heading", "subheading", "body", "bullets", "quote", "caption",
             "image", "media", "images", "left", "right", "quads", "html", "eyebrow",
+            "cards", "callout",
         ))
         if not visible:
             out.append(Issue("error", where, "slide has no visible content"))
@@ -296,6 +341,9 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
                 "Use media-right, media-full, or picture-caption instead.",
             ))
 
+        _check_blocks(slide, layout, known, where, base, out)
+        _design_tips(slide, layout, where, out)
+
         if not slide.get("notes"):
             out.append(Issue("warning", where, "no speaker notes"))
 
@@ -311,6 +359,117 @@ def check_slides(slides: list[Any], base: Path, label: str = "") -> list[Issue]:
                 ))
 
     return out
+
+
+def _check_blocks(
+    slide: dict, layout: str | None, known: bool, where: str, base: Path, out: list[Issue]
+) -> None:
+    """cards, callout, quote, scrim and source: the design building blocks."""
+    cards = slide.get("cards")
+    if cards is not None:
+        if known and layout != "cards":
+            out.append(Issue(
+                "warning", where, f"`cards` only renders on the cards layout, not {layout!r}",
+            ))
+        if not isinstance(cards, list) or not 2 <= len(cards) <= 4:
+            count = len(cards) if isinstance(cards, list) else "?"
+            out.append(Issue(
+                "error", where, f"cards needs two to four cards, got {count}",
+                "One idea is a title-content slide; five or more is two slides.",
+            ))
+        else:
+            for c_idx, card in enumerate(cards, start=1):
+                c_where = f"{where} card {c_idx}"
+                if not isinstance(card, dict):
+                    out.append(Issue("error", c_where, "card must be an object"))
+                    continue
+                _unknown_fields(card, "card", c_where, out)
+                if not (card.get("title") or card.get("body") or card.get("image")):
+                    out.append(Issue("error", c_where, "card has no title, body or image"))
+                if card.get("image"):
+                    _check_image(card["image"], c_where, base, out)
+    elif layout == "cards":
+        out.append(Issue("error", where, "cards layout with no `cards`"))
+
+    if slide.get("numbered") and known and layout != "cards":
+        out.append(Issue("warning", where, "`numbered` only applies to the cards layout"))
+
+    if slide.get("callout") and known and layout not in CALLOUT_LAYOUTS:
+        out.append(Issue(
+            "warning", where, f"`callout` doesn't render on the {layout!r} layout",
+            "It renders on " + ", ".join(sorted(CALLOUT_LAYOUTS)) + ".",
+        ))
+
+    if layout == "quote" and not slide.get("quote"):
+        out.append(Issue("error", where, "quote layout with no `quote`"))
+
+    scrim = slide.get("scrim")
+    if scrim is not None:
+        if scrim not in ("bottom", "left", "none"):
+            out.append(Issue(
+                "warning", where, f"scrim should be 'bottom', 'left' or 'none', got {scrim!r}",
+            ))
+        if known and layout != "media-full":
+            out.append(Issue("warning", where, "`scrim` only applies to the media-full layout"))
+
+
+def _design_tips(slide: dict, layout: str | None, where: str, out: list[Issue]) -> None:
+    """Judgement calls about how a slide will read from the back of a room."""
+    def tip(message: str, hint: str = "") -> None:
+        out.append(Issue("tip", where, message, hint))
+
+    heading = _TAG.sub(" ", str(slide.get("heading") or "")).strip()
+    if len(heading) > MAX_HEADING_CHARS:
+        tip(f"heading is {len(heading)} characters",
+            "A heading reads at a glance under ~70. Move the rest into body or notes.")
+
+    body_words = _words(slide.get("body"))
+    if body_words > MAX_BODY_WORDS:
+        tip(f"body is {body_words} words",
+            f"Over ~{MAX_BODY_WORDS} words the room reads instead of listening. "
+            "Split the slide or move detail into notes.")
+
+    bullets = slide.get("bullets")
+    if isinstance(bullets, list):
+        if len(bullets) > MAX_BULLETS:
+            tip(f"{len(bullets)} bullets", "Six is about the most a slide can hold. Split it.")
+        paired = [b for b in bullets if isinstance(b, dict) and b.get("sub")]
+        if layout == "title-content" and 3 <= len(bullets) <= 4 and len(paired) == len(bullets):
+            tip("every bullet has a title and a second line",
+                "Three or four parallel ideas usually read better as a `cards` layout.")
+
+    if _words(slide.get("callout")) > MAX_CALLOUT_WORDS:
+        tip(f"callout is {_words(slide.get('callout'))} words",
+            "A callout is the one-line takeaway. Keep it to a sentence or two.")
+
+    for c_idx, card in enumerate(slide.get("cards") or [], start=1):
+        if isinstance(card, dict):
+            n = _words(card.get("body"))
+            if n > MAX_CARD_WORDS:
+                tip(f"card {c_idx} body is {n} words",
+                    "Cards sit side by side, so each holds a sentence or two at most.")
+
+    if slide.get("quote") and not slide.get("cite"):
+        tip("quote has no `cite`", "Say who said it; the room will want to know.")
+
+    total = sum(_words(slide.get(k)) for k in (
+        "heading", "subheading", "body", "quote", "callout", "caption"))
+    for b in bullets if isinstance(bullets, list) else []:
+        total += _words(b.get("text") if isinstance(b, dict) else b)
+        total += _words(b.get("sub") if isinstance(b, dict) else "")
+    for side in ("left", "right"):
+        block = slide.get(side)
+        if isinstance(block, dict):
+            total += _words(block.get("body"))
+            for b in block.get("bullets") or []:
+                total += _words(b.get("text") if isinstance(b, dict) else b)
+    for card in slide.get("cards") or []:
+        if isinstance(card, dict):
+            total += _words(card.get("title")) + _words(card.get("body"))
+    if total > MAX_SLIDE_WORDS:
+        tip(f"{total} words on one slide",
+            "A slide the room can take in at a glance is under ~90 words. "
+            "Split it, or move the detail into notes.")
 
 
 def check_requirement(deck: dict[str, Any], label: str = "") -> list[Issue]:
@@ -336,18 +495,41 @@ def check_requirement(deck: dict[str, Any], label: str = "") -> list[Issue]:
     )]
 
 
-def check_deck(deck: dict[str, Any]) -> list[Issue]:
+def check_deck(deck: dict[str, Any], theme_ids: list[str] | None = None) -> list[Issue]:
     """Validate one loaded deck. Media paths resolve beside the deck file."""
     base = Path(deck["path"]).resolve().parent
     label = f"[{deck['id']}] "
     issues = check_requirement(deck, label)
-    issues += _deck_level(deck, label)
+    issues += _deck_level(deck, label, theme_ids)
     return issues + check_slides(deck.get("slides", []), base, label=f"[{deck['id']}]")
 
 
-def _deck_level(deck: dict[str, Any], label: str) -> list[Issue]:
+def _deck_level(
+    deck: dict[str, Any], label: str, theme_ids: list[str] | None = None
+) -> list[Issue]:
     out: list[Issue] = []
     raw = deck.get("raw")
     if isinstance(raw, dict):
         _unknown_fields(raw, "deckObject", f"{label}deck", out)
+        theme = raw.get("theme")
+        if theme is not None and theme_ids is not None and theme not in theme_ids:
+            out.append(Issue(
+                "warning", f"{label}deck", f"unknown theme {theme!r}",
+                _did_you_mean(str(theme), theme_ids)
+                or "Available: " + ", ".join(theme_ids) + ".",
+            ))
+    return out
+
+
+def check_themes(themes: list[dict[str, Any]]) -> list[Issue]:
+    """Contrast problems in the themes a project will present with."""
+    from .themes import contrast_issues
+
+    out = []
+    for t in themes:
+        for problem in contrast_issues(t):
+            out.append(Issue(
+                "warning", f"theme {t['id']!r}", f"low contrast — {problem}",
+                "Darken the text colour or lighten the background (WCAG AA is 4.5:1).",
+            ))
     return out

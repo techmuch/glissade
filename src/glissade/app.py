@@ -61,17 +61,12 @@ def load_themes(project: Project | None = None) -> list[dict[str, Any]]:
     A missing or broken themes.json must not stop a presentation, so fall back
     to a single built-in theme matching the stylesheet's own defaults.
     """
+    from . import themes as theme_lib
     from .project import DEFAULT_THEMES
 
     source = project.themes_file if project else DEFAULT_THEMES
     try:
-        with source.open(encoding="utf-8") as fh:
-            themes = json.load(fh)
-        valid = [
-            t
-            for t in themes
-            if isinstance(t, dict) and t.get("id") and isinstance(t.get("vars"), dict)
-        ]
+        valid = theme_lib.load(source)
         if valid:
             return valid
     except (OSError, ValueError):
@@ -208,6 +203,7 @@ def render_deck(
     title: str = "Glissade",
     decks: list[dict[str, Any]] | None = None,
     current_deck_id: str | None = None,
+    deck_theme: str = "",
 ) -> str:
     """Fill the deck template.
 
@@ -222,9 +218,17 @@ def render_deck(
         # </script> inside slide markup would close the tag early.
         return json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
 
+    from . import themes as theme_lib
+
+    themes = themes if themes is not None else []
+    # Font files can be large, so they are inlined once as CSS rather than
+    # riding along inside the theme JSON.
+    faces = theme_lib.font_face_css(themes).replace("</", "<\\/")
     return (
-        template.replace("__SLIDES_JSON__", embed(slides))
-        .replace("__THEMES_JSON__", embed(themes if themes is not None else []))
+        template.replace("/*__FONT_FACES__*/", faces)
+        .replace("__SLIDES_JSON__", embed(slides))
+        .replace("__THEMES_JSON__", embed(theme_lib.public(themes)))
+        .replace("__DECK_THEME__", embed(deck_theme or ""))
         .replace("__DECKS_JSON__", embed(decks if decks is not None else []))
         .replace("__CURRENT_DECK__", embed(current_deck_id or ""))
         .replace("__TITLE__", embed(title))
@@ -436,7 +440,11 @@ def create_app(
         theme_ids=theme_ids,
         deck_ids=deck_ids,
         scale=settings["scale"],
-        theme=settings["theme"],
+        # A deck that names its theme opens in it; the presenter can still
+        # change it for the session from the remote or with T.
+        theme=(
+            current.get("theme") if current.get("theme") in theme_ids else settings["theme"]
+        ),
         deck=current["id"],
         live_notes=live_notes,
     )
@@ -517,6 +525,8 @@ def create_app(
             return show.state
         deck = deck_by_id(deck_id)
         show.deck = deck["id"]
+        if deck.get("theme") in show.theme_ids:
+            show.theme = deck["theme"]
         show.total = len(slides_for(deck))
         show.n = 1
         show.blank = False
@@ -549,6 +559,7 @@ def create_app(
                 title=deck["title"],
                 decks=deck_summaries,
                 current_deck_id=deck["id"],
+                deck_theme=deck.get("theme", ""),
             )
         )
 
@@ -565,7 +576,11 @@ def create_app(
 
     @app.get("/api/themes")
     async def api_themes() -> JSONResponse:
-        return JSONResponse(app.state.themes, headers={"Cache-Control": "no-store"})
+        from . import themes as theme_lib
+
+        return JSONResponse(
+            theme_lib.public(app.state.themes), headers={"Cache-Control": "no-store"}
+        )
 
     @app.get("/api/decks")
     async def api_decks() -> JSONResponse:

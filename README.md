@@ -46,7 +46,8 @@ Without Pillow, images embed at full size; nothing breaks.
 | `glissade init [dir]` | Scaffold a project: a starter deck, `AGENTS.md`, and the JSON schema |
 | `glissade start` | Present, with a phone remote on the same Wi-Fi |
 | `glissade build [deck]` | Write standalone HTML to `build/` |
-| `glissade check [deck]` | Validate decks — `--fix` applies the obvious corrections |
+| `glissade check [deck]` | Validate decks and themes, with design tips — `--fix` applies the obvious corrections |
+| `glissade shoot [deck]` | Screenshot every slide to `build/shots/` and report layout problems (needs Playwright) |
 | `glissade decks` / `themes` | List what's available |
 | `glissade demo` | Present the built-in tour and layout gallery |
 | `glissade update` | Bring a project's Glissade-owned files up to date |
@@ -203,6 +204,33 @@ agent knows it isn't done:
   error   slide 7: image not found: media/chart.png
   error   slide 9: YouTube watch link will not embed
             Use the /embed/ form: https://www.youtube.com/embed/VIDEO_ID
+  warn    slide 4: image has no alt text
+  tip     slide 5: every bullet has a title and a second line
+            Three or four parallel ideas usually read better as a `cards` layout.
+```
+
+Tips are design judgement calls — word counts, a quote without a citation,
+bullets that want to be cards — and never fail the check (`--no-tips` hides
+them).
+
+The second half of the loop is `glissade shoot`. It renders the deck in a
+headless browser, saves a PNG of every slide, and measures the result:
+
+```
+  slide 4  Activity  (two-content)
+    ! heading sits at 8% of the height; most slides put it at 14%. It will appear to jump.
+  slide 6  Armor of God  (media-right)
+    ! content overflows the slide by 64px — it will scroll. Cut text or split the slide.
+```
+
+It reports overflow, headings that jump between slides, sparse slides, text
+squeezed into part of its column, words too wide for their box, and text too
+small to read in a room. An agent that can see its slides fixes most of these
+on its own. `shoot` needs Playwright, which only authors need:
+
+```bash
+uv tool install --with playwright glissade   # or: pip install 'glissade[shoot]'
+playwright install chromium
 ```
 
 ## Presenting
@@ -264,6 +292,26 @@ Glissade keeps them in your user cache instead.
 | <kbd>T</kbd> | cycle theme |
 | <kbd>R</kbd> | reload a failed embed |
 | <kbd>F</kbd> | fullscreen |
+| <kbd>?</kbd> | show these keys (they appear briefly on load, then get out of the way) |
+
+### Accessibility
+
+The projected deck and the remote are built to work with a keyboard and a
+screen reader, and are checked with axe-core:
+
+- Each slide is a labelled group ("slide, 3 of 6: heading"); slide changes are
+  announced through a live region. Pull quotes are figures with captions,
+  numbered cards are ordered lists, callouts are notes.
+- The deck switcher and the remote's drawer are proper dialogs: focus moves in
+  when they open, Tab stays inside, Escape closes, and focus returns to where
+  it was.
+- Remote buttons expose their state (`aria-pressed`, `aria-expanded`,
+  `aria-current`); the connection dot has a text label; pinch-zoom works.
+- Motion is off under `prefers-reduced-motion`, and every interactive element
+  has a visible focus ring.
+- Every built-in theme clears WCAG AA for each text/background pair it draws,
+  `glissade check` reports any project theme that doesn't, and it warns about
+  images without `alt` text.
 
 ## Writing a slide
 
@@ -288,12 +336,41 @@ Pick a `layout` and fill the fields it uses. Nothing is required.
 
 Layouts: `title`, `title-content`, `section`, `title-only`, `two-content`,
 `comparison`, `content-caption`, `picture-caption`, `media-right`,
-`media-left`, `media-full`, `media-caption`, `grid`, `quad-chart`, `blank`.
+`media-left`, `media-full`, `media-caption`, `grid`, `quad-chart`, `cards`,
+`quote`, `blank`.
 
 `cls` adds modifiers independent of layout: `"ask"` (dark, for questions),
 `"story"`, `"center"`.
 
-Run `glissade demo --deck gallery` to see all fifteen.
+### Design blocks
+
+Laid-out slides anchor their heading to the same place on every slide, size
+text to the column it sits in, and share one type scale. On top of that:
+
+| Block | What it is |
+| --- | --- |
+| `cards` layout | Two to four parallel ideas side by side — `{title, body, source, image}` each; `"numbered": true` for steps |
+| `quote` layout | A large `quote` and `cite`, beside a panel (`subheading`, `body`, `bullets`) or an `image` |
+| `callout` | A filled box for the takeaway or the question — always the last thing on the slide |
+| `source` | A small citation line pinned to the foot of any slide |
+| `scrim` | On `media-full`: `bottom`, `left` or `none` — where the image darkens behind the text |
+| `image.focus` | Where a cropped image anchors: `"right center"`, `"70% 30%"` |
+
+```jsonc
+{
+  "layout": "cards", "numbered": true,
+  "eyebrow": "How to search", "heading": "Three keys to meaningful study",
+  "cards": [
+    {"title": "Seek the Spirit", "body": "Pray first.", "source": "Moroni 10:5"},
+    {"title": "Bring questions", "body": "Write them down first."},
+    {"title": "Live what you learn", "body": "Act on one thing.", "source": "John 7:17"}
+  ],
+  "callout": "<b>This week:</b> pick one key and try it.",
+  "source": "Preach My Gospel, chapter 2"
+}
+```
+
+Run `glissade demo --deck gallery` to see all seventeen.
 
 ## Media
 
@@ -316,32 +393,45 @@ shows a QR-code fallback rather than a blank frame; <kbd>R</kbd> retries.
 
 ## Themes
 
-**Paper** (default), **Georgia Tech**, and **Texas A&M** ship with the tool.
-Press <kbd>T</kbd> or pick one on the remote.
+**Paper** (default), **Parchment**, **Georgia Tech**, and **Texas A&M** ship
+with the tool. Press <kbd>T</kbd> or pick one on the remote. A deck can name
+the theme it opens in with a top-level `"theme": "parchment"`; the presenter
+can still switch.
 
-Drop a `themes.json` in your project to replace them with your own. Every
-colour and typeface in the deck comes from a token, so one entry restyles
-everything:
+Each theme pairs two typefaces: a display face for headings and quotes
+(`--display-font`) and a body face for reading text (`--body-font`).
+
+Drop a `themes.json` in your project to replace them with your own. The
+quickest way is a **palette**: one dark, one light, one or two accents. The
+other tokens are derived, and every derived text colour is pushed until it
+clears WCAG AA against what it sits on:
 
 ```jsonc
 {
   "id": "housestyle",
   "name": "House style",
-  "vars": {
-    "--paper": "#ffffff",        // slide background
-    "--ink": "#111111",          // headings
-    "--ink-soft": "#444444",     // body
-    "--accent": "#8a6d2f",       // eyebrows, citations
-    "--accent-light": "#c0a878", // quote bars, bullets
-    "--ask-bg": "#25303a",       // discussion slides
-    "--deck-font": "Georgia, serif"
-  }
+  "palette": {
+    "dark": "#2b2118", "light": "#f7f1e6",
+    "accent": "#9a4e1f", "accent2": "#e9b27d",
+    "display_font": "'EB Garamond', Georgia, serif",
+    "body_font": "'Public Sans', -apple-system, sans-serif"
+  },
+  "fonts": [
+    {"family": "EB Garamond", "src": "fonts/EBGaramond.woff2", "weight": "400 700"},
+    {"family": "Public Sans", "src": "fonts/PublicSans.woff2", "weight": "400 700"}
+  ],
+  "vars": { "--heading-weight": "500" }   // anything here overrides the palette
 }
 ```
 
-Missing tokens fall back to the Paper defaults. Both university themes are
-built from published brand swatches and every text/background pair clears
-WCAG AA.
+`fonts` lists font files beside `themes.json`; they are embedded in the page
+as `@font-face` rules, so the deck keeps its typefaces with no network. You
+can also set every token by hand in `vars` (`--paper`, `--ink`, `--ink-soft`,
+`--accent`, `--accent-light`, `--ask-bg`, `--callout-bg`, `--display-font`,
+`--body-font`, …); missing ones fall back to the Paper defaults.
+
+`glissade check` reports any text/background pair in your themes that falls
+below WCAG AA (4.5:1). Every built-in theme passes.
 
 ## If the network is down
 

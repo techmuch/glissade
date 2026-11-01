@@ -40,6 +40,8 @@ def read_deck(path: Path) -> dict[str, Any]:
         "id": path.stem,
         "title": meta.get("title") or _title_from(path.stem),
         "subtitle": meta.get("subtitle", ""),
+        # The theme this deck was designed for. Presenter choice still wins.
+        "theme": meta.get("theme", "") if isinstance(meta.get("theme"), str) else "",
         # The version this deck says it needs, if it says.
         "requires": meta.get("glissade", ""),
         # The deck object as written, so `check` can see fields this release

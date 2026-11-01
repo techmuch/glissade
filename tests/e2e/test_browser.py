@@ -243,3 +243,133 @@ async def test_deck_picker_overlay_keyboard_navigation_and_switching(
                 await expect(active_slide).to_contain_text("Welcome to Glissade")
                 await expect(remote.locator("#nowtitle")).to_have_text("Welcome Slide")
 
+
+
+# ------------------------------------------------- design blocks and access
+
+
+def _design_deck() -> dict:
+    return {
+        "title": "Design Deck",
+        "format": 1,
+        "theme": "parchment",
+        "slides": [
+            {
+                "title": "Keys",
+                "layout": "cards",
+                "numbered": True,
+                "eyebrow": "How",
+                "heading": "Three keys",
+                "cards": [
+                    {"title": "Seek", "body": "Pray first.", "source": "Moroni 10:5"},
+                    {"title": "Ask", "body": "Bring questions."},
+                    {"title": "Live", "body": "Act on it."},
+                ],
+                "callout": "<b>This week:</b> try one.",
+                "source": "Chapter 2",
+                "notes": "n",
+            },
+            {
+                "title": "Quote",
+                "layout": "quote",
+                "cls": "ask",
+                "heading": "Why",
+                "quote": "Scripture fills us with faith.",
+                "cite": "An apostle",
+                "subheading": "Discuss",
+                "body": "<p>When has it?</p>",
+                "notes": "n",
+            },
+        ],
+    }
+
+
+async def test_design_blocks_render_with_semantic_structure(tmp_path: Path):
+    with running_server(tmp_path, _design_deck()) as server:
+        async with open_pages(server["base_url"]) as (projector, remote):
+            slide = projector.locator(".slide.active")
+            # Each slide is a labelled group, announced on change.
+            await expect(slide).to_have_attribute("aria-roledescription", "slide")
+            await expect(slide).to_have_attribute("aria-label", "1 of 2: Three keys")
+            announce = projector.locator("#announce")
+            await expect(announce).to_have_text("Slide 1 of 2: Three keys")
+
+            # Numbered cards are an ordered list; the big numerals are hidden
+            # from assistive tech because the list already conveys order.
+            await expect(slide.locator("ol.cards > li.card")).to_have_count(3)
+            numeral = slide.locator(".card-n").first
+            await expect(numeral).to_have_attribute("aria-hidden", "true")
+            await expect(slide.locator(".card h3").first).to_have_text("Seek")
+
+            # The callout is the last content block whatever the field order.
+            last = slide.locator(":scope > :not(.num):not(.source)").last
+            await expect(last).to_have_class("callout")
+            await expect(last).to_have_attribute("role", "note")
+            await expect(slide.locator("footer.source")).to_have_text("Chapter 2")
+
+            # The deck's declared theme is applied.
+            accent = await projector.evaluate(
+                "getComputedStyle(document.documentElement).getPropertyValue('--paper').trim()"
+            )
+            assert accent.lower() == "#f7f1e6"
+
+            # The remote previews cards and flags the discussion slide next.
+            await expect(remote.locator("#nextrender .pv-card")).to_have_count(0)
+            await expect(remote.locator("#nextlabel .badge")).to_have_text("Discussion")
+
+            await remote.locator("#next").click()
+            await expect(projector.locator("#announce")).to_have_text("Slide 2 of 2: Why")
+            quote = projector.locator(".slide.active figure.pull")
+            await expect(quote.locator("blockquote")).to_contain_text("faith")
+            await expect(quote.locator("figcaption cite")).to_have_text("An apostle")
+
+
+async def test_help_overlay_hides_itself_and_toggles(tmp_path: Path, sample_deck_data: dict):
+    with running_server(tmp_path, sample_deck_data) as server:
+        async with open_pages(server["base_url"]) as (projector, _):
+            help_el = projector.locator("#help")
+            await expect(help_el).not_to_have_class("on", timeout=8000)
+            await projector.keyboard.press("?")
+            await expect(help_el).to_have_class("on")
+            await projector.keyboard.press("Escape")
+            await expect(help_el).not_to_have_class("on")
+
+
+async def test_deck_picker_moves_and_returns_focus(tmp_path: Path, sample_deck_data: dict):
+    decks_dir = tmp_path / "decks"
+    decks_dir.mkdir(parents=True, exist_ok=True)
+    (decks_dir / "other.json").write_text(json.dumps(
+        {"title": "Other", "slides": [{"layout": "title", "heading": "O", "notes": "n"}]}
+    ))
+    with running_server(tmp_path, sample_deck_data) as server:
+        async with open_pages(server["base_url"]) as (projector, _):
+            await projector.keyboard.press("d")
+            await expect(projector.locator("#dplist")).to_be_focused()
+            active = await projector.locator("#dplist").get_attribute("aria-activedescendant")
+            assert active and active.startswith("dp-opt-")
+            await projector.keyboard.press("ArrowDown")
+            moved = await projector.locator("#dplist").get_attribute("aria-activedescendant")
+            assert moved != active
+            await projector.keyboard.press("Escape")
+            await expect(projector.locator("#dplist")).not_to_be_focused()
+
+
+async def test_remote_exposes_state_to_assistive_tech(tmp_path: Path, sample_deck_data: dict):
+    with running_server(tmp_path, sample_deck_data) as server:
+        async with open_pages(server["base_url"]) as (_, remote):
+            await expect(remote.locator("#dot")).to_have_attribute("aria-label", "Connected")
+            blank = remote.locator("#blankbtn")
+            await expect(blank).to_have_attribute("aria-pressed", "false")
+            await blank.click()
+            await expect(blank).to_have_attribute("aria-pressed", "true")
+
+            jump = remote.locator("#jumpbtn")
+            await jump.click()
+            await expect(jump).to_have_attribute("aria-expanded", "true")
+            await expect(remote.locator("#drawer")).to_have_attribute("role", "dialog")
+            await expect(remote.locator(".row.cur")).to_be_focused()
+            await expect(remote.locator(".row.cur")).to_have_attribute("aria-current", "step")
+            await remote.keyboard.press("Escape")
+            await expect(remote.locator("#drawer")).not_to_have_class("on")
+            await expect(jump).to_be_focused()
+            await expect(jump).to_have_attribute("aria-expanded", "false")

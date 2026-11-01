@@ -29,6 +29,17 @@ LARGE_ASSET_WARN = 1_500_000
 
 _cache: dict[tuple, str] = {}
 
+# Types the platform's mimetypes table may not know, which matter here: an
+# SVG or a web font served as octet-stream is silently ignored by browsers.
+_EXTRA_MIME = {
+    ".svg": "image/svg+xml",
+    ".woff2": "font/woff2",
+    ".woff": "font/woff",
+    ".ttf": "font/ttf",
+    ".otf": "font/otf",
+    ".webp": "image/webp",
+}
+
 
 def is_external(src: str) -> bool:
     """True for anything the browser must fetch over the network."""
@@ -97,9 +108,11 @@ def data_uri(path: Path, warnings: list[str] | None = None) -> str | None:
     if suffix.lower() in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"):
         raw, suffix = _shrink(raw, suffix)
 
-    mime = mimetypes.types_map.get(suffix.lower()) or "application/octet-stream"
-    if suffix.lower() == ".svg":
-        mime = "image/svg+xml"
+    mime = (
+        _EXTRA_MIME.get(suffix.lower())
+        or mimetypes.types_map.get(suffix.lower())
+        or "application/octet-stream"
+    )
 
     if warnings is not None and len(raw) > LARGE_ASSET_WARN:
         warnings.append(
@@ -217,6 +230,10 @@ def prepare_slides(
         for img in slide.get("images") or []:
             if isinstance(img, dict):
                 _inline_image(img, base, warnings)
+
+        for card in slide.get("cards") or []:
+            if isinstance(card, dict) and isinstance(card.get("image"), dict):
+                _inline_image(card["image"], base, warnings)
 
         for region in ("left", "right"):
             block = slide.get(region)

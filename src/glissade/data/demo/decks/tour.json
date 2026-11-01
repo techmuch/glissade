@@ -127,7 +127,7 @@
       "eyebrow": "decks/your-deck.json",
       "heading": "Anatomy of a slide",
       "caption": "<p>Pick a <b>layout</b>, fill the fields it uses. Skip any you don't need — nothing is required.</p><p>Text fields accept HTML, so emphasis and quotation marks behave.</p>",
-      "notes": "<b>layout: \"content-caption\"</b> — a wide media region beside a narrower text column.<br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>, <code>quote</code>, <code>image</code>, <code>media</code>, <code>images</code>, <code>left</code>, <code>right</code>, <code>quads</code>, <code>caption</code>, <code>notes</code>, <code>tag</code>, <code>cls</code>.<br><br>The <b>Layout Gallery</b> deck shows all fifteen layouts. Switch to it from the remote."
+      "notes": "<b>layout: \"content-caption\"</b> — a wide media region beside a narrower text column.<br><br>Fields: <code>eyebrow</code>, <code>heading</code>, <code>subheading</code>, <code>body</code>, <code>bullets</code>, <code>quote</code>, <code>image</code>, <code>media</code>, <code>images</code>, <code>left</code>, <code>right</code>, <code>quads</code>, <code>caption</code>, <code>notes</code>, <code>tag</code>, <code>cls</code>.<br><br>The <b>Layout Gallery</b> deck shows all seventeen layouts. Switch to it from the remote."
     },
     {
       "n": 9,
@@ -138,7 +138,8 @@
       "heading": "Write the notes first",
       "body": "<p>Every slide carries a <b>notes</b> field. It shows on your phone and, with <b>N</b>, on screen.</p>",
       "quote": "The slide is for the room. The notes are for you.",
-      "notes": "<b>This is the argument for the whole tool.</b><br><br>Slides get overloaded because they're doing two jobs: showing the room something, and reminding the speaker what to say. Split those and the slides get quieter and better.<br><br>Notes accept HTML too — <b>bold</b> the thing you'll forget."
+      "notes": "<b>This is the argument for the whole tool.</b><br><br>Slides get overloaded because they're doing two jobs: showing the room something, and reminding the speaker what to say. Split those and the slides get quieter and better.<br><br>Notes accept HTML too — <b>bold</b> the thing you'll forget.",
+      "cite": "The idea behind Glissade"
     },
     {
       "n": 10,
@@ -185,7 +186,7 @@
       "eyebrow": "Press T to cycle",
       "heading": "Themes",
       "left": {
-        "body": "<p>Every colour and typeface comes from a token. One value restyles the whole deck.</p><p>Two ship: <b>Paper</b> and <b>Georgia Tech</b>. Add your own as an entry in <b>themes.json</b> — no code.</p>"
+        "body": "<p>Every colour and typeface comes from a token. One value restyles the whole deck.</p><p>Four ship: <b>Paper</b>, <b>Parchment</b>, <b>Georgia Tech</b> and <b>Texas A&amp;M</b>. Add your own in <b>themes.json</b> — a palette of a dark, a light and an accent is enough.</p>"
       },
       "right": {
         "image": {
@@ -195,7 +196,7 @@
         },
         "aspect": "4:3"
       },
-      "notes": "<b>Try it now:</b> press <b>T</b>, or tap a swatch on the remote. Watch this slide change under you.<br><br>The Georgia Tech theme follows GT's published accessibility guidance, not just its palette — Tech Gold is used for rules and bullets but never for text, since GT flags it as inaccessible on light backgrounds."
+      "notes": "<b>Try it now:</b> press <b>T</b>, or tap a swatch on the remote. Watch this slide change under you.<br><br>The Georgia Tech theme follows GT's published accessibility guidance, not just its palette — Tech Gold is used for rules and bullets but never for text, since GT flags it as inaccessible on light backgrounds.<br><br>A deck can name the theme it opens in with a top-level <code>\"theme\"</code>. <code>glissade check</code> reports any theme whose text falls below WCAG AA contrast."
     },
     {
       "n": 14,
@@ -314,11 +315,11 @@
       "heading": "Worth memorising",
       "left": {
         "subheading": "On the projector",
-        "body": "<p><b>← →</b> navigate<br><b>N</b> notes<br><b>B</b> blank the screen<br><b>+ − 0</b> text size<br><b>T</b> theme<br><b>R</b> reload an embed<br><b>F</b> fullscreen</p>"
+        "body": "<p><b>← →</b> navigate<br><b>N</b> notes<br><b>B</b> blank the screen<br><b>+ − 0</b> text size<br><b>T</b> theme<br><b>R</b> reload an embed<br><b>F</b> fullscreen<br><b>?</b> show these keys</p>"
       },
       "right": {
         "subheading": "Two decks ship",
-        "body": "<p><b>Glissade — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All fifteen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
+        "body": "<p><b>Glissade — A Tour</b><br>This one.</p><p><b>Layout Gallery</b><br>All seventeen layouts, one per slide.</p><p>Switch between them from the remote.</p>"
       },
       "notes": "<b>B is underused.</b> Blanking the screen during a discussion pulls attention back to the room better than any slide can.<br><br>Now switch to the <b>Layout Gallery</b> from your phone — it picks up where this leaves off."
     },

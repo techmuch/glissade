@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<!-- No maximum-scale: people who need to pinch-zoom the notes must be able to.
+     Buttons use touch-action:manipulation, so double-tap doesn't zoom them. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14120f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Glissade — Remote</title>
@@ -19,6 +21,15 @@
     --ok:#6fa76a;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  /* Tap highlight is off, so keyboard and switch users need a visible focus. */
+  :focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*:before,*:after{animation:none !important; transition:none !important}
+  }
   html,body{height:100%}
   body{
     background:var(--bg); color:var(--text);
@@ -156,9 +167,30 @@
   .prev-render.ask .pv-embed b{color:var(--pv-ask-accent,#b8955a)}
   .pv-embed .u{word-break:break-all; opacity:.85}
   .pv-lay{
-    font-family:-apple-system,sans-serif; font-size:8.5px; letter-spacing:.14em;
-    text-transform:uppercase; opacity:.5; margin-bottom:6px;
+    font-family:-apple-system,sans-serif; font-size:10px; font-weight:600; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--pv-ink-soft,#4a5568); margin-bottom:6px;
   }
+  .prev-render.ask .pv-lay{color:var(--pv-ask-soft,#c3cbcd)}
+  .prev-render h1,.prev-render h2,.prev-render h3,.prev-render blockquote{
+    font-family:var(--pv-display, var(--pv-font, Georgia, serif));
+  }
+  .prev-render p,.prev-render li,.prev-render .pv-callout,.prev-render .pv-card{
+    font-family:var(--pv-body, var(--pv-font, Georgia, serif));
+  }
+  .pv-cards{display:flex; gap:5px; margin-top:8px}
+  .pv-card{
+    flex:1; min-width:0; font-size:11px; line-height:1.3; padding:7px 7px 8px;
+    border:1px solid var(--pv-hair,#ddd5c8); border-top:3px solid var(--pv-accent,#7a5c2e);
+    border-radius:4px; background:rgba(255,255,255,.45); color:var(--pv-ink,#1e2430);
+  }
+  .prev-render.ask .pv-card{background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.18); color:var(--pv-ask-ink,#e8e2d6)}
+  .pv-card b{display:block; color:var(--pv-accent,#7a5c2e); font-size:13px; margin-bottom:2px}
+  .pv-callout{
+    margin-top:8px; padding:7px 9px; border-radius:4px; font-size:12px; line-height:1.35;
+    background:var(--pv-callout-bg, var(--pv-accent,#7a5c2e)); color:var(--pv-callout-ink, var(--pv-paper,#f6f3ee));
+  }
+  .prev-render.ask .pv-callout{background:var(--pv-ask-callout-bg, var(--pv-ask-accent,#c4a265)); color:var(--pv-ask-callout-ink, var(--pv-ask-bg,#2f3a3f))}
+  .pv-source{margin-top:8px; font-family:-apple-system,sans-serif; font-size:10px; opacity:.75}
 
   .end{color:var(--soft); font-size:13.5px; font-style:italic; padding:6px 2px}
 
@@ -191,7 +223,7 @@
     display:flex; align-items:center; padding:12px 14px;
     border-bottom:1px solid var(--line); flex:none;
   }
-  #drawer .head strong{font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); flex:1}
+  #drawer .head h2{font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); flex:1; font-weight:700}
   #drawer .head button{background:none;border:none;color:var(--soft);font-size:15px;font-weight:600;padding:6px 8px}
   .dbody{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch}
   .panel{display:none; padding-bottom:calc(14px + env(safe-area-inset-bottom))}
@@ -349,47 +381,47 @@
 <body>
 
 <header>
-  <span class="dot" id="dot"></span>
-  <span class="count" id="count">—</span>
+  <span class="dot" id="dot" role="img" aria-label="Disconnected"></span>
+  <span class="count" id="count" aria-live="polite">—</span>
   <span class="sp"></span>
-  <button class="listbtn" id="blankbtn">Blank</button>
-  <button class="listbtn" id="deckbtn">Deck</button>
-  <button class="listbtn" id="jumpbtn">Slides</button>
-  <button class="lnlistbtn" id="notesbtn">Notes</button>
-  <button class="listbtn icon" id="setbtn" aria-label="Settings"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.46.66.79 1.18.91H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  <button class="listbtn" id="blankbtn" aria-pressed="false">Blank</button>
+  <button class="listbtn" id="deckbtn" aria-expanded="false" aria-controls="drawer">Deck</button>
+  <button class="listbtn" id="jumpbtn" aria-expanded="false" aria-controls="drawer">Slides</button>
+  <button class="lnlistbtn" id="notesbtn" aria-expanded="false" aria-controls="drawer">Notes</button>
+  <button class="listbtn icon" id="setbtn" aria-label="Settings" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.46.66.79 1.18.91H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
 </header>
 
 <main>
-  <div class="now" id="now">
+  <section class="now" id="now" aria-labelledby="nowtitle">
     <div class="label" id="nowlabel">Now showing</div>
-    <h1 id="nowtitle">Connecting…</h1>
+    <h1 id="nowtitle" aria-live="polite">Connecting…</h1>
     <div class="notes" id="nownotes"></div>
-  </div>
+  </section>
 
-  <div class="next" id="nextbox">
+  <section class="next" id="nextbox" aria-labelledby="nextlabel">
     <div class="label" id="nextlabel">Up next</div>
     <h2 id="nexttitle"></h2>
-    <div class="prev-render" id="nextrender"></div>
-  </div>
+    <div class="prev-render" id="nextrender" role="img" aria-label="Preview of the next slide"></div>
+  </section>
 
-  <div class="lnbox">
-    <div class="label">Live notes</div>
-    <p class="sub">Type audience feedback or follow-up items for this slide. Autosaves to the project.</p>
-    <textarea id="livenotes" placeholder="Type live notes for this slide..."></textarea>
+  <section class="lnbox" aria-labelledby="lnlabel">
+    <div class="label" id="lnlabel">Live notes</div>
+    <p class="sub" id="lnhelp">Type audience feedback or follow-up items for this slide. Autosaves to the project.</p>
+    <textarea id="livenotes" aria-labelledby="lnlabel" aria-describedby="lnhelp" placeholder="Type live notes for this slide..."></textarea>
     <div class="lnmeta">
-      <span id="lnstatus">No live notes yet.</span>
-      <button id="showlive">Show on projector</button>
+      <span id="lnstatus" role="status">No live notes yet.</span>
+      <button id="showlive" aria-pressed="false">Show on projector</button>
     </div>
-  </div>
+  </section>
 </main>
 
 <footer>
-  <button class="nav" id="prev">← Back</button>
-  <button class="nav next" id="next">Next →<small id="nextsub"></small></button>
+  <button class="nav" id="prev" aria-label="Previous slide">← Back</button>
+  <button class="nav next" id="next" aria-label="Next slide">Next →<small id="nextsub"></small></button>
 </footer>
 
-<div id="drawer">
-  <div class="head"><strong id="drawertitle">Jump to slide</strong><button id="close">Done</button></div>
+<div id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawertitle">
+  <div class="head"><h2 id="drawertitle">Jump to slide</h2><button id="close">Done</button></div>
   <div class="dbody">
 
     <div class="panel" id="panel-slides">
@@ -461,10 +493,18 @@ function scaleFailed(r){
   el.classList.add('on');
 }
 
+/* A discussion slide is one marked `cls: "ask"` (or, from an older server,
+   flagged `discussion`). The remote warns you one is coming. */
+function isDiscussion(s){
+  return !!s && (!!s.discussion || /(^|\s)ask(\s|$)/.test(String(s.cls || '')));
+}
+
 function paint(){
   if(!SLIDES.length) return;
   const s = SLIDES[cur - 1] || SLIDES[0];
   const nx = SLIDES[cur];
+  if(s) s.discussion = isDiscussion(s);
+  if(nx) nx.discussion = isDiscussion(nx);
 
   $('count').textContent = cur + ' / ' + SLIDES.length;
 
@@ -499,15 +539,23 @@ function paint(){
 
   $('prev').disabled = cur <= 1;
   $('next').disabled = cur >= SLIDES.length;
+  $('next').setAttribute('aria-label', nx
+    ? 'Next slide: ' + nx.title + (nx.discussion ? ' (discussion)' : '')
+    : 'Next slide (end of deck)');
   $('blankbtn').classList.toggle('on', blanked);
+  $('blankbtn').setAttribute('aria-pressed', blanked ? 'true' : 'false');
+  $('showlive').setAttribute('aria-pressed', liveNotesVisible ? 'true' : 'false');
 
   /* Text size reflects what the projector is actually showing — the server
      holds the value, so this readout can't drift from the wall. */
   document.querySelectorAll('.sw').forEach(b => {
     b.classList.toggle('on', b.dataset.id === themeId);
+    b.setAttribute('aria-pressed', b.dataset.id === themeId ? 'true' : 'false');
   });
   document.querySelectorAll('.deck').forEach(b => {
     b.classList.toggle('on', b.dataset.id === deckId);
+    if(b.dataset.id === deckId) b.setAttribute('aria-current', 'true');
+    else b.removeAttribute('aria-current');
   });
 
   $('scaleval').textContent = serverHasScale ? Math.round(scale * 100) + '%' : '—';
@@ -517,6 +565,8 @@ function paint(){
 
   document.querySelectorAll('.row').forEach(r => {
     r.classList.toggle('cur', +r.dataset.n === cur);
+    if(+r.dataset.n === cur) r.setAttribute('aria-current', 'step');
+    else r.removeAttribute('aria-current');
   });
 
   /* Only jump back to the top when the slide actually changed — adjusting
@@ -587,11 +637,20 @@ function previewHTML(s){
     }
   }
 
+  if(s.quote) h += '<blockquote>' + s.quote + (s.cite ? '<cite>' + s.cite + '</cite>' : '') + '</blockquote>';
   if(s.body) h += '<p>' + s.body + '</p>';
   if(s.bullets && s.bullets.length){
     h += '<ul>' + s.bullets.map(b =>
       '<li>' + (b && typeof b === 'object' ? esc(b.text) : esc(b)) + '</li>').join('') + '</ul>';
   }
+  if(Array.isArray(s.cards) && s.cards.length){
+    h += '<div class="pv-cards">' + s.cards.slice(0, 4).map((c, k) => {
+      c = c && typeof c === 'object' ? c : {};
+      return '<div class="pv-card">' + (s.numbered ? '<b>' + (k + 1) + '</b>' : '') +
+             esc(c.title || '') + '</div>';
+    }).join('') + '</div>';
+  }
+  if(s.callout) h += '<div class="pv-callout">' + s.callout + '</div>';
   if(Array.isArray(s.quads) && s.quads.length){
     h += '<ul>' + s.quads.slice(0, 4).map(q => {
       const label = q && typeof q === 'object' ? (q.subheading || q.body || (q.image ? 'Image' : '') || (q.media ? 'Embed' : '')) : '';
@@ -599,6 +658,7 @@ function previewHTML(s){
     }).join('') + '</ul>';
   }
   if(s.caption) h += '<p>' + s.caption + '</p>';
+  if(s.source) h += '<div class="pv-source">' + s.source + '</div>';
   return h;
 }
 
@@ -618,8 +678,9 @@ function buildThemes(){
     b.className = 'sw';
     b.dataset.id = t.id;
     b.title = t.description || t.name;
+    b.setAttribute('aria-pressed', 'false');
     b.innerHTML =
-      '<span class="chip">' +
+      '<span class="chip" aria-hidden="true">' +
         '<i style="background:' + (v['--paper']   || '#eee') + '"></i>' +
         '<i style="background:' + (v['--ask-bg']  || '#333') + '"></i>' +
         '<i style="background:' + (v['--accent'] || v['--accent-light'] || '#999') + '"></i>' +
@@ -681,7 +742,13 @@ function applyPreviewTheme(){
     '--pv-ask-soft': v['--ask-ink-soft'],
     '--pv-ask-head': v['--ask-heading'],
     '--pv-ask-accent': v['--ask-accent'],
-    '--pv-font':     v['--deck-font']
+    '--pv-font':     v['--deck-font'],
+    '--pv-display':  v['--display-font'] || v['--deck-font'],
+    '--pv-body':     v['--body-font'] || v['--deck-font'],
+    '--pv-callout-bg':  v['--callout-bg'],
+    '--pv-callout-ink': v['--callout-ink'],
+    '--pv-ask-callout-bg':  v['--ask-callout-bg'],
+    '--pv-ask-callout-ink': v['--ask-callout-ink']
   };
   for(const k in map) if(map[k]) r.setProperty(k, map[k]);
 }
@@ -730,9 +797,11 @@ function buildList(){
   list.innerHTML = '';
   SLIDES.forEach(s => {
     const b = document.createElement('button');
-    b.className = 'row' + (s.discussion ? ' d' : '');
+    const disc = isDiscussion(s);
+    b.className = 'row' + (disc ? ' d' : '');
     b.dataset.n = s.n;
-    b.innerHTML = '<span class="n">' + s.n + '</span><span class="t">' + s.title + '</span>';
+    b.innerHTML = '<span class="n">' + s.n + '</span><span class="t">' + s.title + '</span>' +
+      (disc ? '<span class="sr-only"> (discussion)</span>' : '');
     b.onclick = () => { post('/api/goto', {n: s.n}); closeDrawer(); };
     list.appendChild(b);
   });
@@ -759,14 +828,38 @@ function openPanel(name){
     $('panel-' + k).classList.toggle('on', k === name);
     $(PANELS[k].btn).classList.toggle('on', k === name);
   }
+  for(const k in PANELS) $(PANELS[k].btn).setAttribute('aria-expanded', k === name ? 'true' : 'false');
+  drawerReturn = $(spec.btn);
   $('drawer').classList.add('on');
   $('drawer').querySelector('.dbody').scrollTop = 0;
+  /* Focus goes into the dialog: to the current slide in the jump list, so
+     you start where you are, otherwise to Done. */
+  const target = (name === 'slides' && $('list').querySelector('.row.cur')) || $('close');
+  target.focus();
 }
+let drawerReturn = null;
 function closeDrawer(){
   openPanelName = null;
   $('drawer').classList.remove('on');
-  for(const k in PANELS) $(PANELS[k].btn).classList.remove('on');
+  for(const k in PANELS){
+    $(PANELS[k].btn).classList.remove('on');
+    $(PANELS[k].btn).setAttribute('aria-expanded', 'false');
+  }
+  if(drawerReturn && drawerReturn.offsetParent !== null) drawerReturn.focus();
+  drawerReturn = null;
 }
+
+/* Keep Tab inside the open drawer, and let Escape close it. */
+$('drawer').addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ e.preventDefault(); closeDrawer(); return; }
+  if(e.key !== 'Tab') return;
+  const focusables = Array.from($('drawer').querySelectorAll('button, textarea, [tabindex="0"]'))
+    .filter(el => el.offsetParent !== null && !el.disabled);
+  if(!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+});
 
 $('next').onclick   = () => post('/api/next');
 $('prev').onclick   = () => post('/api/prev');
@@ -851,7 +944,10 @@ Promise.all([
 
 (function connect(){
   const es = new EventSource('/events');
-  es.onopen = () => $('dot').classList.add('ok');
+  es.onopen = () => {
+    $('dot').classList.add('ok');
+    $('dot').setAttribute('aria-label', 'Connected');
+  };
   es.onmessage = ev => {
     const st = JSON.parse(ev.data);
     /* A deck change replaces the slide payload entirely, so refetch. */
@@ -874,7 +970,12 @@ Promise.all([
     if(!serverHasScale) scaleFailed({ok:false, status:404});
     paint();
   };
-  es.onerror = () => { $('dot').classList.remove('ok'); es.close(); setTimeout(connect, 1500); };
+  es.onerror = () => {
+    $('dot').classList.remove('ok');
+    $('dot').setAttribute('aria-label', 'Reconnecting');
+    es.close();
+    setTimeout(connect, 1500);
+  };
 })();
 
 

@@ -353,16 +353,31 @@ def cmd_check(args) -> int:
         else:
             out(dim("  Nothing to fix automatically."))
 
-    errors = warnings = 0
+    from .app import load_themes
+    from .check import check_themes
+
+    themes = load_themes(project)
+    theme_ids = [t["id"] for t in themes]
+
+    errors = warnings = tips = 0
     out()
     if not args._demo:
         _warn_if_schema_stale(project)
+    theme_issues = check_themes(themes)
+    if theme_issues:
+        warnings += len(theme_issues)
+        out(f"  {bold('Themes')}  " + dim(str(project.themes_file)))
+        if not args.quiet:
+            for i in theme_issues:
+                out(f"    warn    {i}")
     for deck in chosen:
-        issues = check_deck(deck)
+        issues = check_deck(deck, theme_ids)
         errs = [i for i in issues if i.level == "error"]
         warns = [i for i in issues if i.level == "warning"]
+        hints = [i for i in issues if i.level == "tip"]
         errors += len(errs)
         warnings += len(warns)
+        tips += len(hints)
 
         status = "OK" if not errs else f"{len(errs)} error(s)"
         count = len(deck["slides"])
@@ -372,12 +387,71 @@ def cmd_check(args) -> int:
         if not args.quiet:
             for i in warns:
                 out(f"    warn    {i}")
+            if not args.no_tips:
+                for i in hints:
+                    out(dim(f"    tip     {i}"))
 
     out()
+    tip_note = f", {tips} design tip(s)" if tips else ""
     if errors:
-        out(f"  {errors} error(s), {warnings} warning(s)")
+        out(f"  {errors} error(s), {warnings} warning(s){tip_note}")
         return 1
-    out(f"  No errors. {warnings} warning(s).")
+    out(f"  No errors. {warnings} warning(s){tip_note}.")
+    if tips and not args.quiet:
+        out(dim("  Tips are judgement calls; `glissade shoot` shows how slides actually look."))
+    out()
+    return 0
+
+
+# ----------------------------------------------------------------- shoot
+
+
+def cmd_shoot(args) -> int:
+    from .app import load_themes
+    from .shoot import ShootUnavailable, shoot_deck
+
+    project = demo_project() if args._demo else _project(args)
+    chosen = _decks_or_die(project, args.deck)
+    themes = load_themes(project)
+    if args.theme and args.theme not in [t["id"] for t in themes]:
+        out(f"\n  Unknown theme {args.theme!r}. Run `glissade themes`.\n")
+        return 2
+
+    base = Path(args.out).resolve() if args.out else (
+        (Path.cwd() / "build" / "shots") if args._demo else project.build_dir / "shots"
+    )
+    problems = 0
+    out()
+    for deck in chosen:
+        target = base if (args.out and len(chosen) == 1) else base / deck["id"]
+        try:
+            shots = shoot_deck(
+                deck, target, themes,
+                size=args.size, slides=args.slides, theme=args.theme,
+            )
+        except ShootUnavailable as exc:
+            out(f"  {exc}\n")
+            return 2
+        except ValueError as exc:
+            out(f"  {exc}\n")
+            return 2
+        try:
+            shown = target.relative_to(Path.cwd())
+        except ValueError:
+            shown = target
+        out(f"  {bold(deck['title'])}  " + dim(f"{len(shots)} slide(s) → {shown}/"))
+        for s in shots:
+            if not s.problems:
+                continue
+            out(f"    slide {s.n}  {s.title}  " + dim(f"({s.layout})"))
+            for p in s.problems:
+                out(f"      ! {p}")
+            problems += len(s.problems)
+        out()
+    if problems:
+        out(f"  {problems} layout problem(s). Open the PNGs to see them.")
+    else:
+        out("  No layout problems found. Open the PNGs to check the look.")
     out()
     return 0
 
@@ -641,7 +715,21 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("-q", "--quiet", action="store_true", help="errors only")
     sp.add_argument("--fix", action="store_true",
                     help="apply the corrections that have one obvious answer")
+    sp.add_argument("--no-tips", action="store_true",
+                    help="hide design tips (word counts, layout suggestions)")
     sp.set_defaults(func=cmd_check)
+
+    sp = common(sub.add_parser(
+        "shoot", help="screenshot every slide and report layout problems"))
+    sp.add_argument("deck", nargs="?", default=None, help="deck id (default: all)")
+    sp.add_argument("-o", "--out", default=None,
+                    help="output directory (default: build/shots/<deck>/)")
+    sp.add_argument("--size", default="1920x1080",
+                    help="viewport as WIDTHxHEIGHT (default 1920x1080)")
+    sp.add_argument("--slides", default=None,
+                    help="which slides, e.g. 1,3,5-7 (default: all)")
+    sp.add_argument("--theme", default=None, help="theme id to shoot in")
+    sp.set_defaults(func=cmd_shoot)
 
     sp = common(sub.add_parser("decks", help="list decks"))
     sp.set_defaults(func=cmd_decks)

@@ -8,10 +8,18 @@ layouts, empty slides and YouTube links in the wrong form, and it is the
 fastest way to know a deck is sound. Treat a non-zero exit as work unfinished.
 
 ```bash
-glissade check          # validate every deck
+glissade check          # validate every deck (errors, warnings, design tips)
+glissade shoot          # screenshot every slide to build/shots/ and report layout problems
 glissade start          # present, with a phone remote and live deck reloads
 glissade build          # write standalone HTML to build/
 ```
+
+**Look at what you made.** `check` reads the JSON; `glissade shoot` renders
+it and saves a PNG per slide, then reports overflow, headings that jump
+between slides, sparse slides, text squeezed into part of a column, and text
+too small to read in a room. Open the PNGs. A deck that passes `check` can
+still look wrong. (`shoot` needs Playwright: `pip install playwright` and
+`playwright install chromium`.)
 
 ---
 
@@ -22,10 +30,15 @@ glissade build          # write standalone HTML to build/
   "$schema": "./glissade.schema.json",
   "title": "Shown in the picker and the browser tab",
   "subtitle": "Optional",
+  "theme": "parchment",
   "order": 1,
   "slides": [ /* … */ ]
 }
 ```
+
+`theme` is the theme the deck opens in — an id from `glissade themes`. The
+presenter can still switch with **T** or from the remote. Pick one that suits
+the material rather than leaving the default.
 
 `glissade.schema.json` sits beside this file. Keep the `$schema` line — it
 gives editors autocomplete and inline validation.
@@ -61,13 +74,23 @@ Pick a `layout`, fill the fields it uses, skip the rest. Nothing is required.
   "heading": "The heading",
   "subheading": "A supporting line",
   "body": "<p>HTML is allowed in every text field.</p>",
-  "bullets": ["A point", {"text": "With a second line", "sub": "smaller"}],
+  "bullets": ["A point", {"text": "A title", "sub": "and its explanation"}],
   "quote": "A pull quote", "cite": "Attribution",
-  "image": {"src": "media/chart.png", "alt": "…", "fit": "cover", "caption": "…"},
+  "callout": "<b>This week:</b> the one-line takeaway — always drawn last",
+  "source": "Where this came from — a small line at the foot of the slide",
+  "image": {"src": "media/chart.png", "alt": "What it shows", "fit": "cover",
+            "focus": "center top", "caption": "…"},
   "media": {"file": "media/activity.html"},
   "notes": "Speaker notes. HTML allowed."
 }
 ```
+
+`callout` is a filled box for the takeaway, an invitation or a discussion
+question. It always renders after everything else on the slide, whatever
+order you write the fields in. `source` cites a quote, figure or chapter.
+
+`focus` anchors a cropped (`cover`) image: keywords or percentages, e.g.
+`"right center"`, `"70% 30%"`. Use it when a face would otherwise be cut off.
 
 ### Layouts
 
@@ -83,10 +106,19 @@ Pick a `layout`, fill the fields it uses, skip the rest. Nothing is required.
 | `picture-caption` | centred image, `body` used as the caption |
 | `media-right` / `media-left` | text one side, image or embed the other |
 | `media-caption` | centred media at moderate size |
-| `media-full` | media fills the slide; heading and body overlay it |
+| `media-full` | media fills the slide; eyebrow, heading and body overlay it. `scrim`: `bottom` (default), `left`, `none` |
 | `grid` | two to four `images` |
 | `quad-chart` | heading plus four `quads`, each with its own subheading and text or media |
+| `cards` | heading, then two to four `cards` side by side; `"numbered": true` numbers them |
+| `quote` | heading, a large `quote` + `cite`, beside a panel (`subheading`, `body`, `bullets`) or an `image` |
 | `blank` | raw `html`, used verbatim |
+
+A card is `{"title": "…", "body": "…", "source": "…", "image": {…}}` — every
+part optional, but give it at least a title or body.
+
+`callout` renders on `title-content`, `two-content`, `comparison`,
+`content-caption`, `media-left`/`media-right`, `quad-chart`, `cards` and
+`quote`. `source` renders on every layout.
 
 `cls` is independent of layout and combines freely: `"ask"` (dark — for
 questions and discussion), `"story"` (warmer), `"center"`.
@@ -112,8 +144,41 @@ it or move the detail into `notes`.
 `decks/media/chart.png` when the deck is `decks/talk.json`.
 
 **Don't put `image` or `media` on a text-only layout** (`title`,
-`title-only`, `section`, `title-content`). There is no region to draw it in
-and it will silently not appear. `check` warns about this.
+`title-only`, `section`, `title-content`, `cards`). There is no region to
+draw it in and it will silently not appear. `check` warns about this.
+
+**Every image needs `alt`.** Say what it shows for someone who can't see it
+("Two missionaries looking at a phone beside an open Bible"), not what it is
+("photo"). Use `"alt": ""` only for pure decoration. `check` warns when it's
+missing.
+
+---
+
+## Designing slides that read
+
+The layouts handle spacing, alignment and type. Your job is to choose the
+right one for each idea. `check` prints **tips** for these; they are
+judgement calls, not errors, but follow them unless you have a reason.
+
+- **Three or four parallel ideas are `cards`, not bullets.** If every bullet
+  has a title and a second line, it wants to be cards. Use
+  `"numbered": true` for steps or keys, and put the citation in each
+  card's `source`.
+- **A quotation is a `quote` slide**, with `cite`. Put what to do with it —
+  the scripture it pairs with, the discussion question — in the side panel or
+  a `callout`.
+- **End a teaching sequence with a `callout`**: the invitation, the takeaway,
+  the question to discuss. One or two sentences.
+- **Cite with `source`**, not in the body. It keeps the slide clean and the
+  reference findable.
+- **Open with `media-full`** when you have a strong image. Use
+  `"scrim": "left"` and an image `focus` on the right when the subject is on
+  the right, so the text never covers a face.
+- **Keep headings under ~70 characters, body under ~40 words, bullets to
+  six, and a whole slide under ~90 words.** Move the rest into `notes`.
+- **Use `cls: "ask"` for discussion slides.** The remote warns the presenter
+  that one is coming.
+- **Then run `glissade shoot` and look at every PNG.**
 
 **`html` only renders on the `blank` layout.** On any other layout it is
 ignored. Reach for `blank` last — laid-out slides stay consistent, freeform
@@ -194,9 +259,11 @@ Two things weighed against each other:
 
 ## Before you hand the deck over
 
-1. `glissade check` exits zero.
-2. Every slide has `notes`.
+1. `glissade check` exits zero, with no warnings you haven't decided to keep.
+2. Every slide has `notes`, and every image has `alt`.
 3. Every image referenced actually exists.
-4. External embeds are deliberate — `build` lists them, and each is a slide
+4. `glissade shoot` reports no layout problems, and you have looked at the
+   PNGs.
+5. External embeds are deliberate — `build` lists them, and each is a slide
    that fails without Wi-Fi.
-5. `glissade build` succeeds.
+6. `glissade build` succeeds.
